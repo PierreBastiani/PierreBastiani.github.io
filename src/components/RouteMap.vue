@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { routes, sections } from '@/content'
 import {
   DZ,
@@ -64,15 +64,15 @@ function render(c: Camera) {
   }
 }
 
-// The viewBox is the overview's frame at every angle the pointer can reach. Close-ups are
-// clipped to it, so the figure never changes size.
-const box = (() => {
+// The viewBox is the overview's frame at every angle the camera can reach in that layout.
+// Close-ups are clipped to it, so the figure never changes size.
+function frameBox(turn: number, tilt: number, margin: number, top: number) {
   let x0 = Infinity
   let y0 = Infinity
   let x1 = -Infinity
   let y1 = -Infinity
-  for (const theta of [OVERVIEW.theta - deg(14), OVERVIEW.theta + deg(14)]) {
-    for (const phi of [OVERVIEW.phi - deg(5), OVERVIEW.phi + deg(5)]) {
+  for (const theta of [OVERVIEW.theta - turn, OVERVIEW.theta + turn]) {
+    for (const phi of [OVERVIEW.phi - tilt, OVERVIEW.phi + tilt]) {
       for (const r of rings) {
         for (const h of [(r.level - 1) * DZ, r.level * DZ]) {
           for (const [x, z] of r.plan) {
@@ -86,10 +86,21 @@ const box = (() => {
       }
     }
   }
-  const m = 16
-  return { x: Math.floor(x0 - m), y: Math.floor(y0 - m - 24), w: Math.ceil(x1 - x0 + 2 * m), h: Math.ceil(y1 - y0 + 2 * m + 24) }
-})()
-const viewBox = `${box.x} ${box.y} ${box.w} ${box.h}`
+  return {
+    x: Math.floor(x0 - margin),
+    y: Math.floor(y0 - margin - top),
+    w: Math.ceil(x1 - x0 + 2 * margin),
+    h: Math.ceil(y1 - y0 + 2 * margin + top),
+  }
+}
+// Beside the list (desktop): room for the pointer to turn the crag. Pinned above the list
+// (phones): only the scroll turns it, so the box hugs the model and leaves no empty band.
+// The extra room at the top keeps the summit's tag inside the frame.
+const WIDE = frameBox(deg(14), deg(5), 16, 24)
+const TIGHT = frameBox(deg(5), 0, 6, 90)
+const box = ref(WIDE)
+let narrow = false // set on mount: the map is pinned above the list
+const viewBox = computed(() => `${box.value.x} ${box.value.y} ${box.value.w} ${box.value.h}`)
 
 // Close-up on one route: look at the middle of the climb, turn so it faces the viewer,
 // come down a little to show the height, zoom in, and put it in the middle of the frame.
@@ -102,9 +113,9 @@ function shotOf(id: string): Camera {
     theta,
     phi: deg(28),
     distance: OVERVIEW.distance,
-    zoom: 1.45,
+    zoom: narrow ? 1.15 : 1.45, // pinned on a phone the crag isn't clipped, so it zooms less
     target: [(fx + tx) / 2, (fh + th) / 2, (fz + tz) / 2],
-    offset: [box.x + box.w / 2, box.y + box.h / 2],
+    offset: [box.value.x + box.value.w / 2, box.value.y + box.value.h / 2],
   }
 }
 
@@ -123,6 +134,7 @@ const fromScroll = ref<string | null>(null)
 const active = computed(() => fromList.value ?? fromMap.value ?? fromScroll.value)
 const map = ref<HTMLElement | null>(null)
 const list = ref<HTMLElement | null>(null)
+const pinned = ref(false) // phones: the map is stuck under the header with the list below
 const drawn = ref(true)
 
 // Grades sit in HTML pills over the figure, so they keep a readable size on a phone.
@@ -130,7 +142,8 @@ const drawn = ref(true)
 const pills = computed(() =>
   routes.map((r) => {
     const [x, y] = frame.value.routes[r.id]!.end
-    return { id: r.id, name: r.name, grade: r.grade, left: `${((x - box.x) / box.w) * 100}%`, top: `${((y - box.y) / box.h) * 100}%` }
+    const b = box.value
+    return { id: r.id, name: r.name, grade: r.grade, left: `${((x - b.x) / b.w) * 100}%`, top: `${((y - b.y) / b.h) * 100}%` }
   }),
 )
 
@@ -220,7 +233,8 @@ function onScroll() {
   if (!map.value) return
   const r = map.value.getBoundingClientRect()
   const h = window.innerHeight
-  if (r.bottom < 0 || r.top > h) return
+  pinned.value = narrow && Math.abs(r.top - (parseFloat(getComputedStyle(map.value).top) || 0)) < 1
+  if (reduce || r.bottom < 0 || r.top > h) return
   if (!drawn.value && r.top < h * 0.85) drawn.value = true
   scrollTurn = -((r.top + r.height / 2) / h - 0.5) * deg(10)
   retarget()
@@ -272,20 +286,27 @@ function watchReading() {
   )
   items.forEach((el) => reading!.observe(el))
 }
+// Pick the frame for the layout, then place the reading line under the map's new height.
+async function layout() {
+  narrow = window.matchMedia('(max-width: 52rem)').matches
+  box.value = narrow ? TIGHT : WIDE
+  await nextTick()
+  watchReading()
+  retarget()
+  onScroll()
+}
 function onResize() {
   clearTimeout(resizeTimer)
-  resizeTimer = window.setTimeout(watchReading, 150)
+  resizeTimer = window.setTimeout(layout, 150)
 }
 
 onMounted(() => {
   reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches
-  watchReading()
+  if (!reduce && map.value) drawn.value = map.value.getBoundingClientRect().top < window.innerHeight * 0.85
   window.addEventListener('resize', onResize, { passive: true })
-  if (reduce || !map.value) return
-  drawn.value = map.value.getBoundingClientRect().top < window.innerHeight * 0.85
   window.addEventListener('scroll', onScroll, { passive: true })
-  onScroll()
+  layout()
 })
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
@@ -309,37 +330,39 @@ onBeforeUnmount(() => {
         <p class="sub">{{ sections.skills.sub }}</p>
       </header>
 
-      <figure ref="map" class="map" :class="{ drawn, focused: !!active }" @pointermove="onPointer" @pointerleave="onLeave">
-        <svg :viewBox="viewBox" role="img" aria-labelledby="map-title">
-          <title id="map-title">Falaise en relief à deux sommets, avec cinq voies, une par compétence</title>
-          <g v-for="(lv, i) in frame.levels" :key="i" class="level" :class="{ index: lv.index }" :style="{ '--t': lv.t }">
-            <path v-for="(d, j) in lv.sides" :key="'s' + j" class="side" :d="d" />
-            <path v-for="(d, j) in lv.tops" :key="'e' + j" class="edge" :d="d" />
-            <path v-for="(d, j) in lv.tops" :key="'t' + j" class="top" :d="d" />
-          </g>
-          <g
-            v-for="r in routes"
-            :key="r.id"
-            class="route"
-            :class="{ on: active === r.id, dim: active && active !== r.id }"
-            :data-route="r.id"
+      <figure ref="map" class="map" :class="{ drawn, pinned, focused: !!active }" @pointermove="onPointer" @pointerleave="onLeave">
+        <div class="stage">
+          <svg :viewBox="viewBox" role="img" aria-labelledby="map-title">
+            <title id="map-title">Falaise en relief à deux sommets, avec cinq voies, une par compétence</title>
+            <g v-for="(lv, i) in frame.levels" :key="i" class="level" :class="{ index: lv.index }" :style="{ '--t': lv.t }">
+              <path v-for="(d, j) in lv.sides" :key="'s' + j" class="side" :d="d" />
+              <path v-for="(d, j) in lv.tops" :key="'e' + j" class="edge" :d="d" />
+              <path v-for="(d, j) in lv.tops" :key="'t' + j" class="top" :d="d" />
+            </g>
+            <g
+              v-for="r in routes"
+              :key="r.id"
+              class="route"
+              :class="{ on: active === r.id, dim: active && active !== r.id }"
+              :data-route="r.id"
+            >
+              <path class="hit" :d="frame.routes[r.id]!.d" />
+              <path class="casing" :d="frame.routes[r.id]!.d" pathLength="1" />
+              <path class="line" :d="frame.routes[r.id]!.d" pathLength="1" />
+              <circle class="end" :cx="frame.routes[r.id]!.end[0]" :cy="frame.routes[r.id]!.end[1]" r="11" />
+            </g>
+          </svg>
+          <span
+            v-for="p in pills"
+            :key="p.id"
+            class="pill"
+            :class="{ on: active === p.id, dim: active && active !== p.id }"
+            :style="{ left: p.left, top: p.top }"
+            :data-route="p.id"
+            aria-hidden="true"
+            ><span v-if="active === p.id" class="name">{{ p.name }} · </span><span class="grade">{{ p.grade }}</span></span
           >
-            <path class="hit" :d="frame.routes[r.id]!.d" />
-            <path class="casing" :d="frame.routes[r.id]!.d" pathLength="1" />
-            <path class="line" :d="frame.routes[r.id]!.d" pathLength="1" />
-            <circle class="end" :cx="frame.routes[r.id]!.end[0]" :cy="frame.routes[r.id]!.end[1]" r="11" />
-          </g>
-        </svg>
-        <span
-          v-for="p in pills"
-          :key="p.id"
-          class="pill"
-          :class="{ on: active === p.id, dim: active && active !== p.id }"
-          :style="{ left: p.left, top: p.top }"
-          :data-route="p.id"
-          aria-hidden="true"
-          ><span v-if="active === p.id" class="name">{{ p.name }} · </span><span class="grade">{{ p.grade }}</span></span
-        >
+        </div>
       </figure>
 
       <ol ref="list" class="list">
@@ -385,6 +408,9 @@ onBeforeUnmount(() => {
   margin: 0;
   position: sticky;
   top: calc(var(--header-h) + 2rem);
+}
+.stage {
+  position: relative;
   overflow: hidden;
 }
 .map svg {
@@ -543,11 +569,47 @@ onBeforeUnmount(() => {
     grid-template-areas: 'head' 'map' 'list';
     gap: 3rem;
   }
+  /* Pinned under the header with no background: the list shows through the empty parts and
+     passes behind the crag, which keeps a soft halo of the page colour around it. */
   .map {
     position: sticky;
     top: var(--header-h);
     z-index: 1;
+  }
+  .map.pinned {
+    pointer-events: none; /* taps reach the list links behind; the map needs none on a phone */
+  }
+  .map.pinned .stage {
+    overflow: visible;
+  }
+  .map.pinned svg {
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+    filter: drop-shadow(0 0 1px var(--bg)) drop-shadow(0 0 10px var(--bg));
+  }
+  /* Behind the model, in the page colour: a cover from the top of the screen down to the map
+     (nothing shows through the translucent header), then a wash over the map that is solid
+     behind the crag's mass and fades out toward its foot. List text scrolling up dissolves as
+     it passes behind the model and is crisp again below it. CSS only, nothing runs per frame. */
+  .map.pinned::before,
+  .map.pinned::after {
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--gutter));
+    right: calc(-1 * var(--gutter-r));
+    z-index: -1;
+    pointer-events: none;
+  }
+  .map.pinned::before {
+    bottom: 100%;
+    height: calc(var(--header-h) + 1px);
     background: var(--bg);
+  }
+  .map.pinned::after {
+    top: 0;
+    bottom: -1.5rem;
+    background: linear-gradient(var(--bg) 55%, transparent);
   }
 }
 @media (prefers-reduced-motion: reduce) {
