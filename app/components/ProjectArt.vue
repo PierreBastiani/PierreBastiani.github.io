@@ -1,40 +1,14 @@
 <script setup lang="ts">
 import { ridgeFacets, ridgeLine, type RidgeOptions } from '@/lib/ridge'
-// Small flat illustrations for the project cards, drawn in three layers like the hero.
+// Small illustrations for the project cards, drawn in three layers like the hero.
 // On hover or keyboard focus of the card, the layers lift apart a little (see ProjectGrid).
 export type ArtKind = 'homelab' | 'smarket' | 'gree' | 'site'
 defineProps<{ kind: ArtKind }>()
 
-// Isometric slab: top, left and right faces of a box w × d × h standing at height z.
-const O = { x: 200, y: 150 }
-const iso = (x: number, y: number, z: number) =>
-  `${(O.x + (x - y) * 0.866).toFixed(1)},${(O.y + (x + y) * 0.5 - z).toFixed(1)}`
-function slab(w: number, d: number, h: number, z: number) {
-  const x0 = -w / 2
-  const y0 = -d / 2
-  const x1 = w / 2
-  const y1 = d / 2
-  const t = z + h
-  return {
-    top: [iso(x0, y0, t), iso(x1, y0, t), iso(x1, y1, t), iso(x0, y1, t)].join(' '),
-    left: [iso(x0, y1, t), iso(x1, y1, t), iso(x1, y1, z), iso(x0, y1, z)].join(' '),
-    right: [iso(x1, y0, t), iso(x1, y1, t), iso(x1, y1, z), iso(x1, y0, z)].join(' '),
-  }
-}
-const router = slab(150, 96, 14, -40)
-const mini = slab(104, 104, 26, 2)
-const pi = slab(64, 44, 22, 56)
-const at = (x: number, y: number, z: number) => iso(x, y, z).split(',').map(Number) as [number, number]
-const antennas = [at(-60, -48, -26), at(30, -48, -26)]
-const piLed = at(32, 6, 66)
-const miniLed = at(52, 20, 10)
-const routerLeds = [-40, -25, -10, 5].map((x) => at(x, 48, -33))
-
-// smarket: a price line over a receipt
-const prices = [150, 138, 146, 120, 128, 104, 112, 92]
-const curve = prices.map((p, i) => `${70 + i * 38},${p}`).join(' ')
-const last = { x: 70 + (prices.length - 1) * 38, y: prices[prices.length - 1]! }
-const receiptLines = [0, 1, 2, 3, 4, 5, 6, 7]
+// homelab, smarket and gree-smartir are guidebook ink: one pen in three weights, porphyry as
+// the only spot colour, laid a little off the line. The site card is the hero's poster.
+const tooth = Array.from({ length: 26 }, (_, i) => `l5 ${i % 2 ? -7 : 7}`).join(' ') // torn receipt edge
+const pulses = 'M138 166 h10 v-12 h5 v12 h14 v-12 h5 v12 h5 v-12 h5 v12 h14 v-12 h5 v12 h5 v-12 h14 v12 h5 v-12 h5 v12 h14 v-12 h5 v12 h10'
 
 // the site itself: the hero as a small PLM poster, lettering band and all
 const card = (seed: number, base: number, amp: number, bumps: { x: number; height: number; width: number }[]): RidgeOptions => ({
@@ -68,24 +42,25 @@ const site = {
       <!-- back layer -->
       <svg class="layer l0" viewBox="0 0 400 250">
         <template v-if="kind === 'homelab'">
-          <ellipse cx="200" cy="214" rx="150" ry="26" class="shadow" />
-          <polygon :points="router.left" class="sea-l" />
-          <polygon :points="router.right" class="sea-r" />
-          <polygon :points="router.top" class="sea-t" />
-          <line v-for="(a, i) in antennas" :key="i" :x1="a[0]" :y1="a[1]" :x2="a[0]" :y2="a[1] - 34" class="stroke-ink" />
-          <circle v-for="(l, i) in routerLeds" :key="'l' + i" :cx="l[0]" :cy="l[1]" r="2.2" class="led-soft" />
+          <path d="M0 206 H400" class="ink-line" />
+          <path d="M40 170 L64 154 H214 L190 170 Z M190 170 L214 154 V188 L190 204 Z" class="paper ink-line" />
+          <path d="M40 170 H190 V204 H40 Z" class="paper ink-heavy" />
+          <path d="M70 154 V106 M180 154 V110" class="ink-line" />
+          <path d="M58 185 h4 v4 h-4 Z M68 185 h4 v4 h-4 Z M78 185 h4 v4 h-4 Z M88 185 h4 v4 h-4 Z M132 180 H176 M132 186 H176 M132 192 H176" class="ink-hair" />
         </template>
         <template v-else-if="kind === 'smarket'">
-          <g transform="rotate(-5 150 130)">
-            <path d="M80 34 H220 V214 l-10 8 -10 -8 -10 8 -10 -8 -10 8 -10 -8 -10 8 -10 -8 -10 8 -10 -8 -10 8 -10 -8 -10 8 -10 -8 Z" class="paper" />
-            <rect v-for="i in receiptLines" :key="i" x="98" :y="58 + i * 18" :width="i % 3 === 0 ? 70 : 104" height="5" rx="2.5" class="ink-soft" />
-            <rect x="98" y="200" width="104" height="2" class="ink-soft" />
+          <g transform="rotate(-4 135 120)">
+            <path :d="`M70 30 H200 V214 ${tooth.replace(/l5/g, 'l-5')} Z`" class="paper ink-heavy" />
+            <path d="M100 46 H170" class="ink-line" />
+            <path v-for="i in 8" :key="i" :d="`M84 ${62 + i * 15} H${120 + ((i * 17) % 34)}`" class="ink-hair" />
+            <path v-for="i in 8" :key="'p' + i" :d="`M168 ${62 + i * 15} H188`" class="ink-line" />
+            <path d="M84 196 H188" class="ink-heavy" />
           </g>
         </template>
         <template v-else-if="kind === 'gree'">
-          <rect x="0" y="196" width="400" height="54" class="floor" />
-          <rect x="300" y="36" width="70" height="96" rx="4" class="window" />
-          <line x1="335" y1="36" x2="335" y2="132" class="frame" />
+          <path d="M0 208 H400" class="ink-hair" />
+          <path d="M326 22 H410 V150 H326 Z" class="ink-line" />
+          <path d="M368 22 V150 M326 86 H410" class="ink-hair" />
         </template>
         <template v-else>
           <rect x="0" y="0" width="400" height="250" class="sky" />
@@ -102,22 +77,27 @@ const site = {
       <!-- middle layer -->
       <svg class="layer l1" viewBox="0 0 400 250">
         <template v-if="kind === 'homelab'">
-          <polygon :points="mini.left" class="alu-l" />
-          <polygon :points="mini.right" class="alu-r" />
-          <polygon :points="mini.top" class="alu-t" />
-          <circle :cx="miniLed[0]" :cy="miniLed[1]" r="2" class="led-soft" />
+          <!-- the Mac mini on the router -->
+          <path d="M84 138 L104 125 H198 L178 138 Z M178 138 L198 125 V147 L178 160 Z" class="paper ink-line" />
+          <path d="M84 138 H178 V160 H84 Z" class="paper ink-heavy" />
+          <path d="M97 153 H119" class="ink-hair" />
+          <path d="M163.5 149.5 h5 v5 h-5 Z" class="spot" />
+          <path d="M162 148 h5 v5 h-5 Z" class="ink-hair" />
         </template>
         <template v-else-if="kind === 'smarket'">
-          <g class="grid">
-            <line v-for="i in 4" :key="i" x1="56" :x2="352" :y1="70 + i * 26" :y2="70 + i * 26" />
-          </g>
-          <line x1="56" y1="176" x2="352" y2="176" class="axis" />
+          <!-- the shelf edge with its price tags -->
+          <path d="M214 150 H400" class="ink-heavy" />
+          <path d="M214 160 H400" class="ink-hair" />
+          <path d="M228 160 H266 V182 H228 Z M296 160 H334 V182 H296 Z M364 160 H402 V182 H364 Z" class="paper ink-hair" />
+          <path d="M234 168 H252 M234 175 H260 M302 168 H320 M302 175 H328 M370 168 H388" class="ink-hair" />
         </template>
         <template v-else-if="kind === 'gree'">
-          <rect x="70" y="56" width="210" height="64" rx="14" class="unit" />
-          <rect x="70" y="100" width="210" height="20" rx="10" class="unit-shade" />
-          <line v-for="i in 5" :key="i" :x1="92 + i * 28" y1="110" :x2="104 + i * 28" y2="110" class="slat" />
-          <rect x="236" y="70" width="26" height="9" rx="2" class="display" />
+          <!-- the split unit: casing, vent line, louvre, the display -->
+          <path d="M60 50 H290 V112 H60 Z" class="paper ink-heavy" />
+          <path d="M60 96 H290" class="ink-line" />
+          <path d="M80 112 L76 122 H274 L270 112" class="ink-line" />
+          <path d="M243.5 64.5 h28 v10 h-28 Z" class="spot" />
+          <path d="M242 63 h28 v10 h-28 Z M76 66 H110" class="ink-hair" />
         </template>
         <template v-else>
           <path :d="site.far" class="far" />
@@ -130,24 +110,34 @@ const site = {
       <!-- front layer -->
       <svg class="layer l2" viewBox="0 0 400 250">
         <template v-if="kind === 'homelab'">
-          <polygon :points="pi.left" class="stone-l" />
-          <polygon :points="pi.right" class="stone-r" />
-          <polygon :points="pi.top" class="stone-t" />
-          <circle :cx="piLed[0]" :cy="piLed[1]" r="3" class="accent" />
+          <!-- the Raspberry Pi in its case, its cable running off the edge -->
+          <path d="M250 176 L266 166 H346 L330 176 Z M330 176 L346 166 V194 L330 204 Z" class="paper ink-line" />
+          <path d="M250 176 H330 V204 H250 Z" class="paper ink-heavy" />
+          <path d="M262 171 H322" class="ink-hair dotted" />
+          <path d="M261.5 187.5 h6 v6 h-6 Z" class="spot" />
+          <path d="M260 186 h6 v6 h-6 Z M276 190 H316" class="ink-hair" />
+          <path d="M338 190 C368 198 380 226 410 234 M250 196 C226 206 214 204 190 198" class="ink-line" />
         </template>
         <template v-else-if="kind === 'smarket'">
-          <polyline :points="curve" class="curve" />
-          <circle v-for="(p, i) in prices.slice(0, -1)" :key="i" :cx="70 + i * 38" :cy="p" r="3.5" class="dot" />
-          <circle :cx="last.x" :cy="last.y" r="6" class="accent" />
+          <!-- the price that went down: a tag with the old price struck out -->
+          <path d="M240 34 C256 54 268 76 283 99" class="ink-hair" />
+          <path d="M272.5 82.5 L284.5 70.5 H352.5 V132.5 H284.5 L272.5 120.5 Z" class="spot" />
+          <path d="M270 80 L282 68 H350 V130 H282 L270 118 Z" class="ink-heavy" />
+          <circle cx="283" cy="99" r="3.2" class="paper ink-hair" />
+          <path d="M298 88 H336" class="ink-hair" />
+          <path d="M296 94 L338 84" class="ink-line" />
+          <path d="M298 112 H330" class="ink-heavy" />
         </template>
         <template v-else-if="kind === 'gree'">
-          <rect x="96" y="178" width="30" height="52" rx="7" class="remote" transform="rotate(-18 111 204)" />
-          <circle cx="114" cy="186" r="3" class="accent" />
-          <g class="waves">
-            <path d="M132 164 q14 -14 6 -32" />
-            <path d="M146 172 q24 -22 12 -54" />
-            <path d="M160 180 q34 -30 18 -76" />
+          <!-- the remote, and the IR frame it sends as the pulses the generator decodes -->
+          <g transform="rotate(-14 111 204)">
+            <path d="M96 176 H126 V234 H96 Z" class="paper ink-heavy" />
+            <path d="M101 190 h8 v6 h-8 Z M113 190 h8 v6 h-8 Z M101 200 h8 v6 h-8 Z M113 200 h8 v6 h-8 Z M104 214 H118" class="ink-hair" />
+            <path d="M108.5 179.5 h7 v5 h-7 Z" class="spot" />
+            <path d="M107 178 h7 v5 h-7 Z" class="ink-hair" />
           </g>
+          <path d="M118 170 L138 162" class="ink-hair dashed" />
+          <path :d="pulses" class="ink-line" />
         </template>
         <template v-else>
           <path :d="site.near" class="near" />
@@ -175,7 +165,6 @@ const site = {
 .art {
   position: relative;
   aspect-ratio: 8 / 5;
-  background: var(--art-bg);
   overflow: hidden;
   perspective: 900px;
 }
@@ -193,35 +182,18 @@ const site = {
   transition: transform var(--dur-move) var(--ease);
 }
 
-/* palette: every colour is a token (main.css, art block) */
-.shadow { fill: var(--art-shadow); }
-.sea-t { fill: var(--art-sea-t); }
-.sea-l { fill: var(--art-sea-l); }
-.sea-r { fill: var(--art-sea-r); }
-.alu-t { fill: var(--art-alu-t); }
-.alu-l { fill: var(--art-alu-l); }
-.alu-r { fill: var(--art-alu-r); }
-.stone-t { fill: var(--art-stone-t); }
-.stone-l { fill: var(--art-stone-l); }
-.stone-r { fill: var(--art-stone-r); }
-.stroke-ink { stroke: var(--art-ink); stroke-width: 3; stroke-linecap: round; }
-.led-soft { fill: var(--art-led); }
-.accent { fill: var(--accent); }
-.paper { fill: var(--art-paper); }
-.ink-soft { fill: var(--art-line); }
-.grid line { stroke: var(--art-line); stroke-width: 1; stroke-dasharray: 3 5; }
-.axis { stroke: var(--art-ink); stroke-width: 1.5; opacity: 0.5; }
-.curve { fill: none; stroke: var(--sea); stroke-width: 3.5; stroke-linejoin: round; stroke-linecap: round; }
-.dot { fill: var(--art-bg); stroke: var(--sea); stroke-width: 2.5; }
-.floor { fill: var(--art-floor); }
-.window { fill: var(--art-window); }
-.frame { stroke: var(--art-wall); stroke-width: 3; }
-.unit { fill: var(--art-paper); }
-.unit-shade { fill: var(--art-alu-t); }
-.slat { stroke: var(--art-alu-l); stroke-width: 2.5; stroke-linecap: round; }
-.display { fill: var(--art-ink); opacity: 0.75; }
-.remote { fill: var(--art-ink); }
-.waves path { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+/* guidebook ink: the pen is the text colour, porphyry the one spot */
+.art:not(.site) {
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.art:not(.site) svg {
+  stroke: var(--ink);
+}
+.paper { fill: var(--surface); }
+.spot { fill: var(--accent); stroke: none; }
+.dashed { stroke-dasharray: 3 3; }
+.dotted { stroke-dasharray: 1.5 3; }
 
 /* the site card: the hero's scene tokens, so it follows the theme like the hero */
 .site { background: var(--sky-top); }
