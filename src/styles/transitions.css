@@ -1,0 +1,41 @@
+/*
+  Page transition between / and /geek-du-quartier/ (cross-document View Transitions).
+  Browsers without support just navigate. Off entirely under reduced motion.
+  Shared elements: the header (.vt-header) and the hero section (.vt-hero, a class
+  passed onto HeroStrata's root from App.vue / GeekApp.vue).
+*/
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
+.vt-header {
+  view-transition-name: site-header;
+}
+.vt-hero {
+  view-transition-name: hero;
+}
+
+::view-transition-group(*) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+/* The page body: a short fade with a small lift, so the swap reads as one move. */
+::view-transition-old(root) {
+  animation: 0.25s ease-in both vt-out;
+}
+::view-transition-new(root) {
+  animation: 0.4s 0.05s cubic-bezier(0.25, 0.8, 0.25, 1) both vt-in;
+}
+@keyframes vt-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
