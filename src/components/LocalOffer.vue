@@ -1,135 +1,398 @@
 <script setup lang="ts">
-import { contact, localOffer, sections } from '@/content'
+import { contact, localOffer, localTestimonials } from '@/content'
+import OfferVisual from './OfferVisual.vue'
+import LocalMap from './LocalMap.vue'
+import PortraitImage from './PortraitImage.vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
+// The phone bar hides while the hero's own call button is on screen, so there's never two.
+// Without JS it simply stays.
+const heroCallVisible = ref(false)
+let io: IntersectionObserver | null = null
+onMounted(() => {
+  const heroCall = document.querySelector('.intro-grid .btn-primary')
+  if (!heroCall) return
+  io = new IntersectionObserver(([e]) => (heroCallVisible.value = !!e?.isIntersecting))
+  io.observe(heroCall)
+})
+onBeforeUnmount(() => io?.disconnect())
 </script>
 
 <template>
   <section id="commerces" class="section offer" aria-labelledby="commerces-title">
     <div class="wrap">
-      <div class="top">
-        <h2 id="commerces-title">{{ localOffer.title }}</h2>
+      <h2 id="commerces-title">{{ localOffer.title }}</h2>
 
-        <ul class="items">
-          <li v-for="item in localOffer.items" :key="item.title">
-            <h3>{{ item.title }}</h3>
-            <p>{{ item.text }}</p>
-          </li>
-        </ul>
-      </div>
+      <!-- what I fix, each shown before and after -->
+      <ul class="items">
+        <li v-for="item in localOffer.items" :key="item.title">
+          <OfferVisual :kind="item.visual" :before="item.before" :after="item.after" />
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.text }}</p>
+        </li>
+      </ul>
 
+      <!-- the three steps, as a lane through the village -->
       <div class="how">
-        <h3 class="how-title">{{ sections.local.how }}</h3>
-        <ol class="steps">
+        <h2 class="sub-h">{{ localOffer.how }}</h2>
+        <ol class="lane">
           <li v-for="(step, i) in localOffer.steps" :key="step.title">
-            <span class="n" aria-hidden="true">{{ i + 1 }}</span>
+            <span class="stop" aria-hidden="true">{{ i + 1 }}</span>
             <strong>{{ step.title }}</strong>
             <span class="t">{{ step.text }}</span>
           </li>
         </ol>
       </div>
 
-      <aside class="trial" aria-labelledby="trial-title">
-        <h3 id="trial-title">{{ sections.local.trial }}</h3>
-        <p>{{ localOffer.offer }}</p>
-        <div class="contact">
-          <a class="phone" :href="contact.phoneHref">{{ contact.phone }}</a>
-          <a class="mail" :href="`mailto:${contact.email}`">{{ contact.email }}</a>
+      <!-- where I go -->
+      <div class="area">
+        <div class="area-text">
+          <h2 class="sub-h">{{ localOffer.area.title }}</h2>
+          <p>{{ localOffer.area.text }}</p>
         </div>
-      </aside>
+        <LocalMap />
+      </div>
+
+      <!-- who I am, and the honest offer -->
+      <div class="trial">
+        <div class="me">
+          <PortraitImage :size="104" alt="Pierre Bastiani" class="portrait" />
+          <div>
+            <p class="name" translate="no">{{ contact.name }}</p>
+            <p class="line">{{ localOffer.me.line }}</p>
+          </div>
+        </div>
+        <div class="offer-text">
+          <h2 class="sub-h">{{ localOffer.trial }}</h2>
+          <p>{{ localOffer.offer }}</p>
+        </div>
+      </div>
+
+      <!-- testimonials: nothing until a real one exists -->
+      <ul v-if="localTestimonials.length" class="quotes">
+        <li v-for="t in localTestimonials" :key="t.author">
+          <blockquote>
+            <p>{{ t.quote }}</p>
+          </blockquote>
+          <p class="who">{{ t.author }}<template v-if="t.shop">, {{ t.shop }}</template></p>
+        </li>
+      </ul>
+
+      <!-- questions a shop owner asks -->
+      <div class="faq">
+        <h2 class="sub-h">{{ localOffer.faq.title }}</h2>
+        <details v-for="f in localOffer.faq.items" :key="f.q">
+          <summary>{{ f.q }}</summary>
+          <p>{{ f.a }}</p>
+        </details>
+      </div>
+
+      <!-- call -->
+      <div class="call">
+        <p class="call-title">{{ localOffer.call.title }}</p>
+        <a class="phone" :href="contact.phoneHref">{{ contact.phone }}</a>
+        <a class="mail" :href="`mailto:${contact.email}`">{{ contact.email }}</a>
+      </div>
+    </div>
+
+    <!-- on phones, the call stays under the thumb -->
+    <div class="call-bar" :class="{ tucked: heroCallVisible }" role="region" aria-label="Appeler">
+      <a class="btn btn-primary" :href="contact.phoneHref">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z" />
+        </svg>
+        <span>{{ localOffer.call.bar }} <span class="nw">{{ contact.phone }}</span></span>
+      </a>
     </div>
   </section>
 </template>
 
 <style scoped>
-.top {
-  display: grid;
-  gap: 3rem clamp(3rem, 7vw, 7rem);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  align-items: start;
+/* Read by a shop owner on a phone: larger text, shorter lines than the main page. */
+.offer {
+  font-size: clamp(1.1rem, 1.04rem + 0.3vw, 1.2rem);
+  line-height: 1.6;
 }
+.offer p {
+  max-width: 46ch;
+}
+h2 {
+  margin-bottom: var(--space-head);
+}
+.sub-h {
+  font-size: var(--step-2);
+  letter-spacing: -0.025em;
+  margin-bottom: 1.5rem;
+}
+.how,
+.area,
+.trial,
+.faq,
+.call {
+  margin-top: var(--space-section);
+}
+
+/* offer items */
 .items {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 2.25rem;
+  gap: 3.5rem clamp(2rem, 5vw, 4rem);
+}
+.items li {
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+}
+.items :deep(.ba) {
+  margin-bottom: 0.6rem;
+}
+.items h3 {
+  font-size: var(--step-1);
 }
 .items p {
   color: var(--muted);
-  margin-top: 0.4rem;
 }
-.how {
-  display: grid;
-  gap: 2.5rem;
-  margin-top: var(--space-section);
-}
-.how-title {
-  font-size: var(--step-2);
-  letter-spacing: -0.025em;
-}
-.steps {
+
+/* the lane: a dashed path with three stops */
+.lane {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2.5rem clamp(2rem, 4vw, 3.5rem);
+  gap: 2rem;
+  position: relative;
 }
-.steps li {
+.lane::before {
+  content: '';
+  position: absolute;
+  left: 1.1rem;
+  top: 1rem;
+  bottom: 1rem;
+  border-left: 2px dashed color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+.lane li {
+  position: relative;
   display: grid;
-  gap: 0.4rem;
-  align-content: start;
+  gap: 0.2rem;
+  padding-left: 3.4rem;
 }
-/* a real sequence, so numbers earn their place; kept quiet, no accent */
-.n {
-  font: 300 var(--step-3) / 1 var(--f-display);
-  color: var(--quiet);
-  margin-bottom: 0.6rem;
+.stop {
+  position: absolute;
+  left: 0;
+  top: -0.1rem;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 5px var(--bg);
+  color: var(--on-accent);
+  font: 700 0.95rem/1 var(--f-display);
 }
-.steps strong {
-  font: 600 var(--step-1) / 1.15 var(--f-display);
-  letter-spacing: -0.01em;
+.lane strong {
+  font: 600 var(--step-1) / 1.2 var(--f-display);
 }
 .t {
   color: var(--muted);
 }
+
+/* area */
+.area {
+  display: grid;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+/* who, and the free half-day */
 .trial {
   display: grid;
-  gap: 1.25rem;
-  margin-top: var(--space-section);
-  padding: clamp(2rem, 5vw, 3.5rem);
+  gap: 2rem;
+  padding: clamp(1.75rem, 5vw, 3rem);
   border-radius: 1.5rem;
   background: var(--surface);
 }
-.trial h3 {
-  font-size: var(--step-2);
-  letter-spacing: -0.025em;
-}
-.trial > p {
-  max-width: 58ch;
-  font-size: var(--step-1);
-  line-height: 1.5;
-}
-.contact {
+.me {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.5rem 2rem;
+  align-items: center;
+  gap: 1.25rem;
+}
+.portrait {
+  flex: none;
+  width: 5.5rem;
+  height: 5.5rem;
+}
+.portrait :deep(img) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.name {
+  font: 650 var(--step-1) / 1.2 var(--f-display);
+}
+.line {
+  color: var(--muted);
+}
+
+/* testimonials */
+.quotes {
+  list-style: none;
+  margin: var(--space-section) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2rem;
+}
+blockquote {
+  margin: 0;
+  font-size: var(--step-1);
+}
+.who {
   margin-top: 0.5rem;
+  color: var(--muted);
+}
+
+/* FAQ */
+.faq details {
+  border-top: 1px solid var(--line);
+  padding-block: 1rem;
+}
+.faq details:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.faq summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: '+';
+  flex: none;
+  color: var(--accent-text);
+  font-weight: 400;
+  transition: transform var(--dur-hover) var(--ease);
+}
+.faq details[open] summary::after {
+  transform: rotate(45deg);
+}
+.faq details p {
+  margin-top: 0.6rem;
+  color: var(--muted);
+}
+
+/* call */
+.call {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+.call-title {
+  font: 600 var(--step-2) / 1.15 var(--f-display);
+  letter-spacing: -0.02em;
 }
 .phone {
-  font: 600 var(--step-3) / 1 var(--f-display);
+  font: 650 var(--step-3) / 1 var(--f-display);
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   text-decoration: none;
+  color: var(--accent-text);
 }
 .mail {
   overflow-wrap: anywhere;
 }
-@media (max-width: 52rem) {
-  .top,
-  .steps {
-    grid-template-columns: 1fr;
+
+/* sticky call bar: phones only */
+.call-bar {
+  display: none;
+}
+.nw {
+  white-space: nowrap;
+}
+@media (max-width: 40rem) {
+  /* room for the bar, so it never covers the footer */
+  :global(body) {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+  }
+  .call-bar {
+    display: block;
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 30;
+    padding: 0.6rem var(--gutter-r) calc(0.6rem + env(safe-area-inset-bottom, 0px)) var(--gutter);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+    transition:
+      transform var(--dur-fade) var(--ease),
+      visibility 0s;
+  }
+  .call-bar.tucked {
+    transform: translateY(110%);
+    visibility: hidden;
+    transition:
+      transform var(--dur-fade) var(--ease),
+      visibility 0s linear var(--dur-fade);
+  }
+  .call-bar .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 3rem;
+    font-size: 1.05rem;
+  }
+  .call-bar svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linejoin: round;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-bar,
+  .call-bar.tucked {
+    transition: none;
+  }
+}
+@media (min-width: 48rem) {
+  .items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lane {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2.5rem;
+  }
+  .lane::before {
+    left: 1.1rem;
+    right: 1.1rem;
+    top: 1.1rem;
+    bottom: auto;
+    border-left: 0;
+    border-top: 2px dashed color-mix(in srgb, var(--accent) 55%, var(--line));
+  }
+  .lane li {
+    padding-left: 0;
+    padding-top: 3.4rem;
+  }
+  .area {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+  .trial {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
   }
 }
 </style>
