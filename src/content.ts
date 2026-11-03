@@ -185,10 +185,6 @@ export const localOffer = {
   offer:
     'Je lance cette activité et je veux d’abord vérifier que je peux vraiment être utile aux commerces d’ici. Pour les 3\u00a0premiers\u00a0: une demi-journée offerte. Vous me dites franchement si ça vous a servi.',
   how: 'Comment ça se passe',
-  area: {
-    title: 'Je me déplace ici',
-    text: 'À La Colle-sur-Loup et à Saint-Paul-de-Vence, je viens dans votre commerce.',
-  },
   me: {
     line: 'J’habite à Saint-Paul-de-Vence et je suis développeur depuis 2020.',
   },
