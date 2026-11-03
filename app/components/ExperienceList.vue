@@ -230,15 +230,14 @@ onBeforeUnmount(() => {
           :viewBox="`0 0 ${geo.w} ${geo.h}`"
           aria-hidden="true"
         >
-          <path v-for="(c, i) in line.cracks" :key="'c' + i" :d="c" class="crack" />
-          <path :d="line.d" class="rope" pathLength="1" />
+          <path v-for="(c, i) in line.cracks" :key="'c' + i" :d="c" class="crack ink-hair" />
+          <path :d="line.d" class="rope ink-heavy" pathLength="1" />
           <path ref="track" :d="line.d" class="track" />
 
-          <g v-for="(q, i) in line.draws" :key="'q' + i" class="draw" :transform="`translate(${q.x.toFixed(1)} ${q.y.toFixed(1)}) rotate(${q.r.toFixed(1)})`">
-            <circle cx="0" cy="-11" r="1.6" class="hanger" />
-            <ellipse cx="0" cy="-7.5" rx="2.2" ry="3.2" />
-            <line x1="0" y1="-4" x2="0" y2="2.5" class="sling" />
-            <ellipse cx="0" cy="6" rx="2.2" ry="3.2" />
+          <!-- guidebook topo symbols: a cross for each bolt, a double ring for each belay, the
+               start as a hatched ground line -->
+          <g v-for="(q, i) in line.draws" :key="'q' + i" class="bolt-x" :transform="`translate(${q.x.toFixed(1)} ${(q.y + 6).toFixed(1)})`">
+            <path d="M-3.2,-3.2 L3.2,3.2 M3.2,-3.2 L-3.2,3.2" class="ink-line" />
           </g>
           <g
             v-for="(y, i) in line.anchors"
@@ -248,13 +247,12 @@ onBeforeUnmount(() => {
             :transform="`translate(${line.cx} ${y.toFixed(1)})`"
           >
             <template v-if="i === line.anchors.length - 1">
-              <line x1="-9" y1="2" x2="9" y2="2" class="ground" />
+              <path d="M-11,2 H11" class="ground ink-line" />
+              <path d="M-9,2 l-4,5 M-3,2 l-4,5 M3,2 l-4,5 M9,2 l-4,5" class="ground ink-hair" />
             </template>
             <template v-else>
-              <path d="M-6,-5 L0,3 L6,-5" class="chain" />
-              <circle cx="-6" cy="-5" r="2.4" class="bolt" />
-              <circle cx="6" cy="-5" r="2.4" class="bolt" />
-              <circle cx="0" cy="4.5" r="3" class="ring" />
+              <circle cx="0" cy="0" r="6.5" class="ring ink-line" />
+              <circle cx="0" cy="0" r="3" class="ring inner" />
             </template>
           </g>
           <!-- the climber: origin at his tie-in on the rope; body hangs to the left of it -->
@@ -263,11 +261,11 @@ onBeforeUnmount(() => {
               <g class="pose climb">
                 <path d="M-7,0 l-3,6 l1,5 M-3,0 l2,5 l-1,6" class="limb" />
                 <path d="M-8,-10 l-3,-8 M-3,-10 l2,-9" class="limb" />
-                <rect x="-9" y="-12" width="7" height="12" rx="2.5" class="body" />
-                <rect x="-9.5" y="-2.5" width="8" height="2.4" rx="1" class="harness" />
+                <path d="M-9,-12 H-2 V0 H-9 Z" class="body" />
+                <path d="M-9.5,-2.5 H-1.5 V-0.1 H-9.5 Z" class="harness" />
                 <g class="head">
-                  <circle cx="-5.5" cy="-15.6" r="3.2" class="body" />
-                  <path d="M-8.8,-16.2 a3.3,3.3 0 0 1 6.6,0 z" class="beanie" />
+                  <path d="M-8.4,-15 L-7.6,-18.4 H-3.4 L-2.6,-15 L-3.6,-12.6 H-7.4 Z" class="body" />
+                  <path d="M-8.9,-16 L-7.8,-19.6 L-5.5,-20.4 L-3.2,-19.6 L-2.1,-16 Z" class="beanie" />
                 </g>
                 <path d="M-2,-1.2 L0,0" class="tie" />
               </g>
@@ -275,11 +273,11 @@ onBeforeUnmount(() => {
                 <path d="M-3,-0.5 l8,0.5 l0.5,-1.5 M-3,1 l7,3.5 l0.8,-1.2" class="limb" />
                 <g transform="rotate(-28 -3 0)">
                   <path d="M-1.5,-10 l3.5,-6.5 M-6,-9 l2,7" class="limb" />
-                  <rect x="-6.5" y="-12" width="7" height="12" rx="2.5" class="body" />
-                  <rect x="-7" y="-2.5" width="8" height="2.4" rx="1" class="harness" />
+                  <path d="M-6.5,-12 H0.5 V0 H-6.5 Z" class="body" />
+                  <path d="M-7,-2.5 H1 V-0.1 H-7 Z" class="harness" />
                   <g class="head">
-                    <circle cx="-3" cy="-15.6" r="3.2" class="body" />
-                    <path d="M-6.3,-16.2 a3.3,3.3 0 0 1 6.6,0 z" class="beanie" />
+                    <path d="M-5.9,-15 L-5.1,-18.4 H-0.9 L-0.1,-15 L-1.1,-12.6 H-4.9 Z" class="body" />
+                    <path d="M-6.4,-16 L-5.3,-19.6 L-3,-20.4 L-0.7,-19.6 L0.4,-16 Z" class="beanie" />
                   </g>
                 </g>
                 <path d="M-1.5,-0.5 L0,0" class="tie" />
@@ -338,64 +336,36 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 .rope {
-  fill: none;
-  stroke: var(--sea);
-  stroke-width: 2;
-  stroke-linecap: round;
+  stroke: color-mix(in srgb, var(--route) 82%, var(--bg));
   stroke-dasharray: 1;
   stroke-dashoffset: 0;
-  opacity: 0.7;
   transition: stroke-dashoffset var(--dur-draw) var(--ease-draw);
 }
 .route.pending .rope {
   stroke-dashoffset: 1;
 }
 .crack {
-  fill: none;
-  stroke: var(--line);
-  stroke-width: 1;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.draw ellipse {
-  fill: none;
-  stroke: var(--muted);
-  stroke-width: 1.2;
-}
-.draw .sling {
   stroke: var(--quiet);
-  stroke-width: 2.6;
-  stroke-linecap: round;
 }
-.draw .hanger {
-  fill: var(--muted);
-}
-.relais .chain {
-  fill: none;
+.bolt-x {
   stroke: var(--muted);
-  stroke-width: 1.4;
-}
-.relais .bolt {
-  fill: var(--muted);
 }
 .relais .ring {
   fill: var(--bg);
-  stroke: var(--sea);
-  stroke-width: 2;
+  stroke: var(--route);
 }
-.relais.current .chain {
-  stroke: var(--accent);
+.relais .ring.inner {
+  fill: var(--route);
+  stroke: none;
 }
-.relais.current .bolt,
 .relais.current .ring {
-  fill: var(--accent);
   stroke: var(--accent);
+}
+.relais.current .ring.inner {
+  fill: var(--accent);
 }
 .relais .ground {
-  stroke: var(--sea);
-  stroke-width: 3;
-  stroke-linecap: round;
-  opacity: 0.6;
+  stroke: var(--route);
 }
 
 .pitches {
@@ -513,17 +483,17 @@ onBeforeUnmount(() => {
   fill: none;
   stroke: color-mix(in srgb, var(--ink) 88%, var(--bg));
   stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
 }
 .climber .harness {
-  fill: var(--sea);
+  fill: var(--route);
 }
 .climber .beanie {
   fill: var(--accent);
 }
 .climber .tie {
-  stroke: var(--sea);
+  stroke: var(--route);
   stroke-width: 1.6;
 }
 /* at an anchor he glances toward the text */

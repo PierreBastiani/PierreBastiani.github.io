@@ -14,7 +14,6 @@
   --ink: #0d0e1c;
   --muted: #5a4e4a;
   --line: #e2d2c2;
-  --sea: #1d4466;
   --accent: #c27a55; /* porphyry: shapes only, 2.8:1 on bg */
   --accent-text: #5e2f22; /* oxblood: accent for words, 9.1:1 */
   --on-accent: #0d0e1c;
@@ -128,7 +127,6 @@
     --ink: #ebe6dc;
     --muted: #aab4be;
     --line: #2c3850;
-    --sea: #aab4be;
     --accent: #d27850;
     --accent-text: #e08a62;
     --on-accent: #141e32;
@@ -186,7 +184,6 @@
   --ink: #ebe6dc;
   --muted: #aab4be;
   --line: #2c3850;
-  --sea: #aab4be;
   --accent: #d27850;
   --accent-text: #e08a62;
   --on-accent: #141e32;
@@ -467,73 +464,6 @@ main > .section:last-child {
 }
 .tags li {
   white-space: nowrap;
-}
-
-/* Project illustrations (ProjectArt.vue): light, then dusk in both dark blocks. */
-:root {
-  --art-bg: #ecdfd2;
-  --art-shadow: #ddcdbd;
-  --art-ink: #2b3a44;
-  --art-line: #cdbcab;
-  --art-led: #8fbbe8;
-  --art-paper: #fdf9f4;
-  --art-sea-t: #5d7f9e;
-  --art-sea-l: #2c4d6c;
-  --art-sea-r: #1d3a55;
-  --art-alu-t: #e6e9ec;
-  --art-alu-l: #c4cbd2;
-  --art-alu-r: #a9b3bd;
-  --art-stone-t: #f6efe7;
-  --art-stone-l: #ddcbb8;
-  --art-stone-r: #c6ae97;
-  --art-wall: #f3e8dc;
-  --art-floor: #dccab8;
-  --art-window: #cfe0ee;
-  --art-sun: #f6d2ad;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --art-bg: #1c2840;
-    --art-shadow: #16203a;
-    --art-ink: #aab4be;
-    --art-line: #3a4864;
-    --art-led: #90bced;
-    --art-paper: #c9cfd8;
-    --art-sea-t: #4f6f8e;
-    --art-sea-l: #33506d;
-    --art-sea-r: #253d57;
-    --art-alu-t: #8d97a6;
-    --art-alu-l: #6b7586;
-    --art-alu-r: #556071;
-    --art-stone-t: #b2adb3;
-    --art-stone-l: #858a9b;
-    --art-stone-r: #6b7184;
-    --art-wall: #26324d;
-    --art-floor: #1f2a42;
-    --art-window: #3a4560;
-    --art-sun: #f4c79a;
-  }
-}
-:root[data-theme='dark'] {
-  --art-bg: #1c2840;
-  --art-shadow: #16203a;
-  --art-ink: #aab4be;
-  --art-line: #3a4864;
-  --art-led: #90bced;
-  --art-paper: #c9cfd8;
-  --art-sea-t: #4f6f8e;
-  --art-sea-l: #33506d;
-  --art-sea-r: #253d57;
-  --art-alu-t: #8d97a6;
-  --art-alu-l: #6b7586;
-  --art-alu-r: #556071;
-  --art-stone-t: #b2adb3;
-  --art-stone-l: #858a9b;
-  --art-stone-r: #6b7184;
-  --art-wall: #26324d;
-  --art-floor: #1f2a42;
-  --art-window: #3a4560;
-  --art-sun: #f4c79a;
 }
 
 /* Printed drawings. .print lays the grain over a drawing (the drawing's box must be
