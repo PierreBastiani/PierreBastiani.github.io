@@ -1,4 +1,4 @@
-# Build the site and publish dist/ to GitHub Pages on every push to main.
+# Generate the site with Nuxt and publish .output/public to GitHub Pages on every push to main.
 # Actions are pinned to release commits; the comment gives the tag.
 name: Deploy to GitHub Pages
 
@@ -26,16 +26,16 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - run: npx nuxt generate
         env:
-          # contact details stay out of the repository; the build fails without them
-          VITE_CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
-          VITE_CONTACT_PHONE: ${{ secrets.CONTACT_PHONE }}
+          # contact details stay out of the repository; generation fails without them
+          NUXT_PUBLIC_CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+          NUXT_CONTACT_PHONE: ${{ secrets.CONTACT_PHONE }}
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: dist
-          # ship dist/.well-known/security.txt (dot folders are left out by default)
+          path: .output/public
+          # ship .well-known/security.txt (dot folders are left out by default)
           include-hidden-files: true
 
   deploy:

@@ -7,16 +7,16 @@ Source of my site: [pierre.kensae.com](https://pierre.kensae.com). Two pages, in
 
 ## Stack
 
-Vue 3 and Vite, in TypeScript. No UI kit and no 3D library. The build renders both pages to static HTML with `vue/server-renderer` (see `scripts/prerender.mjs`), then the client hydrates them. GitHub Pages serves `dist/`, deployed by `.github/workflows/deploy.yml` on every push to `main`.
+Nuxt 4 (Vue 3) in TypeScript. No UI kit and no 3D library. `nuxt generate` renders both pages to static HTML at build time, then the client hydrates them; moving between the two pages is a client-side navigation with a view transition. GitHub Pages serves `.output/public`, deployed by `.github/workflows/deploy.yml` on every push to `main`.
 
 ```sh
 npm ci
-npm run dev       # http://localhost:5173
-npm run build     # type-check, client build, SSR build, prerender into dist/
-npm run preview   # serve dist/
+npm run dev        # http://localhost:3000
+npm run build      # type-check, then nuxt generate into .output/public
+npm run preview    # serve the generated site
 ```
 
-All the copy lives in `src/content.ts`; components only lay it out. The contact email and phone aren't in the repository: copy `.env.example` to `.env.local` locally, and the deploy workflow reads them from the `CONTACT_EMAIL` and `CONTACT_PHONE` repository secrets. A build without them fails.
+All the copy lives in `app/content.ts`; components only lay it out. The contact email and phone aren't in the repository: copy `.env.example` to `.env` locally, and the deploy workflow reads them from the `CONTACT_EMAIL` and `CONTACT_PHONE` repository secrets. Generation fails without them.
 
 ## Design notes
 
