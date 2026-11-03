@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // What sits in the hero's dark band, under the scene: status, who, the pitch, the actions,
 // a few facts and (on the main page) the tools. The band itself belongs to HeroStrata.
-import { contact, introFacts, links, localOffer, profile } from '@/content'
+import { introFacts, links, localOffer, profile } from '@/content'
+import { useContact, useContactPhone } from '@/composables/useContact'
 import { stack } from '@/assets/icons/stack'
 import MaltIcon from '@/assets/icons/MaltIcon.vue'
 import GithubIcon from '@/assets/icons/GithubIcon.vue'
@@ -9,6 +10,9 @@ import LinkedinIcon from '@/assets/icons/LinkedinIcon.vue'
 
 const props = defineProps<{ variant: 'main' | 'geek' }>()
 const facts = introFacts[props.variant]
+const contact = useContact()
+// only the shop page asks for the phone, so the main page never carries it
+const call = props.variant === 'geek' ? useContactPhone() : null
 </script>
 
 <template>
@@ -31,10 +35,10 @@ const facts = introFacts[props.variant]
       <template v-else>
         <p class="lead">{{ localOffer.intro }}</p>
         <div class="btns">
-          <a class="btn btn-primary" :href="contact.phoneHref">
+          <a v-if="call" class="btn btn-primary" :href="call.phoneHref.value">
             <svg class="icon line" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z" />
-            </svg><span>Appeler le <span class="nw">{{ contact.phone }}</span></span>
+            </svg><span>Appeler le <span class="nw">{{ call?.phone.value }}</span></span>
           </a>
           <a class="btn" :href="`mailto:${contact.email}`">Écrire un mail</a>
         </div>

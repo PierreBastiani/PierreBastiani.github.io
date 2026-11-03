@@ -1,17 +1,10 @@
 // All page copy in one place. Components only lay it out.
 // Professional texts mirror the public Malt profile; nothing here that isn't public already.
 
-// Email and phone come from build-time env (VITE_CONTACT_EMAIL, VITE_CONTACT_PHONE): the
-// repository is public and doesn't hold them. See .env.example. A production build fails
-// when they're missing (vite.config.ts); in dev an obvious placeholder shows instead.
-const email = import.meta.env.VITE_CONTACT_EMAIL || 'VITE_CONTACT_EMAIL-manquant@example.invalid'
-const phone = import.meta.env.VITE_CONTACT_PHONE || '00 00 00 00 00'
-
+// Email and phone are not here: the repository is public. They come from the generate-time
+// env through runtimeConfig; components read them with useContact() (composables/useContact.ts).
 export const contact = {
   name: 'Pierre Bastiani',
-  phone,
-  phoneHref: telHref(phone),
-  email,
 }
 
 // '06 12 34 56 78' → 'tel:+33612345678' (French numbers; anything else is kept as dialled)
@@ -244,7 +237,7 @@ export const routeCard = {
     { icon: 'pin', label: 'Accès', value: 'Télétravail ou Côte d’Azur' },
     { icon: 'route', label: 'Type', value: 'Reprise d’applis, CI/CD et migrations, intégrations API, automatisation avec un LLM' },
     { icon: 'tag', label: 'Tarif', value: 'Sur Malt', href: 'malt' },
-    { icon: 'mail', label: 'Contact', value: contact.email, href: 'email' },
+    { icon: 'mail', label: 'Contact', value: '', href: 'email' }, // value: the address, from useContact()
   ] as { icon: 'clock' | 'pin' | 'route' | 'tag' | 'mail'; label: string; value: string; href?: 'malt' | 'email' }[],
 }
 

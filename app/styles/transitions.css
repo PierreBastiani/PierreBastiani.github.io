@@ -1,14 +1,11 @@
 /*
-  Page transition between / and /geek-du-quartier/ (cross-document View Transitions).
-  Browsers without support just navigate. Off entirely under reduced motion.
+  Page transition between / and /geek-du-quartier/: Nuxt's view transition
+  (experimental.viewTransition) wraps the client-side route change in
+  document.startViewTransition. Nuxt skips it under prefers-reduced-motion, and
+  browsers without the API just navigate.
   Shared elements: the header (.vt-header) and the hero section (.vt-hero, a class
-  passed onto HeroStrata's root from App.vue / GeekApp.vue).
+  passed onto HeroStrata's root from each page).
 */
-@media (prefers-reduced-motion: no-preference) {
-  @view-transition {
-    navigation: auto;
-  }
-}
 
 .vt-header {
   view-transition-name: site-header;

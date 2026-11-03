@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { contact, links, logbook, profile, routeCard, sections } from '@/content'
+import { links, logbook, profile, routeCard, sections } from '@/content'
+import { useContact } from '@/composables/useContact'
 import PortraitImage from './PortraitImage.vue'
 import SummitStrip from './SummitStrip.vue'
 
@@ -11,6 +12,7 @@ onMounted(() => {
   today.value = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date())
 })
 
+const contact = useContact()
 const signHref = `mailto:${contact.email}?subject=${encodeURIComponent(logbook.subject)}&body=${encodeURIComponent(logbook.body)}`
 const hrefs = { malt: links.malt, email: `mailto:${contact.email}` }
 
@@ -55,7 +57,7 @@ const icons: Record<string, string> = {
                   {{ r.label }}
                 </dt>
                 <dd>
-                  <a v-if="r.href" :href="hrefs[r.href]" :class="{ mail: r.href === 'email' }">{{ r.value }}</a>
+                  <a v-if="r.href" :href="hrefs[r.href]" :class="{ mail: r.href === 'email' }">{{ r.href === 'email' ? contact.email : r.value }}</a>
                   <template v-else>{{ r.value }}</template>
                 </dd>
               </div>
