@@ -88,6 +88,7 @@
   --ink-ochre: #e4b47e; /* low sun on stone and sand */
   --ink-porphyry: #c27a55; /* the accent: roofs, the beanie, one mark per drawing */
   --ink-oxblood: #5e2f22; /* the darkest ink: figures, ground, lettering */
+  --ghost-ink: var(--ink-oxblood); /* the ghost wall behind the content (CliffOverlay) */
 
   /* Line: three weights, in screen pixels whatever the drawing's scale (with .ink-*,
      vector-effect: non-scaling-stroke). Contour, line, hair. Square ends, mitred corners. */
@@ -174,6 +175,7 @@
     --ink-ochre: #f2c595;
     --ink-porphyry: #d27850;
     --ink-oxblood: #0e1524;
+    --ghost-ink: var(--ink-ochre); /* lit by the last light */
     --grain-opacity: 0.32;
     color-scheme: dark;
   }
@@ -231,6 +233,7 @@
   --ink-ochre: #f2c595;
   --ink-porphyry: #d27850;
   --ink-oxblood: #0e1524;
+  --ghost-ink: var(--ink-ochre); /* lit by the last light */
   --grain-opacity: 0.32;
   color-scheme: dark;
 }
