@@ -231,6 +231,7 @@ export const sections = {
 // Every value restates something above: profile.availability, missions, links.
 export const routeCard = {
   title: 'Fiche de la voie',
+  place: 'Côte d’Azur',
   intro: 'Je prends des missions à temps partiel, via Malt ou en direct.',
   rows: [
     { icon: 'clock', label: 'Engagement', value: 'Temps partiel' },
@@ -243,8 +244,10 @@ export const routeCard = {
 
 export const logbook = {
   title: 'Carnet de sommet',
+  // printed in the card's lettering band, like the summit figure's route card
+  place: 'Baou de Saint-Jeannet',
+  altitude: '802\u00a0m',
   intro: 'En haut des voies, une boîte garde un carnet où chacun signe son passage. Laissez-y deux lignes sur votre projet, je réponds par mail.',
-  columns: ['Date', 'Nom', 'Projet'],
   you: 'Vous',
   sign: 'Signer le carnet de sommet',
   subject: 'Carnet de sommet\u00a0: un projet à discuter',
