@@ -23,7 +23,7 @@ const saintPaul = [
     <path d="M0 230 C80 200 160 220 240 205 S360 190 400 210 V260 H0 Z" class="hill-far" />
     <!-- the Loup -->
     <path d="M70 0 C96 46 44 82 78 124 S118 190 88 260" class="river" />
-    <text x="40" y="210" class="label river-label" translate="no">Le Loup</text>
+    <text x="40" y="210" class="label river-label">Le Loup</text>
     <!-- the road between the two villages -->
     <path d="M150 156 C190 150 210 132 240 124 S272 112 286 104" class="road" />
     <path d="M150 156 C190 150 210 132 240 124 S272 112 286 104" class="road-line" />
@@ -42,8 +42,8 @@ const saintPaul = [
     <path d="M287.5 84 l3 -5 3 5 z" class="roof" />
     <!-- where I go -->
     <path d="M84 186 C64 140 108 106 170 104 C214 70 290 44 344 66 C384 84 372 140 324 150 C276 160 246 206 176 212 C126 216 96 210 84 186 Z" class="zone" />
-    <text x="96" y="140" class="label" translate="no">La Colle-sur-Loup</text>
-    <text x="266" y="68" class="label" translate="no">Saint-Paul-de-Vence</text>
+    <text x="96" y="140" class="label">La Colle-sur-Loup</text>
+    <text x="266" y="68" class="label">Saint-Paul-de-Vence</text>
     <!-- north -->
     <path d="M372 236 l6 -16 6 16 -6 -4 z" class="north" />
   </svg>
