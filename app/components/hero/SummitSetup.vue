@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useId } from 'vue'
 import { codeLines } from '@/lib/scene'
 
 // The summit rock of the Baou with the desk on it: a flat limestone block as the table,
@@ -10,19 +9,10 @@ import { codeLines } from '@/lib/scene'
 const monitor = codeLines(7, 12, 72)
 const laptop = codeLines(19, 9, 36)
 const tones = ['var(--code-a)', 'var(--code-b)', 'var(--code-c)']
-// The desk is drawn in the hero and again on the contact section: one gradient id per instance.
-const glowId = `screen-glow-${useId()}`
 </script>
 
 <template>
   <g transform="translate(-40 30)">
-    <defs>
-      <radialGradient :id="glowId" cx="960" cy="688" r="150" gradientUnits="userSpaceOnUse">
-        <stop offset="0" style="stop-color: var(--screen-glow); stop-opacity: 0.32" />
-        <stop offset="1" style="stop-color: var(--screen-glow); stop-opacity: 0" />
-      </radialGradient>
-    </defs>
-
     <!-- the crest: pale broken limestone running in from the right, a cliff on the left -->
     <path
       d="M700 1000 L716 920 L736 850 L752 800 L760 776 L850 768 L858 716 L1088 706 L1110 688 L1138 666 L1176 660 L1198 682 L1250 700 L1300 724 L1340 714 L1420 738 L1480 750 L1530 742 L1620 768 L1720 782 L1780 774 L1920 800 L2120 812 L2320 832 L2620 846 L2980 860 L2980 1000 Z"
@@ -41,12 +31,15 @@ const glowId = `screen-glow-${useId()}`
     <path d="M858 716 L1088 706 L1094 714 L862 724 Z" fill="var(--rock-lit)" />
     <path d="M760 776 L850 768 L848 776 L764 782 Z" fill="var(--rock-lit)" />
 
-    <!-- screen glow, only at dusk -->
-    <rect x="780" y="520" width="360" height="340" :fill="`url(#${glowId})`" style="opacity: var(--glow-opacity)" />
+    <!-- screen glow, only at dusk: two flat discs, overprinted -->
+    <g fill="var(--screen-glow)" style="opacity: var(--glow-opacity)">
+      <ellipse cx="960" cy="690" rx="120" ry="74" opacity="0.1" />
+      <ellipse cx="960" cy="690" rx="74" ry="44" opacity="0.14" />
+    </g>
 
     <!-- portable monitor on its folio stand -->
     <path d="M962 706 L978 712 L976 714 L958 708 Z" fill="var(--gear)" />
-    <rect x="880" y="650" width="90" height="58" rx="2" fill="var(--gear)" />
+    <rect x="880" y="650" width="90" height="58" fill="var(--gear)" />
     <rect x="884" y="654" width="82" height="48" fill="var(--screen)" />
     <template v-for="(l, i) in monitor" :key="'m' + i">
       <rect v-if="l.len" :x="891 + l.indent * 4" :y="656.5 + i * 3.7" :width="l.len" height="1.8" :fill="tones[l.tone]" />
@@ -64,13 +57,13 @@ const glowId = `screen-glow-${useId()}`
 
     <!-- keyboard, power bank and its cable -->
     <path d="M888 717 L893 710 L960 709 L966 716 Z" fill="var(--gear)" />
-    <path d="M893 711 L960 710" stroke="var(--gear-lit)" stroke-width="1" />
-    <path d="M1058 712 C1068 736 1092 738 1100 706" fill="none" stroke="var(--gear)" stroke-width="2" stroke-linecap="round" />
-    <rect x="1094" y="696" width="16" height="9" rx="1.5" fill="var(--gear)" />
+    <path class="ink-hair" d="M893 711 L960 710" stroke="var(--gear-lit)" />
+    <path class="ink-line" d="M1058 712 C1068 736 1092 738 1100 706" stroke="var(--gear)" />
+    <rect x="1094" y="696" width="16" height="9" fill="var(--gear)" />
 
     <!-- chalk bag -->
     <path d="M772 776 L774 752 L794 752 L796 776 Z" fill="var(--figure)" />
-    <path d="M772 754 C778 746 790 746 796 754" fill="none" stroke="var(--rock-lit)" stroke-width="2.5" />
+    <path d="M772 754 L784 748 L796 754 L796 757 L772 757 Z" fill="var(--rock-lit)" />
 
     <!-- the figure at the desk: legs, back, arm, head in a beanie with headphones -->
     <g fill="var(--figure)">
@@ -82,7 +75,7 @@ const glowId = `screen-glow-${useId()}`
     </g>
     <path d="M824 668 C821 650 828 636 840 633 C847 631 852 633 855 637 C860 645 861 656 858 666 Z" fill="var(--accent)" />
     <path d="M823 669 L859 666 L859 659 L823 662 Z" fill="var(--figure)" opacity="0.25" />
-    <path d="M829 676 C826 654 834 642 845 642 C855 643 859 655 857 670" fill="none" stroke="var(--gear)" stroke-width="2.5" />
+    <path class="ink-heavy" d="M829 676 C826 654 834 642 845 642 C855 643 859 655 857 670" stroke="var(--gear)" />
     <ellipse cx="837" cy="674" rx="5.5" ry="7.5" fill="var(--gear)" />
   </g>
 </template>

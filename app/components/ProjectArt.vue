@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ridgeFacets, ridgeLine, type RidgeOptions } from '@/lib/ridge'
 // Small flat illustrations for the project cards, drawn in three layers like the hero.
 // On hover or keyboard focus of the card, the layers lift apart a little (see ProjectGrid).
 export type ArtKind = 'homelab' | 'smarket' | 'gree' | 'site'
@@ -35,17 +36,34 @@ const curve = prices.map((p, i) => `${70 + i * 38},${p}`).join(' ')
 const last = { x: 70 + (prices.length - 1) * 38, y: prices[prices.length - 1]! }
 const receiptLines = [0, 1, 2, 3, 4, 5, 6, 7]
 
-// the site itself: three ridges and a sun, the hero in miniature
-const ridge = (base: number, amp: number, phase: number) => {
-  const pts: string[] = []
-  for (let x = 0; x <= 400; x += 20) pts.push(`${x},${(base - amp * Math.sin(x / 55 + phase) - amp * 0.5 * Math.sin(x / 23 + phase * 2)).toFixed(1)}`)
-  return `M0,250 L${pts.join(' L')} L400,250 Z`
+// the site itself: the hero as a small PLM poster, lettering band and all
+const card = (seed: number, base: number, amp: number, bumps: { x: number; height: number; width: number }[]): RidgeOptions => ({
+  seed,
+  base,
+  amp,
+  scale: 0.012,
+  octaves: 2,
+  bumps,
+  x0: -20,
+  x1: 420,
+  step: 6,
+})
+const siteFar = card(5, 150, 4, [{ x: 70, height: 18, width: 60 }, { x: 330, height: 10, width: 70 }])
+const siteMid = card(13, 172, 6, [{ x: 150, height: 30, width: 40 }, { x: 250, height: 22, width: 36 }])
+const siteNear = card(29, 204, 6, [{ x: 40, height: 34, width: 60 }, { x: 360, height: 26, width: 50 }])
+const close = (o: RidgeOptions) => `${ridgeLine(o)} L420 260 L-20 260 Z`
+const site = {
+  far: close(siteFar),
+  farShade: ridgeFacets(siteFar, { minProm: 6, smooth: 14, depth: 2 }),
+  mid: close(siteMid),
+  midShade: ridgeFacets(siteMid, { minProm: 6, smooth: 12, depth: 2 }),
+  near: close(siteNear),
+  nearShade: ridgeFacets(siteNear, { minProm: 6, smooth: 12, depth: 2 }),
 }
-const ridges = [ridge(150, 14, 0.4), ridge(178, 18, 2.1), ridge(206, 16, 4)]
 </script>
 
 <template>
-  <div class="art" :class="kind" aria-hidden="true">
+  <div class="art print" :class="kind" aria-hidden="true">
     <div class="stage">
       <!-- back layer -->
       <svg class="layer l0" viewBox="0 0 400 250">
@@ -71,7 +89,13 @@ const ridges = [ridge(150, 14, 0.4), ridge(178, 18, 2.1), ridge(206, 16, 4)]
         </template>
         <template v-else>
           <rect x="0" y="0" width="400" height="250" class="sky" />
-          <circle cx="300" cy="104" r="15" class="sun" />
+          <rect x="0" y="112" width="400" height="22" class="sky-low" />
+          <circle cx="306" cy="118" r="22" class="sun halo" />
+          <circle cx="306" cy="118" r="13" class="sun" />
+          <rect x="0" y="130" width="400" height="30" class="sea" />
+          <path d="M318 130 L340 125 L372 127 L400 123 L400 130 Z" class="far" />
+          <rect x="290" y="134" width="32" height="1.6" class="sun" />
+          <rect x="298" y="138" width="16" height="1.6" class="sun" />
         </template>
       </svg>
 
@@ -96,8 +120,10 @@ const ridges = [ridge(150, 14, 0.4), ridge(178, 18, 2.1), ridge(206, 16, 4)]
           <rect x="236" y="70" width="26" height="9" rx="2" class="display" />
         </template>
         <template v-else>
-          <path :d="ridges[0]" class="ridge-far" />
-          <path :d="ridges[1]" class="ridge-mid" />
+          <path :d="site.far" class="far" />
+          <path :d="site.farShade" class="far-shade" />
+          <path :d="site.mid" class="mid" />
+          <path :d="site.midShade" class="mid-shade" />
         </template>
       </svg>
 
@@ -124,9 +150,21 @@ const ridges = [ridge(150, 14, 0.4), ridge(178, 18, 2.1), ridge(206, 16, 4)]
           </g>
         </template>
         <template v-else>
-          <path :d="ridges[2]" class="ridge-near" />
-          <path d="M230 250 L262 196 L300 186 L330 210 L360 250 Z" class="crag" />
-          <rect x="276" y="176" width="18" height="11" rx="1.5" class="screen" />
+          <path :d="site.near" class="near" />
+          <path :d="site.nearShade" class="near-shade" />
+          <path d="M214 214 L232 186 L246 178 L300 174 L318 182 L352 192 L384 214 Z" class="rock" />
+          <path d="M214 214 L232 186 L246 178 L250 200 L242 214 Z" class="rock-shade" />
+          <path d="M246 178 L300 174 L302 177 L248 181 Z" class="rock-lit" />
+          <!-- the desk, the screen and the figure in its beanie -->
+          <rect x="272" y="166" width="16" height="10" class="figure" />
+          <rect x="273.5" y="167.5" width="13" height="7" class="screen" />
+          <path d="M254 176 C253 168 255 162 259 161 C263 160 265 164 265 170 L264 176 Z" class="figure" />
+          <path d="M256 157 C256 152 263 151 263 156 Z" class="beanie" />
+          <circle cx="259.5" cy="158.5" r="3.6" class="figure" />
+          <path d="M256.2 156.6 C256 151.6 263 151 262.8 156 Z" class="beanie" />
+          <!-- the lettering band -->
+          <rect x="0" y="214" width="400" height="36" class="band" />
+          <text x="200" y="238" class="lettering">PIERRE.KENSAE.COM</text>
         </template>
       </svg>
     </div>
@@ -137,7 +175,6 @@ const ridges = [ridge(150, 14, 0.4), ridge(178, 18, 2.1), ridge(206, 16, 4)]
 .art {
   position: relative;
   aspect-ratio: 8 / 5;
-  border-radius: 1rem;
   background: var(--art-bg);
   overflow: hidden;
   perspective: 900px;
@@ -185,11 +222,31 @@ const ridges = [ridge(150, 14, 0.4), ridge(178, 18, 2.1), ridge(206, 16, 4)]
 .display { fill: var(--art-ink); opacity: 0.75; }
 .remote { fill: var(--art-ink); }
 .waves path { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
-.sky { fill: var(--art-window); }
-.sun { fill: var(--art-sun); }
-.ridge-far { fill: var(--art-alu-t); }
-.ridge-mid { fill: var(--art-alu-l); }
-.ridge-near { fill: var(--art-sea-l); }
-.crag { fill: var(--art-stone-t); }
-.screen { fill: var(--art-ink); }
+
+/* the site card: the hero's scene tokens, so it follows the theme like the hero */
+.site { background: var(--sky-top); }
+.site .sky { fill: var(--sky-top); }
+.site .sky-low { fill: var(--sky-low); }
+.site .sun { fill: var(--sun); }
+.site .halo { opacity: 0.35; }
+.site .sea { fill: var(--sea-fill); }
+.site .far { fill: var(--hill-far); }
+.site .far-shade { fill: var(--hill-far-shade); }
+.site .mid { fill: var(--hill-mid); }
+.site .mid-shade { fill: var(--hill-mid-shade); }
+.site .near { fill: var(--hill-near); }
+.site .near-shade { fill: var(--hill-near-shade); }
+.site .rock { fill: var(--rock); }
+.site .rock-shade { fill: var(--rock-shade); }
+.site .rock-lit { fill: var(--rock-lit); }
+.site .figure { fill: var(--figure); }
+.site .screen { fill: var(--screen); }
+.site .beanie { fill: var(--accent); }
+.site .band { fill: var(--ground); }
+.site .lettering {
+  fill: var(--on-ground);
+  font: 800 17px var(--f-display);
+  letter-spacing: 0.22em;
+  text-anchor: middle;
+}
 </style>

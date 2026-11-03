@@ -81,6 +81,12 @@ export function coastPath(bottom: number) {
   return `M${SHORE.map(([x, y]) => `${x} ${y}`).join(' L')} L2940 ${bottom} L-1340 ${bottom} Z`
 }
 
+// The paler strip of shallow water along the shore: the shoreline raised by `rise`, filled
+// down to below the land (which is drawn over it).
+export function shoreStrip(rise: number, bottom: number) {
+  return `M${SHORE.map(([x, y]) => `${x} ${y - rise}`).join(' L')} L2940 ${bottom} L-1340 ${bottom} Z`
+}
+
 // y of the shore at x along the main line (ignores the spit and the cap folding back).
 function shoreAt(x: number) {
   const line = SHORE.filter(([px], i) => i === 0 || px > SHORE[i - 1]![0])
