@@ -82,7 +82,9 @@ const { phone, phoneHref } = useContactPhone()
 
       <!-- call: the poster's lettering band -->
       <div class="call print">
-        <p class="call-band">{{ localOffer.call.band }}</p>
+        <p class="call-band">
+          <template v-for="(place, i) in localOffer.call.band.split(' · ')" :key="place">{{ i ? ' · ' : '' }}<span class="nw">{{ place }}</span></template>
+        </p>
         <p class="call-title">{{ localOffer.call.title }}</p>
         <a class="phone" :href="phoneHref">{{ phone }}</a>
         <a class="mail" :href="`mailto:${contact.email}`">{{ contact.email }}</a>
@@ -317,12 +319,16 @@ blockquote {
   padding: clamp(1.75rem, 5vw, 3rem) clamp(1.25rem, 5vw, 3rem);
   background: var(--ground);
   color: var(--on-ground);
+  /* an inner printed rule in the paper ink, so the band reads as an object on a dark page too */
+  box-shadow: inset 0 0 0 5px var(--ground), inset 0 0 0 6px color-mix(in srgb, var(--on-ground) 70%, transparent);
 }
 .call > * {
   position: relative;
   z-index: 2;
 }
-.call-band {
+/* .call .call-band outranks .offer p, whose 46ch cap would break the place names */
+.call .call-band {
+  max-width: none;
   font: 500 0.8rem / 1.3 var(--f-mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
