@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Le geek du quartier · Pierre Bastiani, Saint-Paul-de-Vence</title>
+    <meta name="description" content="Fiche Google, site, devis et petits pépins informatiques : j’aide les commerces de La Colle-sur-Loup et Saint-Paul-de-Vence. Demi-journée offerte aux 3 premiers.">
+    <link rel="canonical" href="https://pierre.kensae.com/geek-du-quartier/">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#f4e8dc" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#141e32" media="(prefers-color-scheme: dark)">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:site_name" content="Pierre Bastiani">
+    <meta property="og:url" content="https://pierre.kensae.com/geek-du-quartier/">
+    <meta property="og:title" content="Le geek du quartier · Pierre Bastiani, Saint-Paul-de-Vence">
+    <meta property="og:description" content="Fiche Google, site, devis et petits pépins informatiques : j’aide les commerces de La Colle-sur-Loup et Saint-Paul-de-Vence. Demi-journée offerte aux 3 premiers.">
+    <meta property="og:image" content="https://pierre.kensae.com/og/og-geek.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Paysage du Baou au-dessus de la Côte d’Azur, une personne code à un bureau posé au sommet">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Le geek du quartier · Pierre Bastiani, Saint-Paul-de-Vence">
+    <meta name="twitter:description" content="Fiche Google, site, devis et petits pépins informatiques : j’aide les commerces de La Colle-sur-Loup et Saint-Paul-de-Vence. Demi-journée offerte aux 3 premiers.">
+    <meta name="twitter:image" content="https://pierre.kensae.com/og/og-geek.jpg">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "ProfessionalService",
+        "@id": "https://pierre.kensae.com/geek-du-quartier/#service",
+        "name": "Le geek du quartier",
+        "url": "https://pierre.kensae.com/geek-du-quartier/",
+        "description": "Fiche Google, site, devis et petits pépins informatiques pour les commerces de La Colle-sur-Loup et Saint-Paul-de-Vence.",
+        "telephone": "__CONTACT_TEL__",
+        "email": "mailto:__CONTACT_EMAIL__",
+        "image": "https://pierre.kensae.com/og/og-geek.jpg",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Saint-Paul-de-Vence",
+          "addressRegion": "Alpes-Maritimes",
+          "addressCountry": "FR"
+        },
+        "areaServed": [
+          {
+            "@type": "City",
+            "name": "La Colle-sur-Loup"
+          },
+          {
+            "@type": "City",
+            "name": "Saint-Paul-de-Vence"
+          }
+        ],
+        "founder": {
+          "@type": "Person",
+          "@id": "https://pierre.kensae.com/#pierre",
+          "name": "Pierre Bastiani",
+          "url": "https://pierre.kensae.com/"
+        }
+      }
+    </script>
+    <script>
+      // Theme before first paint: only an explicit Light/Dark choice is stored (see
+      // src/composables/useTheme.ts); with nothing stored the CSS follows the device.
+      try {
+        const t = localStorage.getItem('theme')
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+      } catch {}
+    </script>
+    <!-- render-blocking so a cross-page view transition captures the mounted page, not an empty #app -->
+    <script type="module" src="/src/geek.ts" blocking="render"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
