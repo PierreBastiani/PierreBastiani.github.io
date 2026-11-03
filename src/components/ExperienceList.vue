@@ -345,7 +345,7 @@ onBeforeUnmount(() => {
   stroke-dasharray: 1;
   stroke-dashoffset: 0;
   opacity: 0.7;
-  transition: stroke-dashoffset 2.2s cubic-bezier(0.3, 0.7, 0.2, 1);
+  transition: stroke-dashoffset var(--dur-draw) var(--ease-draw);
 }
 .route.pending .rope {
   stroke-dashoffset: 1;
@@ -488,7 +488,7 @@ onBeforeUnmount(() => {
   stroke: none;
 }
 .climber {
-  transition: opacity 0.4s;
+  transition: opacity var(--dur-fade);
 }
 .route.pending .climber {
   opacity: 0;
@@ -530,7 +530,7 @@ onBeforeUnmount(() => {
 .climber .head {
   transform-box: fill-box;
   transform-origin: center bottom;
-  transition: transform 0.4s;
+  transition: transform var(--dur-fade);
 }
 .climber.rest .head {
   transform: rotate(12deg);

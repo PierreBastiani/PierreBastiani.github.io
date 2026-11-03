@@ -230,7 +230,7 @@ useParallax(scene, cardOpen)
             <rect :x="h.x - 0.5" :y="h.y - h.h * 0.35" :width="h.w + 1" :height="h.h * 0.4" fill="var(--roof)" />
           </g>
         </g>
-        <rect v-bind="towns.saintPaul.tower" fill="var(--villa)" />
+        <rect :x="towns.saintPaul.tower.x" :y="towns.saintPaul.tower.y" :width="towns.saintPaul.tower.w" :height="towns.saintPaul.tower.h" fill="var(--villa)" />
         <rect :x="px - 22" :y="py + 12" width="44" height="6" fill="var(--villa)" />
         <g class="lights">
           <circle v-for="(d, i) in dusk.mid" :key="i" :cx="d.x" :cy="d.y" :r="d.r" />
@@ -248,8 +248,8 @@ useParallax(scene, cardOpen)
           <rect :x="h.x" :y="h.y" :width="h.w" :height="h.h" fill="var(--villa)" />
           <rect :x="h.x - 0.5" :y="h.y - h.h * 0.35" :width="h.w + 1" :height="h.h * 0.4" fill="var(--roof)" />
         </g>
-        <rect v-bind="saintJeannet.tower" fill="var(--villa)" />
-        <rect v-bind="vence.tower" fill="var(--villa)" />
+        <rect :x="saintJeannet.tower.x" :y="saintJeannet.tower.y" :width="saintJeannet.tower.w" :height="saintJeannet.tower.h" fill="var(--villa)" />
+        <rect :x="vence.tower.x" :y="vence.tower.y" :width="vence.tower.w" :height="vence.tower.h" fill="var(--villa)" />
         <g class="lights">
           <circle v-for="(d, i) in dusk.near" :key="i" :cx="d.x" :cy="d.y" :r="d.r" />
         </g>
@@ -313,7 +313,7 @@ useParallax(scene, cardOpen)
 /* A table d'orientation: place names show while the pointer is over the view, desktop only. */
 .labels {
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity var(--dur-fade) var(--ease);
   fill: var(--label);
   stroke: var(--label);
   stroke-width: 1;

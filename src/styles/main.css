@@ -205,14 +205,24 @@
 
 /* Layout and type tokens added for the airier pass (not scene tokens) */
 :root {
-  --space-section: clamp(5rem, 3rem + 5vw, 7.5rem);
+  --space-section: clamp(5.5rem, 4rem + 4vw, 7.5rem); /* 88 px on a phone, 115 px at 1280 */
   --gutter: max(clamp(1.25rem, 4vw, 2.5rem), env(safe-area-inset-left, 0px));
   --gutter-r: max(clamp(1.25rem, 4vw, 2.5rem), env(safe-area-inset-right, 0px));
   --space-head: clamp(2.5rem, 1.5rem + 2.5vw, 4rem);
   --step-h2: clamp(2.2rem, 1.5rem + 3vw, 4rem);
-  --quiet: color-mix(in srgb, var(--ink) 48%, var(--bg));
+  --quiet: color-mix(in srgb, var(--ink) 60%, var(--bg)); /* 4.7:1 light, 5.6:1 dark on --bg */
   --wash: color-mix(in srgb, var(--ink) 5%, var(--bg));
   --header-h: 4rem;
+
+  /* Motion: one easing for things that move, one for lines drawing on; four durations.
+     Hovers 200 ms, fades and the page transition 400 ms, card layers 600 ms, draw-ons 900 ms.
+     Scroll-linked motion (parallax, map camera, climber) follows the scroll, not a clock. */
+  --ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --ease-draw: cubic-bezier(0.3, 0.7, 0.2, 1);
+  --dur-hover: 200ms;
+  --dur-fade: 400ms;
+  --dur-move: 600ms;
+  --dur-draw: 900ms;
 }
 
 html {
@@ -284,8 +294,8 @@ a {
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.2em;
   transition:
-    color 0.2s,
-    text-decoration-color 0.2s;
+    color var(--dur-hover),
+    text-decoration-color var(--dur-hover);
 }
 a:hover {
   color: var(--accent-text);
@@ -366,8 +376,8 @@ a:hover {
   font-weight: 550;
   line-height: 1.2;
   transition:
-    border-color 0.2s,
-    background-color 0.2s;
+    border-color var(--dur-hover),
+    background-color var(--dur-hover);
 }
 .btn:hover {
   border-color: currentColor;
@@ -383,8 +393,13 @@ a:hover {
   border-color: transparent;
   color: var(--on-accent);
 }
+/* One gap between sections: each section pads its top only, so paddings never stack.
+   The last section of a page pads its bottom too, before the footer. */
 .section {
-  padding-block: var(--space-section);
+  padding-top: var(--space-section);
+}
+main > .section:last-child {
+  padding-bottom: var(--space-section);
 }
 .section-head {
   display: grid;

@@ -60,7 +60,7 @@ h3 a {
   font-weight: 400;
   font-size: 0.7em;
   color: var(--quiet);
-  transition: color 0.2s;
+  transition: color var(--dur-hover);
 }
 /* the whole card is the link target */
 h3 a::after {
