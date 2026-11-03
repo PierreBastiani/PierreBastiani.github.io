@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { contact, links, logbook, profile, routeCard, sections } from '@/content'
-import portrait from '@/assets/pierre-bastiani.jpg'
+import PortraitImage from './PortraitImage.vue'
 import SummitStrip from './SummitStrip.vue'
 
 // The register's first line is dated today, in French. Set on mount: the prerendered page
@@ -38,7 +38,7 @@ const icons: Record<string, string> = {
       <div class="grid">
         <div class="who">
           <div class="id">
-            <img :src="portrait" width="480" height="480" alt="Pierre Bastiani" loading="lazy" decoding="async" class="portrait" />
+            <PortraitImage :size="104" alt="Pierre Bastiani" class="portrait" />
             <div class="id-text">
               <p class="name" translate="no">{{ contact.name }}</p>
               <p class="role">{{ profile.role }}</p>
@@ -105,9 +105,6 @@ const icons: Record<string, string> = {
 .contact {
   padding-top: var(--space-section);
 }
-.contact .section-head {
-  margin-bottom: clamp(3rem, 5vw, 4.5rem);
-}
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
@@ -130,6 +127,11 @@ const icons: Record<string, string> = {
   flex: none;
   width: 6.5rem;
   height: 6.5rem;
+}
+.portrait :deep(img) {
+  display: block;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
   background: var(--wash);

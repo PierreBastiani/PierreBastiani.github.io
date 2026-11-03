@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue'
 import { contact, profile } from '@/content'
-import portrait from '@/assets/pierre-bastiani.jpg'
+import PortraitImage from '../PortraitImage.vue'
 
 // A real link over the figure at the desk (the SVG layers are aria-hidden), and a small card
 // beside it that is a link too. Both go to the contact section.
@@ -74,7 +74,7 @@ onBeforeUnmount(() => clearTimeout(timer))
       <a ref="figure" class="figure" href="#contact" aria-label="Pierre Bastiani, me contacter"></a>
       <div class="bridge">
         <a class="card" href="#contact" :tabindex="open ? 0 : -1" @click="open = false">
-          <img :src="portrait" alt="" width="44" height="44" loading="lazy" decoding="async" />
+          <PortraitImage :size="44" alt="" />
           <span class="who">
             <span class="name">{{ contact.name }}</span>
             <span class="role">{{ profile.role }}</span>
@@ -144,23 +144,24 @@ onBeforeUnmount(() => clearTimeout(timer))
   translate: 0 4px;
   visibility: hidden;
   transition:
-    opacity 0.2s ease,
-    translate 0.2s ease,
-    visibility 0s linear 0.2s;
+    opacity var(--dur-hover) var(--ease),
+    translate var(--dur-hover) var(--ease),
+    visibility 0s linear var(--dur-hover);
 }
 .zone.open .card {
   opacity: 1;
   translate: 0 0;
   visibility: visible;
   transition:
-    opacity 0.2s ease,
-    translate 0.2s ease;
+    opacity var(--dur-hover) var(--ease),
+    translate var(--dur-hover) var(--ease);
 }
 .card:hover {
   border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
   color: var(--ink);
 }
-.card img {
+.card :deep(img) {
+  display: block;
   width: 44px;
   height: 44px;
   border-radius: 50%;

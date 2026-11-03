@@ -1,0 +1,33 @@
+# Pierre Bastiani
+
+> Développeur full-stack et DevOps à Saint-Paul-de-Vence, sur la Côte d’Azur. Je reprends des applis existantes (Rails, Node, Python), je les corrige, je les fais évoluer et je les mets en production. Disponible à temps partiel, en télétravail ou sur la Côte d’Azur.
+
+Site en français, deux pages. Pour me contacter, passez par la section contact ou par Malt.
+
+## Pages
+
+- [Profil](https://pierre.kensae.com/): compétences, parcours, projets perso, contact
+- [Contact](https://pierre.kensae.com/#contact): disponibilité, types de missions, lien Malt
+- [Le geek du quartier](https://pierre.kensae.com/geek-du-quartier/): aide informatique pour les commerces de La Colle-sur-Loup et Saint-Paul-de-Vence (fiche Google, site, ressaisies, petits pépins)
+
+## Profils
+
+- [Malt](https://www.malt.fr/profile/pierrebastiani): missions en freelance
+- [GitHub](https://github.com/PierreBastiani)
+- [LinkedIn](https://www.linkedin.com/in/pierre-bastiani)
+
+## Parcours
+
+- Lead Dev chez LivePepper, depuis juin 2025: intégrations caisse et livraison, API, load balancer HAProxy, agents Claude Code
+- Consultant DevOps chez SQUAD pour Amadeus, mars 2024 à janvier 2025: migration d’un service C++ vers Azure, OpenShift, ArgoCD, Helm
+- Développeur DevOps chez LivePepper, septembre 2023 à février 2024: CDN AWS, Docker, Terraform, Kubernetes
+- Développeur back-end puis full-stack chez LivePepper, septembre 2020 à août 2023: commande en ligne pour restaurants, paiement, Ruby on Rails, Vue
+- Epitech, diplôme d’Expert(e) en technologies de l’information (Bac+5), 2019 à 2024
+
+## Projets
+
+- [homelab](https://github.com/PierreBastiani/homelab): maison auto-hébergée, Home Assistant, Node-RED, ESPHome, Jellyfin, LLM local
+- [smarket](https://github.com/PierreBastiani/smarket): suivi des prix en supermarché, scrapers Node et pipeline Rust
+- [gree-smartir](https://github.com/PierreBastiani/gree-smartir): générateur de codes infrarouges pour les clims Gree dans Home Assistant
+- [Classification](https://github.com/GaetanCrd/Classification): classification d’images de plumes (YOLO)
+- [Source de ce site](https://github.com/PierreBastiani/PierreBastiani.github.io): Vue 3, Vite, SVG dessiné à la main, pages prérendues
