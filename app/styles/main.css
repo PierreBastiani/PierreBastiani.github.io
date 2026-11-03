@@ -66,14 +66,15 @@
   --ground: var(--ink-oxblood);
   --on-ground: #f4e8dc;
 
-  /* topo map */
-  --contour: #c9a993;
-  --route: #1d4466;
-  --topo-low: #ecdccb;
-  --topo-high: #fbf5ee;
-  --topo-side: #d6bea8;
-  --topo-edge: #c2a089;
-  --route-casing: #fbf5ee;
+  /* topo map: a Swiss map in relief. Brown contours, violet shadow on the slab sides, rock
+     hachures, the routes in deep sea */
+  --topo-low: color-mix(in srgb, var(--ink-sage) 32%, var(--ink-shell));
+  --topo-high: color-mix(in srgb, var(--ink-ochre) 16%, var(--ink-shell));
+  --topo-side: color-mix(in srgb, var(--ink-lilac) 45%, var(--ink-shell));
+  --topo-edge: color-mix(in srgb, var(--ink-porphyry) 55%, var(--ink-oxblood));
+  --topo-rock: color-mix(in srgb, var(--ink-oxblood) 80%, var(--ink-sea));
+  --route: var(--ink-sea);
+  --route-casing: var(--ink-shell);
 
   /* Inks: the print palette every drawing is made of (2026-11-03 illustration pass, after
      Roger Broders' PLM posters and Swiss maps). A drawing picks from these eight, as flats;
@@ -91,7 +92,7 @@
 
   /* Line: three weights, in screen pixels whatever the drawing's scale (with .ink-*,
      vector-effect: non-scaling-stroke). Contour, line, hair. Square ends, mitred corners. */
-  --w-heavy: 2.25px;
+  --w-heavy: 3px;
   --w-line: 1.25px;
   --w-hair: 0.75px;
 
@@ -160,13 +161,13 @@
     --pine-lit: var(--ink-sage);
     --trunk: color-mix(in srgb, var(--ink-porphyry) 45%, var(--ink-sage));
     --trunk-shade: var(--ink-sea);
-    --contour: #2f3b55;
-    --route: #aab4be;
-    --topo-low: #222e48;
-    --topo-high: #3a4865;
-    --topo-side: #131b2e;
-    --topo-edge: #56658a;
-    --route-casing: #131b2e;
+    --topo-low: color-mix(in srgb, var(--ink-sage) 55%, var(--ink-sky));
+    --topo-high: color-mix(in srgb, var(--ink-lilac) 85%, var(--ink-sage));
+    --topo-side: color-mix(in srgb, var(--ink-sea) 55%, var(--ink-sage));
+    --topo-edge: color-mix(in srgb, var(--ink-porphyry) 50%, var(--ink-lilac));
+    --topo-rock: color-mix(in srgb, var(--ink-lilac) 70%, var(--ink-shell));
+    --route: color-mix(in srgb, var(--ink-shell) 75%, var(--ink-sky));
+    --route-casing: var(--ink-sea);
     --ink-shell: #d9c3b0;
     --ink-sky: #29344f;
     --ink-lilac: #5c5b7f;
@@ -218,13 +219,13 @@
   --pine-lit: var(--ink-sage);
   --trunk: color-mix(in srgb, var(--ink-porphyry) 45%, var(--ink-sage));
   --trunk-shade: var(--ink-sea);
-  --contour: #2f3b55;
-  --route: #aab4be;
-  --topo-low: #222e48;
-  --topo-high: #3a4865;
-  --topo-side: #131b2e;
-  --topo-edge: #56658a;
-  --route-casing: #131b2e;
+  --topo-low: color-mix(in srgb, var(--ink-sage) 55%, var(--ink-sky));
+  --topo-high: color-mix(in srgb, var(--ink-lilac) 85%, var(--ink-sage));
+  --topo-side: color-mix(in srgb, var(--ink-sea) 55%, var(--ink-sage));
+  --topo-edge: color-mix(in srgb, var(--ink-porphyry) 50%, var(--ink-lilac));
+  --topo-rock: color-mix(in srgb, var(--ink-lilac) 70%, var(--ink-shell));
+  --route: color-mix(in srgb, var(--ink-shell) 75%, var(--ink-sky));
+  --route-casing: var(--ink-sea);
   --ink-shell: #d9c3b0;
   --ink-sky: #29344f;
   --ink-lilac: #5c5b7f;
