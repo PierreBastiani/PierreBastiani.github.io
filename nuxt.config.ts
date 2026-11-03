@@ -46,6 +46,10 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-11-03',
   devtools: { enabled: true },
   ssr: true,
+  // Component CSS ships as files, as before the move to Nuxt, instead of being inlined into each
+  // page: cached across the two pages, and the HTML stays HTML (the W3C validator's CSS checker
+  // doesn't know container-query units or vector-effect and would flag the inlined styles).
+  features: { inlineStyles: false },
 
   css: [
     '@fontsource-variable/hanken-grotesk',
