@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Pierre's portrait at the size it's shown, as AVIF or WebP with a JPEG fallback.
-// The files in src/assets/portrait/ are committed derivatives (96, 208, 312 px, no metadata).
+// The files in assets/portrait/ are committed derivatives (96, 208, 312 px, no metadata).
 import avif96 from '@/assets/portrait/pierre-bastiani-96.avif'
 import avif208 from '@/assets/portrait/pierre-bastiani-208.avif'
 import avif312 from '@/assets/portrait/pierre-bastiani-312.avif'

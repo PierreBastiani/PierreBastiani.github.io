@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { contact, localOffer, localTestimonials } from '@/content'
+import { localOffer, localTestimonials } from '@/content'
+import { useContact, useContactPhone } from '@/composables/useContact'
 import OfferVisual from './OfferVisual.vue'
 import PortraitImage from './PortraitImage.vue'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
@@ -15,6 +16,8 @@ onMounted(() => {
   io.observe(heroCall)
 })
 onBeforeUnmount(() => io?.disconnect())
+const contact = useContact()
+const { phone, phoneHref } = useContactPhone()
 </script>
 
 <template>
@@ -81,18 +84,18 @@ onBeforeUnmount(() => io?.disconnect())
       <!-- call -->
       <div class="call">
         <p class="call-title">{{ localOffer.call.title }}</p>
-        <a class="phone" :href="contact.phoneHref">{{ contact.phone }}</a>
+        <a class="phone" :href="phoneHref">{{ phone }}</a>
         <a class="mail" :href="`mailto:${contact.email}`">{{ contact.email }}</a>
       </div>
     </div>
 
     <!-- on phones, the call stays under the thumb -->
     <div class="call-bar" :class="{ tucked: heroCallVisible }" role="region" aria-label="Appeler">
-      <a class="btn btn-primary" :href="contact.phoneHref">
+      <a class="btn btn-primary" :href="phoneHref">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z" />
         </svg>
-        <span>{{ localOffer.call.bar }} <span class="nw">{{ contact.phone }}</span></span>
+        <span>{{ localOffer.call.bar }} <span class="nw">{{ phone }}</span></span>
       </a>
     </div>
   </section>

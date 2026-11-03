@@ -10,7 +10,7 @@ import DeskFigureLink from './hero/DeskFigureLink.vue'
 // The view south from the Baou de Saint-Jeannet late in the day. Left is east: the Var plain
 // running down to Nice and the airport. Ahead: hills stepping down to the sea at Cagnes.
 // Right is west: Vence, Saint-Paul, La Colle, Antibes and its cap, the Estérel on the horizon.
-// Scene units and the phone-safe zone are described in src/lib/scene.ts.
+// Scene units and the phone-safe zone are described in lib/scene.ts.
 
 const clouds = [
   cloud(3, 446, 920, 1180, 10, 22),

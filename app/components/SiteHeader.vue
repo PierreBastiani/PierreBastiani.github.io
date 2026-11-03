@@ -12,7 +12,8 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
 <template>
   <header class="site-header vt-header">
     <div class="wrap bar">
-      <a class="name" :href="props.variant === 'geek' ? links.home : '#top'" translate="no">{{ contact.name }}</a>
+      <NuxtLink v-if="props.variant === 'geek'" class="name" :to="links.home" translate="no">{{ contact.name }}</NuxtLink>
+      <a v-else class="name" href="#top" translate="no">{{ contact.name }}</a>
 
       <nav v-if="props.variant !== 'geek'" aria-label="Sections">
         <ul>
@@ -23,10 +24,10 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
         </ul>
       </nav>
 
-      <a v-if="props.variant !== 'geek'" class="switch" :href="links.geek">Geek du quartier</a>
-      <a v-else class="switch" :href="links.home">
+      <NuxtLink v-if="props.variant !== 'geek'" class="switch" :to="links.geek">Geek du quartier</NuxtLink>
+      <NuxtLink v-else class="switch" :to="links.home">
         Développeur<span class="long"> full-stack &amp; DevOps</span>
-      </a>
+      </NuxtLink>
 
       <button
         type="button"

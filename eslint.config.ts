@@ -15,12 +15,19 @@ export default defineConfigWithVueTs(
     files: ['**/*.{vue,ts,mts,tsx}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/.nuxt/**', '**/.output/**']),
 
   ...pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
+
+  // Nuxt names pages and the root component after their files: index.vue, app.vue
+  {
+    name: 'app/nuxt-file-names',
+    files: ['app/pages/**/*.vue', 'app/app.vue'],
+    rules: { 'vue/multi-word-component-names': 'off' },
+  },
 
   skipFormatting,
 )

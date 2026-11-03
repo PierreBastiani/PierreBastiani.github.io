@@ -18,8 +18,8 @@ const year = new Date().getFullYear()
         <li><a :href="links.github"><GithubIcon /><span translate="no">GitHub</span></a></li>
         <li><a :href="links.linkedin"><LinkedinIcon /><span translate="no">LinkedIn</span></a></li>
         <li><a :href="links.malt"><MaltIcon /><span translate="no">Malt</span></a></li>
-        <li v-if="props.variant !== 'geek'"><a :href="links.geek"><GeekIcon />Geek du quartier</a></li>
-        <li v-else><a :href="links.home"><LaptopIcon />Développeur full-stack &amp; DevOps</a></li>
+        <li v-if="props.variant !== 'geek'"><NuxtLink :to="links.geek"><GeekIcon />Geek du quartier</NuxtLink></li>
+        <li v-else><NuxtLink :to="links.home"><LaptopIcon />Développeur full-stack &amp; DevOps</NuxtLink></li>
         <li><a :href="links.source"><GithubIcon />Code source</a></li>
       </ul>
     </div>
