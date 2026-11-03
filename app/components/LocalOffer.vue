@@ -34,31 +34,30 @@ const { phone, phoneHref } = useContactPhone()
         </li>
       </ul>
 
-      <!-- the three steps, as a lane through the village -->
-      <div class="how">
-        <h2 class="sub-h">{{ localOffer.how }}</h2>
-        <ol class="lane">
+      <!-- the three steps, printed like a timetable card in a station or a shop's opening hours -->
+      <div class="sheet timetable">
+        <h2 class="band"><span>{{ localOffer.how }}</span><span>{{ localOffer.howCount }}</span></h2>
+        <ol>
           <li v-for="(step, i) in localOffer.steps" :key="step.title">
-            <span class="stop" aria-hidden="true">{{ i + 1 }}</span>
+            <span class="n" aria-hidden="true">{{ i + 1 }}</span>
             <strong>{{ step.title }}</strong>
             <span class="t">{{ step.text }}</span>
           </li>
         </ol>
       </div>
 
-
-      <!-- who I am, and the honest offer -->
-      <div class="trial">
-        <div class="me">
-          <PortraitImage :size="104" alt="Pierre Bastiani" class="portrait" />
-          <div>
-            <p class="name" translate="no">{{ contact.name }}</p>
-            <p class="line">{{ localOffer.me.line }}</p>
+      <!-- who I am, and the honest offer: a printed card like the summit figure's -->
+      <div class="sheet trial print">
+        <h2 class="band"><span>{{ localOffer.trial }}</span><span>{{ localOffer.trialFor }}</span></h2>
+        <div class="trial-body">
+          <div class="me">
+            <span class="frame"><PortraitImage :size="104" alt="Pierre Bastiani" class="portrait" /></span>
+            <div>
+              <p class="name" translate="no">{{ contact.name }}</p>
+              <p class="line">{{ localOffer.me.line }}</p>
+            </div>
           </div>
-        </div>
-        <div class="offer-text">
-          <h2 class="sub-h">{{ localOffer.trial }}</h2>
-          <p>{{ localOffer.offer }}</p>
+          <p class="offer-text">{{ localOffer.offer }}</p>
         </div>
       </div>
 
@@ -72,20 +71,25 @@ const { phone, phoneHref } = useContactPhone()
         </li>
       </ul>
 
-      <!-- questions a shop owner asks -->
-      <div class="faq">
-        <h2 class="sub-h">{{ localOffer.faq.title }}</h2>
+      <!-- questions a shop owner asks: a printed notice, one native disclosure per question -->
+      <div class="sheet faq">
+        <h2 class="band"><span>{{ localOffer.faq.title }}</span></h2>
         <details v-for="f in localOffer.faq.items" :key="f.q">
           <summary>{{ f.q }}</summary>
           <p>{{ f.a }}</p>
         </details>
       </div>
 
-      <!-- call -->
-      <div class="call">
+      <!-- call: the poster's lettering band -->
+      <div class="call print">
+        <p class="call-band">{{ localOffer.call.band }}</p>
         <p class="call-title">{{ localOffer.call.title }}</p>
         <a class="phone" :href="phoneHref">{{ phone }}</a>
         <a class="mail" :href="`mailto:${contact.email}`">{{ contact.email }}</a>
+        <div class="btns">
+          <a class="btn btn-primary" :href="phoneHref">{{ localOffer.call.bar }}</a>
+          <a class="btn" :href="`mailto:${contact.email}`">{{ localOffer.call.mail }}</a>
+        </div>
       </div>
     </div>
 
@@ -110,19 +114,8 @@ const { phone, phoneHref } = useContactPhone()
 .offer p {
   max-width: 46ch;
 }
-h2 {
+#commerces-title {
   margin-bottom: var(--space-head);
-}
-.sub-h {
-  font-size: var(--step-2);
-  letter-spacing: -0.025em;
-  margin-bottom: 1.5rem;
-}
-.how,
-.trial,
-.faq,
-.call {
-  margin-top: var(--space-section);
 }
 
 /* offer items */
@@ -148,65 +141,95 @@ h2 {
   color: var(--muted);
 }
 
-/* the lane: a dashed path with three stops */
-.lane {
+/* ---- Printed objects: sharp corners, an ink rule, the posters' lettering band on top ---- */
+.sheet,
+.call {
+  margin-top: var(--space-section);
+}
+.sheet {
+  border: 1.5px solid var(--ink);
+  background: var(--bg);
+}
+.band {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0.55rem 1rem;
+  background: var(--ground);
+  color: var(--on-ground);
+  font: 500 0.8rem / 1.3 var(--f-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* the timetable: number column, a vertical rule, step title large and plain, the detail under it */
+.timetable ol {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+.timetable li {
   display: grid;
-  gap: 2rem;
-  position: relative;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  column-gap: 1.25rem;
+  row-gap: 0.15rem;
+  padding: 1.1rem 1rem 1.1rem 0;
+  border-top: 1px solid var(--line);
 }
-.lane::before {
-  content: '';
-  position: absolute;
-  left: 1.1rem;
-  top: 1rem;
-  bottom: 1rem;
-  border-left: 2px dashed color-mix(in srgb, var(--accent) 55%, var(--line));
+.timetable li:first-child {
+  border-top: 0;
 }
-.lane li {
-  position: relative;
+.n {
+  grid-row: span 2;
+  align-self: stretch;
   display: grid;
-  gap: 0.2rem;
-  padding-left: 3.4rem;
+  place-items: start center;
+  padding-top: 0.1rem;
+  border-right: 1px solid var(--ink);
+  font: 600 var(--step-2) / 1 var(--f-mono);
+  color: var(--accent-text);
 }
-.stop {
-  position: absolute;
-  left: 0;
-  top: -0.1rem;
-  display: grid;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 5px var(--bg);
-  color: var(--on-accent);
-  font: 700 0.95rem/1 var(--f-display);
-}
-.lane strong {
+.timetable strong {
   font: 600 var(--step-1) / 1.2 var(--f-display);
+  letter-spacing: -0.01em;
 }
 .t {
   color: var(--muted);
 }
 
-/* who, and the free half-day */
+/* the free half-day: the figure card's family, double ink rule and grain */
 .trial {
-  display: grid;
-  gap: 2rem;
-  padding: clamp(1.75rem, 5vw, 3rem);
-  border-radius: 1.5rem;
   background: var(--surface);
+  box-shadow:
+    inset 0 0 0 4px var(--surface),
+    inset 0 0 0 5px var(--ink);
+}
+.trial > * {
+  position: relative;
+  z-index: 2;
+}
+.trial .band {
+  margin: 5px 5px 0;
+}
+.trial-body {
+  display: grid;
+  gap: 1.5rem;
+  padding: clamp(1.25rem, 4vw, 2.25rem);
 }
 .me {
   display: flex;
   align-items: center;
   gap: 1.25rem;
 }
-.portrait {
+.frame {
   flex: none;
+  display: block;
+  padding: 3px;
+  border: 1px solid var(--ink);
+}
+.portrait {
   width: 5.5rem;
   height: 5.5rem;
 }
@@ -214,7 +237,6 @@ h2 {
   display: block;
   width: 100%;
   height: 100%;
-  border-radius: 50%;
   object-fit: cover;
 }
 .name {
@@ -241,63 +263,102 @@ blockquote {
   color: var(--muted);
 }
 
-/* FAQ */
+/* the notice: questions in bold, answers behind a native disclosure, rules between */
 .faq details {
   border-top: 1px solid var(--line);
-  padding-block: 1rem;
+  padding: 0 1rem;
 }
-.faq details:last-child {
-  border-bottom: 1px solid var(--line);
+.faq .band + details {
+  border-top: 0;
 }
 .faq summary {
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 650;
   list-style: none;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 1rem;
+  padding-block: 1rem;
 }
 .faq summary::-webkit-details-marker {
   display: none;
 }
+/* a square printed marker: + closed, − open */
 .faq summary::after {
   content: '+';
   flex: none;
-  color: var(--accent-text);
-  font-weight: 400;
-  transition: transform var(--dur-hover) var(--ease);
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--ink);
+  font: 500 1rem / 1 var(--f-mono);
+  color: var(--ink);
 }
 .faq details[open] summary::after {
-  transform: rotate(45deg);
+  content: '−';
+  background: var(--ink);
+  color: var(--bg);
+}
+.faq summary:hover::after {
+  border-color: var(--accent-text);
 }
 .faq details p {
-  margin-top: 0.6rem;
+  padding-bottom: 1.1rem;
   color: var(--muted);
 }
 
-/* call */
+/* the call: a lettering band in the ground ink, with grain, the number in large type */
 .call {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.6rem;
   justify-items: start;
+  padding: clamp(1.75rem, 5vw, 3rem) clamp(1.25rem, 5vw, 3rem);
+  background: var(--ground);
+  color: var(--on-ground);
+}
+.call > * {
+  position: relative;
+  z-index: 2;
+}
+.call-band {
+  font: 500 0.8rem / 1.3 var(--f-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
 }
 .call-title {
   font: 600 var(--step-2) / 1.15 var(--f-display);
   letter-spacing: -0.02em;
 }
 .phone {
-  font: 650 var(--step-3) / 1 var(--f-display);
-  letter-spacing: -0.02em;
+  font: 700 var(--step-4) / 1 var(--f-display);
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   text-decoration: none;
-  color: var(--accent-text);
+  color: var(--on-ground);
 }
-.mail {
+.phone:hover {
+  color: var(--on-ground);
+  text-decoration: underline;
+  text-decoration-thickness: 0.06em;
+}
+.call .mail {
   overflow-wrap: anywhere;
+  color: var(--on-ground);
+}
+.call .btns {
+  margin-top: 0.75rem;
+}
+/* square buttons in the printed blocks (radius 0–2 px); same inks as everywhere */
+.call .btn,
+.call-bar .btn {
+  border-radius: 2px;
 }
 
-/* sticky call bar: phones only */
+/* sticky call bar: phones only, opaque, an ink rule on top */
 .call-bar {
   display: none;
 }
@@ -311,10 +372,8 @@ blockquote {
     inset: auto 0 0;
     z-index: 30;
     padding: 0.6rem var(--gutter-r) calc(0.6rem + env(safe-area-inset-bottom, 0px)) var(--gutter);
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid var(--line);
+    background: var(--bg);
+    border-top: 1.5px solid var(--ink);
     transition:
       transform var(--dur-fade) var(--ease),
       visibility 0s;
@@ -338,7 +397,10 @@ blockquote {
     fill: none;
     stroke: currentColor;
     stroke-width: 1.7;
-    stroke-linejoin: round;
+    stroke-linejoin: miter;
+  }
+  .phone {
+    font-size: clamp(2.4rem, 11vw, 3.2rem);
   }
 }
 
@@ -352,23 +414,18 @@ blockquote {
   .items {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .lane {
+  .timetable ol {
+    display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 2.5rem;
   }
-  .lane::before {
-    left: 1.1rem;
-    right: 1.1rem;
-    top: 1.1rem;
-    bottom: auto;
+  .timetable li {
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+  .timetable li:first-child {
     border-left: 0;
-    border-top: 2px dashed color-mix(in srgb, var(--accent) 55%, var(--line));
   }
-  .lane li {
-    padding-left: 0;
-    padding-top: 3.4rem;
-  }
-  .trial {
+  .trial-body {
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     align-items: center;
   }
