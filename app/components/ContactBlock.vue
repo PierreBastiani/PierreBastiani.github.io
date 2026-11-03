@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { links, logbook, profile, routeCard, sections } from '@/content'
 import { useContact } from '@/composables/useContact'
 import PortraitImage from './PortraitImage.vue'
-import SummitStrip from './SummitStrip.vue'
+import CliffOverlay from './CliffOverlay.vue'
 
 // The register's first line is dated today, in French. Set on mount: the prerendered page
 // was built on another day.
@@ -28,6 +28,8 @@ const icons: Record<string, string> = {
 
 <template>
   <section id="contact" class="contact" aria-labelledby="contact-title">
+    <!-- the face rises along the right edge to the summit: the logbook at its top anchor -->
+    <CliffOverlay side="right" width="clamp(180px, 26vw, 360px)" summit-at="#contact .logbook" :summit-gap="96" desk />
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow">{{ sections.contact.label }}</p>
@@ -84,14 +86,15 @@ const icons: Record<string, string> = {
         </div>
       </div>
     </div>
-
-    <SummitStrip />
   </section>
 </template>
 
 <style scoped>
 .contact {
+  position: relative;
+  isolation: isolate;
   padding-top: var(--space-section);
+  padding-bottom: var(--space-section);
 }
 .grid {
   display: grid;
