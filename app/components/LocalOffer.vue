@@ -305,10 +305,6 @@ blockquote {
   white-space: nowrap;
 }
 @media (max-width: 40rem) {
-  /* room for the bar, so it never covers the footer */
-  :global(body) {
-    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
-  }
   .call-bar {
     display: block;
     position: fixed;

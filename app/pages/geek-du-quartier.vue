@@ -44,7 +44,7 @@ useHead({
 </script>
 
 <template>
-  <div>
+  <div class="geek-page">
     <a class="skip" href="#main">Aller au contenu</a>
     <SiteHeader variant="geek" />
     <main id="main">
@@ -56,3 +56,14 @@ useHead({
     <SiteFooter variant="geek" />
   </div>
 </template>
+
+<style scoped>
+/* On phones the sticky call bar covers the bottom of the screen: leave room for it so it never
+   hides the footer. Scoped to this page: when the main page prefetches this one, its CSS loads
+   there too, so nothing here may target body. */
+@media (max-width: 40rem) {
+  .geek-page {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+</style>
