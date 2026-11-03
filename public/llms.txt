@@ -30,4 +30,4 @@ Site en français, deux pages. Pour me contacter, passez par la section contact 
 - [smarket](https://github.com/PierreBastiani/smarket): suivi des prix en supermarché, scrapers Node et pipeline Rust
 - [gree-smartir](https://github.com/PierreBastiani/gree-smartir): générateur de codes infrarouges pour les clims Gree dans Home Assistant
 - [Classification](https://github.com/GaetanCrd/Classification): classification d’images de plumes (YOLO)
-- [Source de ce site](https://github.com/PierreBastiani/PierreBastiani.github.io): Vue 3, Vite, SVG dessiné à la main, pages prérendues
+- [Source de ce site](https://github.com/PierreBastiani/PierreBastiani.github.io): Nuxt 4 (Vue 3) en génération statique, SVG dessiné à la main
