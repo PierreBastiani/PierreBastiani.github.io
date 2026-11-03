@@ -1,173 +1,89 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, useId, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { routes, sections } from '@/content'
 import {
-  DZ,
-  INDEX_EVERY,
-  contourRings,
-  hachures,
-  heightAt,
+  DEPTH,
+  FAR_HILLS,
+  GROUND,
+  PINES,
+  PLATEAU,
+  ROUTE_LINES,
+  SCENE,
+  SCREE,
+  SCREE_SHADE,
+  WALL,
+  WALL_FLATS,
+  bolts,
   pathOf,
-  project,
-  routePlan,
-  spotHeights,
-  type Camera,
+  smooth,
   type Pt,
-  type Vec3,
-} from '@/lib/topo'
+} from '@/lib/crag'
 
-// The five routes in flat-map units (1000 × 640, foot of the crag at the bottom).
-const lines: Record<string, Pt[]> = {
-  ship: [[600, 640], [612, 520], [590, 400], [628, 300], [640, 205]],
-  build: [[760, 640], [742, 520], [770, 420], [748, 330]],
-  ai: [[220, 640], [236, 560], [214, 500], [246, 438]],
-  home: [[470, 640], [486, 560], [508, 480], [530, 410], [548, 352]],
-  data: [[330, 640], [318, 590], [296, 540]],
+// The five routes on the Baou's south face, drawn once in wall coordinates: the line, its
+// bolts, its foot and its top anchor. Only the camera's transforms change afterwards.
+const lines = Object.fromEntries(
+  Object.entries(ROUTE_LINES).map(([id, pts]) => {
+    const line = smooth(pts)
+    return [id, { d: pathOf(line), ticks: bolts(line), start: line[0]!, end: line[line.length - 1]! }]
+  }),
+)
+
+// The camera: the point of the wall at the centre of the frame, a zoom, and a sway (pointer,
+// scroll) that only shifts the sky and the foreground against the wall: that's the depth.
+interface Camera {
+  x: number
+  y: number
+  zoom: number
+  sx: number
+  sy: number
 }
+const C = { x: SCENE.w / 2, y: SCENE.h / 2 }
+const OVERVIEW: Camera = { x: C.x, y: C.y, zoom: 1, sx: 0, sy: 0 }
+const box = ref({ x: 0, y: 0, w: SCENE.w, h: SCENE.h })
+const viewBox = computed(() => `${box.value.x} ${box.value.y} ${box.value.w} ${box.value.h}`)
+let narrow = false // set on mount: the map is pinned above the list
 
-// Plan geometry, computed once: every contour ring with its level, the rock hachures, the
-// spot heights, and the routes draped on the ground.
-const rings = contourRings()
-const top = Math.max(...rings.map((r) => r.level))
-const byLevel = Array.from({ length: top }, (_, i) => rings.filter((r) => r.level === i + 1))
-const rock = hachures(rings)
-const rockByLevel = Array.from({ length: top + 1 }, (_, i) => rock.filter((h) => h.level === i))
-const spots = spotHeights()
-
-// Each route starts at the foot of the crag: the flat approach in front of it is dropped.
-function drape(pts: Pt[]): Vec3[] {
-  const ground = routePlan(pts).map(([x, z]) => [x, heightAt(x, z), z] as Vec3)
-  const foot = Math.max(0, ground.findIndex(([, h]) => h > DZ * 0.5))
-  return ground.slice(foot).map(([x, h, z]) => [x, h + 2, z])
+function plane(c: Camera, depth: number) {
+  const ox = C.x + (c.x - C.x) * depth + c.sx * (depth - 1)
+  const oy = C.y + (c.y - C.y) * depth + c.sy * (depth - 1)
+  return `translate(${C.x} ${C.y}) scale(${c.zoom.toFixed(4)}) translate(${(-ox).toFixed(2)} ${(-oy).toFixed(2)})`
 }
-const draped = Object.fromEntries(Object.entries(lines).map(([id, pts]) => [id, drape(pts)]))
-
-const deg = (d: number) => (d * Math.PI) / 180
-const clamp = (v: number, a: number) => Math.max(-a, Math.min(a, v))
-
-// Overview: the whole crag from the south-east, a little above.
-const OVERVIEW: Camera = { theta: deg(-10), phi: deg(36), distance: 2600, zoom: 1, target: [500, 0, 470], offset: [0, 0] }
-
+const onWall = (c: Camera, [x, y]: Pt): Pt => [(x - c.x) * c.zoom + C.x, (y - c.y) * c.zoom + C.y]
 function render(c: Camera) {
   return {
-    levels: byLevel.map((ring, i) => {
-      const level = i + 1
-      return {
-        t: (level / top).toFixed(3),
-        index: level % INDEX_EVERY === 0,
-        // the slab's lower outline shows as its side, the upper one as its top
-        sides: ring.map((r) => pathOf(r.plan.map(([x, z]) => project([x, (level - 1) * DZ, z], c)), true)),
-        tops: ring.map((r) => pathOf(r.plan.map(([x, z]) => project([x, level * DZ, z], c)), true)),
-        // hachures that start on this slab, one path of short strokes
-        rock: rockByLevel[level]!.map((h) => pathOf([project(h.a, c), project(h.b, c), project(h.c, c)], true)).join(' '),
-      }
-    }),
-    spots: spots.map((s) => project(s.at, c)),
-    routes: Object.fromEntries(
-      Object.entries(draped).map(([id, pts]) => {
-        const p = pts.map((v) => project(v, c))
-        return [id, { d: pathOf(p), end: p[p.length - 1]! }]
-      }),
-    ),
+    far: plane(c, DEPTH.far),
+    wall: plane(c, DEPTH.wall),
+    near: plane(c, DEPTH.near),
+    ends: Object.fromEntries(Object.entries(lines).map(([id, l]) => [id, { start: onWall(c, l.start), end: onWall(c, l.end) }])),
   }
 }
 
-// The viewBox is the overview's frame at every angle the camera can reach in that layout.
-// Close-ups are clipped to it, so the figure never changes size.
-function frameBox(turn: number, tilt: number, margin: number, top: number) {
-  let x0 = Infinity
-  let y0 = Infinity
-  let x1 = -Infinity
-  let y1 = -Infinity
-  for (const theta of [OVERVIEW.theta - turn, OVERVIEW.theta + turn]) {
-    for (const phi of [OVERVIEW.phi - tilt, OVERVIEW.phi + tilt]) {
-      for (const r of rings) {
-        for (const h of [(r.level - 1) * DZ, r.level * DZ]) {
-          for (const [x, z] of r.plan) {
-            const [sx, sy] = project([x, h, z], { ...OVERVIEW, theta, phi })
-            x0 = Math.min(x0, sx)
-            x1 = Math.max(x1, sx)
-            y0 = Math.min(y0, sy)
-            y1 = Math.max(y1, sy)
-          }
-        }
-      }
-    }
-  }
-  return {
-    x: Math.floor(x0 - margin),
-    y: Math.floor(y0 - margin - top),
-    w: Math.ceil(x1 - x0 + 2 * margin),
-    h: Math.ceil(y1 - y0 + 2 * margin + top),
-  }
+// Keep the frame on the drawing: the camera can't pan past the wall's edges at its zoom.
+function inFrame(c: Camera): Camera {
+  const hw = C.x / c.zoom
+  const hh = C.y / c.zoom
+  return { ...c, x: Math.min(SCENE.w - hw, Math.max(hw, c.x)), y: Math.min(SCENE.h - hh, Math.max(hh, c.y)) }
 }
-// Beside the list (desktop): room for the pointer to turn the crag. Pinned above the list
-// (phones): only the scroll turns it, so the box hugs the model and leaves no empty band.
-// The extra room at the top keeps the summit's tag inside the frame.
-const WIDE = frameBox(deg(14), deg(5), 16, 24)
-const TIGHT = frameBox(deg(5), 0, 6, 90)
-const box = ref(WIDE)
-let narrow = false // set on mount: the map is pinned above the list
-const viewBox = computed(() => `${box.value.x} ${box.value.y} ${box.value.w} ${box.value.h}`)
 
-// Close-up on one route: look at the middle of the climb, turn so it faces the viewer,
-// come down a little to show the height, zoom in, and put it in the middle of the frame.
+// Close-up on one route: centre it, zoom in, and keep its top anchor low enough that its
+// tag stays in the frame.
 function shotOf(id: string): Camera {
-  const pts = draped[id]!
-  const [fx, fh, fz] = pts[0]!
-  const [tx, th, tz] = pts[pts.length - 1]!
-  const theta = clamp(Math.atan2(tx - fx, fz - tz), deg(28))
-  return {
-    theta,
-    phi: deg(28),
-    distance: OVERVIEW.distance,
-    zoom: narrow ? 1.05 : 1.45, // pinned on a phone the crag isn't clipped, so it barely zooms
-    target: [(fx + tx) / 2, (fh + th) / 2, (fz + tz) / 2],
-    offset: [box.value.x + box.value.w / 2, box.value.y + box.value.h / 2],
-  }
+  const pts = ROUTE_LINES[id]!
+  const xs = pts.map((p) => p[0])
+  const ys = pts.map((p) => p[1])
+  const top = Math.min(...ys)
+  const foot = Math.max(...ys)
+  // close enough to read the route, never so close its foot or its tag leaves the frame
+  const zoom = Math.min(narrow ? 1.2 : 1.3, (SCENE.h - 150) / (foot - top))
+  let y = (top + foot) / 2
+  y = Math.min(y, top + (C.y - 70) / zoom)
+  return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y, zoom, sx: 0, sy: 0 }
 }
 
-// On a phone the crag isn't clipped, so pan each view to keep it on screen: the whole crag
-// when it fits the frame, otherwise at least the active route's summit, with room above it
-// for its tag.
-let stageWidth = 0
-function fitInFrame(c: Camera, id: string | null): Camera {
-  if (!narrow || !stageWidth) return c
-  const b = box.value
-  const unit = b.w / stageWidth // scene units per CSS px
-  const left = b.x + 12 * unit
-  const right = b.x + b.w - 12 * unit
-  let x0 = Infinity
-  let x1 = -Infinity
-  for (const r of rings) {
-    for (const [x, z] of r.plan) {
-      const [sx] = project([x, r.level * DZ, z], c)
-      x0 = Math.min(x0, sx)
-      x1 = Math.max(x1, sx)
-    }
-  }
-  let dx = 0
-  if (x1 - x0 <= right - left) {
-    if (x0 < left) dx = left - x0
-    if (x1 + dx > right) dx = right - x1
-  } else {
-    dx = (left + right) / 2 - (x0 + x1) / 2
-  }
-  let dy = 0
-  if (id) {
-    const pts = draped[id]!
-    const [sx, sy] = project(pts[pts.length - 1]!, c)
-    if (sx + dx < left) dx = left - sx
-    if (sx + dx > right) dx = right - sx
-    const roof = b.y + 46 * unit // the tag above the summit
-    if (sy < roof) dy = roof - sy
-  }
-  return { ...c, offset: [c.offset[0] + dx, c.offset[1] + dy] }
-}
-
-const cam: Camera = { ...OVERVIEW, target: [...OVERVIEW.target], offset: [...OVERVIEW.offset] }
+const cam: Camera = { ...OVERVIEW }
 let aim: Camera = { ...cam }
 const frame = shallowRef(render(cam))
+const stage = ref<HTMLElement | null>(null)
 
 // Three sources of highlight, in order: the list (mouse hover, keyboard focus), the map
 // (mouse on a route), and reading (on touch or when the map is pinned above the list, the
@@ -192,29 +108,14 @@ const list = ref<HTMLElement | null>(null)
 // the screen keeps anything from showing through the translucent header.
 const pinned = ref(false)
 const coverOn = ref(false)
-const stage = ref<HTMLElement | null>(null)
 const section = ref<HTMLElement | null>(null)
-const haloId = `crag-halo-${useId()}`
 const drawn = ref(true)
 
-// Spot heights, like the pills: HTML over the figure so the numbers stay readable.
-const spotTags = computed(() =>
-  spots.map((s, i) => {
-    const [x, y] = frame.value.spots[i]!
-    const b = box.value
-    return { metres: s.metres, left: `${((x - b.x) / b.w) * 100}%`, top: `${((y - b.y) / b.h) * 100}%` }
-  }),
-)
-
-// Grades sit in HTML pills over the figure, so they keep a readable size on a phone.
-// The active one also carries the skill's name.
-const pills = computed(() =>
-  routes.map((r) => {
-    const [x, y] = frame.value.routes[r.id]!.end
-    const b = box.value
-    return { id: r.id, name: r.name, grade: r.grade, left: `${((x - b.x) / b.w) * 100}%`, top: `${((y - b.y) / b.h) * 100}%` }
-  }),
-)
+// Grades sit in HTML tags over the figure, so they keep a readable size on a phone: the
+// grade at the top anchor (with the skill's name when active), the route number at the foot.
+const pct = ([x, y]: Pt) => ({ left: `${((x - box.value.x) / box.value.w) * 100}%`, top: `${((y - box.value.y) / box.value.h) * 100}%` })
+const pills = computed(() => routes.map((r) => ({ id: r.id, name: r.name, grade: r.grade, ...pct(frame.value.ends[r.id]!.end) })))
+const feet = computed(() => routes.map((r, i) => ({ id: r.id, n: i + 1, ...pct(frame.value.ends[r.id]!.start) })))
 
 // The camera eases toward its aim and stops once it gets there: nothing runs while idle.
 let raf = 0
@@ -223,36 +124,23 @@ const lerp = (a: number, b: number, k: number) => a + (b - a) * k
 function step() {
   raf = 0
   const k = 0.085 // about 700 ms to settle at 60 fps
-  cam.theta = lerp(cam.theta, aim.theta, k)
-  cam.phi = lerp(cam.phi, aim.phi, k)
-  cam.zoom = lerp(cam.zoom, aim.zoom, k)
-  cam.target = cam.target.map((v, i) => lerp(v, aim.target[i]!, k)) as Vec3
-  cam.offset = cam.offset.map((v, i) => lerp(v, aim.offset[i]!, k)) as Pt
+  for (const key of ['x', 'y', 'zoom', 'sx', 'sy'] as const) cam[key] = lerp(cam[key], aim[key], k)
   frame.value = render(cam)
-  const far =
-    Math.abs(aim.theta - cam.theta) > 1e-4 ||
-    Math.abs(aim.phi - cam.phi) > 1e-4 ||
-    Math.abs(aim.zoom - cam.zoom) > 1e-4 ||
-    cam.target.some((v, i) => Math.abs(v - aim.target[i]!) > 0.05) ||
-    cam.offset.some((v, i) => Math.abs(v - aim.offset[i]!) > 0.05)
+  const far = (['x', 'y', 'sx', 'sy'] as const).some((key) => Math.abs(aim[key] - cam[key]) > 0.05) || Math.abs(aim.zoom - cam.zoom) > 1e-4
   if (far) raf = requestAnimationFrame(step)
 }
 
 let pointer = { x: 0, y: 0 }
-let scrollTurn = 0
+let scrollShift = 0
 function retarget() {
   const base = active.value ? shotOf(active.value) : OVERVIEW
   const sway = active.value ? 0.35 : 1 // a close-up only sways a little with the pointer
-  aim = fitInFrame(
-    {
-      ...base,
-      theta: base.theta + clamp(scrollTurn + pointer.x * deg(14), deg(14)) * sway,
-      phi: base.phi - pointer.y * deg(5) * sway,
-    },
-    active.value,
-  )
+  aim = inFrame({ ...base, sx: pointer.x * 22 * sway, sy: (pointer.y * 10 + scrollShift) * sway })
+  // the slight tilt of the plate, CSS 3D on the stage
+  stage.value?.style.setProperty('--ry', `${(pointer.x * 2.5 * sway).toFixed(2)}deg`)
+  stage.value?.style.setProperty('--rx', `${(2 - pointer.y * 1.5 * sway).toFixed(2)}deg`)
   if (reduce) {
-    Object.assign(cam, { ...aim, target: [...aim.target], offset: [...aim.offset] })
+    Object.assign(cam, aim)
     frame.value = render(cam)
     return
   }
@@ -311,7 +199,7 @@ function onScroll() {
   coverOn.value = narrow && !!sr && sr.top < stickyTop && sr.bottom > 0
   if (reduce || r.bottom < 0 || r.top > h) return
   if (!drawn.value && r.top < h * 0.85) drawn.value = true
-  scrollTurn = -((r.top + r.height / 2) / h - 0.5) * deg(10)
+  scrollShift = -((r.top + r.height / 2) / h - 0.5) * 40
   retarget()
 }
 
@@ -370,9 +258,9 @@ function watchReading() {
 // Pick the frame for the layout, then place the reading line under the map's new height.
 async function layout() {
   narrow = window.matchMedia('(max-width: 52rem)').matches
-  box.value = narrow ? TIGHT : WIDE
+  // pinned on a phone the plate is cropped to the wall, so the list keeps most of the screen
+  box.value = narrow ? { x: 40, y: 60, w: 920, h: 560 } : { x: 0, y: 0, w: SCENE.w, h: SCENE.h }
   await nextTick()
-  stageWidth = stage.value?.offsetWidth ?? 0
   watchReading()
   retarget()
   onScroll()
@@ -416,48 +304,55 @@ onBeforeUnmount(() => {
       <figure ref="map" class="map" :class="{ drawn, pinned, focused: !!active }" @pointermove="onPointer" @pointerleave="onLeave">
         <div ref="stage" class="stage">
           <svg :viewBox="viewBox" role="img" aria-labelledby="map-title">
-            <title id="map-title">Falaise en relief à deux sommets, avec cinq voies, une par compétence</title>
-            <!-- pinned on a phone: a soft halo of the page colour around the crag, drawn inside
-                 the SVG with a filter region well beyond it, so it never ends on a hard edge -->
-            <template v-if="pinned">
-              <defs>
-                <filter :id="haloId" x="-25%" y="-25%" width="150%" height="150%">
-                  <feGaussianBlur stdDeviation="14" />
-                </filter>
-              </defs>
-              <g class="halo" :filter="`url(#${haloId})`">
-                <template v-for="(lv, i) in frame.levels" :key="i">
-                  <path v-for="(d, j) in lv.tops" :key="j" :d="d" />
-                </template>
-              </g>
-            </template>
-            <g v-for="(lv, i) in frame.levels" :key="i" class="level" :class="{ index: lv.index }" :style="{ '--t': lv.t }">
-              <path v-for="(d, j) in lv.sides" :key="'s' + j" class="side" :d="d" />
-              <path v-for="(d, j) in lv.tops" :key="'e' + j" class="edge" :d="d" />
-              <path v-for="(d, j) in lv.tops" :key="'t' + j" class="top" :d="d" />
-              <path v-if="lv.rock" class="rock" :d="lv.rock" />
+            <title id="map-title">La face sud du Baou, avec cinq voies, une par compétence</title>
+            <!-- sky and far hills -->
+            <g :transform="frame.far">
+              <rect x="-400" y="-400" width="1800" height="1400" class="sky" />
+              <path :d="FAR_HILLS" class="far-hills" />
             </g>
-            <g
-              v-for="r in routes"
-              :key="r.id"
-              class="route"
-              :class="{ on: active === r.id, dim: active && active !== r.id }"
-              :data-route="r.id"
-            >
-              <path class="hit" :d="frame.routes[r.id]!.d" />
-              <path class="casing" :d="frame.routes[r.id]!.d" pathLength="1" />
-              <path class="line" :d="frame.routes[r.id]!.d" pathLength="1" />
-              <circle class="end" :cx="frame.routes[r.id]!.end[0]" :cy="frame.routes[r.id]!.end[1]" r="11" />
+            <!-- the wall: plateau, the face and its flats, the scree -->
+            <g :transform="frame.wall">
+              <path :d="PLATEAU" class="plateau" />
+              <path :d="WALL" class="wall" />
+              <path v-for="([d, role], i) in WALL_FLATS" :key="i" :d="d" :class="role" />
+              <path :d="SCREE" class="scree" />
+              <path v-for="(d, i) in SCREE_SHADE" :key="'s' + i" :d="d" class="shade" />
+            </g>
+            <!-- the foreground: garrigue and two pines -->
+            <g :transform="frame.near">
+              <path :d="GROUND" class="ground" />
+              <template v-for="(t, i) in PINES" :key="'p' + i">
+                <path :d="t.trunk" class="trunk" />
+                <path :d="t.crown" class="crown" />
+                <path :d="t.lit" class="crown-lit" />
+              </template>
+            </g>
+            <!-- the routes, on the wall's plane -->
+            <g :transform="frame.wall">
+              <g
+                v-for="r in routes"
+                :key="r.id"
+                class="route"
+                :class="{ on: active === r.id, dim: active && active !== r.id }"
+                :data-route="r.id"
+              >
+                <path class="hit" :d="lines[r.id]!.d" />
+                <path class="casing" :d="lines[r.id]!.d" pathLength="1" />
+                <path class="line" :d="lines[r.id]!.d" pathLength="1" />
+                <path class="bolts" :d="lines[r.id]!.ticks" />
+                <circle class="end" :cx="lines[r.id]!.end[0]" :cy="lines[r.id]!.end[1]" r="8" />
+                <circle class="end-dot" :cx="lines[r.id]!.end[0]" :cy="lines[r.id]!.end[1]" r="3.2" />
+              </g>
             </g>
           </svg>
           <span
-            v-for="(s, i) in spotTags"
-            :key="'h' + i"
-            class="spot"
-            :class="{ dim: !!active }"
-            :style="{ left: s.left, top: s.top }"
+            v-for="f in feet"
+            :key="'n' + f.id"
+            class="num"
+            :class="{ on: active === f.id, dim: active && active !== f.id }"
+            :style="{ left: f.left, top: f.top }"
             aria-hidden="true"
-            >{{ s.metres }}</span
+            >{{ f.n }}</span
           >
           <span
             v-for="p in pills"
@@ -536,38 +431,60 @@ onBeforeUnmount(() => {
   width: 100%;
   height: auto;
   /* close-ups run past the frame: fade its edges instead of cutting the crag with a straight line */
-  --fade: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent),
-    linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
+  --fade: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent),
+    linear-gradient(to bottom, transparent, #000 4%, #000 92%, transparent);
   -webkit-mask-image: var(--fade);
   -webkit-mask-composite: source-in;
   mask-image: var(--fade);
   mask-composite: intersect;
 }
-/* the crag: each contour level is a slab, its side in shadow, its top lighter as it climbs */
-.side {
-  fill: var(--topo-side);
+/* the plate: the hero's inks, flat, the low sun from the right */
+.stage {
+  transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform var(--dur-move) var(--ease);
 }
-.edge {
-  fill: none;
-  stroke: var(--topo-edge);
-  stroke-width: calc(2 * var(--w-hair)); /* half of it shows: the top is painted over the inner half */
-  stroke-linejoin: miter;
-  vector-effect: non-scaling-stroke;
+.sky {
+  fill: var(--sky-top);
 }
-.level.index .edge {
-  stroke-width: calc(2 * var(--w-line));
+.far-hills {
+  fill: var(--hill-far);
 }
-/* rock hachures: filled wedges on the cliff risers, drawn after the slab they hang from */
-.rock {
-  fill: var(--topo-rock);
+.plateau {
+  fill: var(--hill-mid);
 }
-.top {
-  fill: var(--topo-low);
+.wall {
+  fill: var(--rock);
 }
-@supports (fill: color-mix(in srgb, red 50%, blue)) {
-  .top {
-    fill: color-mix(in srgb, var(--topo-high) calc(var(--t) * 100%), var(--topo-low));
-  }
+.shade {
+  fill: var(--rock-shade);
+}
+.lit {
+  fill: var(--rock-lit);
+}
+.glow {
+  fill: color-mix(in srgb, var(--rock-lit) 60%, var(--rock));
+}
+.deep {
+  fill: var(--rock-crack);
+}
+.streak {
+  fill: var(--rock-shade);
+  opacity: 0.35;
+}
+.scree {
+  fill: color-mix(in srgb, var(--rock) 70%, var(--rock-shade));
+}
+.ground {
+  fill: var(--hill-near);
+}
+.trunk {
+  fill: var(--trunk);
+}
+.crown {
+  fill: var(--pine);
+}
+.crown-lit {
+  fill: var(--pine-lit);
 }
 /* routes: a solid line on a casing of the surface colour, so it reads over every contour */
 .route .hit {
@@ -602,11 +519,22 @@ onBeforeUnmount(() => {
 .map.drawn .route .line {
   stroke-dashoffset: 0;
 }
-.route .end {
-  fill: var(--route);
-  stroke: var(--route-casing);
-  stroke-width: var(--w-heavy);
+.route .bolts {
+  fill: none;
+  stroke: var(--route);
+  stroke-width: var(--w-line);
   vector-effect: non-scaling-stroke;
+}
+/* the top anchor: a double ring, as on a guidebook topo */
+.route .end {
+  fill: var(--route-casing);
+  stroke: var(--route);
+  stroke-width: var(--w-line);
+  vector-effect: non-scaling-stroke;
+  transition: stroke var(--dur-hover);
+}
+.route .end-dot {
+  fill: var(--route);
   transition: fill var(--dur-hover);
 }
 .route {
@@ -616,11 +544,35 @@ onBeforeUnmount(() => {
   stroke: var(--accent);
 }
 .route.on .end {
+  stroke: var(--accent);
+}
+.route.on .end-dot,
+.route.on .bolts {
   fill: var(--accent);
+  stroke: var(--accent);
 }
 .route.dim,
-.pill.dim {
+.pill.dim,
+.num.dim {
   opacity: 0.22;
+}
+/* route numbers at the foot, like a guidebook's */
+.num {
+  position: absolute;
+  transform: translate(-50%, 0.45rem);
+  min-width: 1.15rem;
+  padding: 0.1rem 0.25rem;
+  background: var(--route-casing);
+  border: 1.5px solid var(--route);
+  color: var(--route);
+  font: 600 0.72rem / 1.1 var(--f-mono);
+  text-align: center;
+  pointer-events: none;
+  transition: opacity var(--dur-hover);
+}
+.num.on {
+  border-color: var(--accent-text);
+  color: var(--accent-text);
 }
 /* grade tags: page-colour text on the route colour, on-accent text on the accent when active */
 .pill {
@@ -644,31 +596,6 @@ onBeforeUnmount(() => {
   padding: 0.2rem 0.6rem;
   background: var(--accent);
   color: var(--on-accent);
-}
-.spot {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  transform: translate(calc(-100% + 0.2rem), -60%);
-  color: var(--ink);
-  font: 500 0.7rem / 1 var(--f-mono);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  pointer-events: none;
-  transition: opacity var(--dur-hover);
-}
-/* the survey triangle, on the summit point */
-.spot::after {
-  content: '';
-  width: 0.45rem;
-  height: 0.4rem;
-  background: currentColor;
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
-}
-.spot.dim {
-  opacity: 0.4;
 }
 .pill .name {
   font: 600 0.8rem / 1.2 var(--f-body);
@@ -729,19 +656,13 @@ onBeforeUnmount(() => {
   .map.pinned {
     pointer-events: none; /* taps reach the list links behind; the map needs none on a phone */
   }
+  /* the plate fades into the page colour at its foot, over an opaque stage, so the list
+     passing behind it never shows through the fade */
   .map.pinned .stage {
-    overflow: visible;
+    background: var(--bg);
   }
   .map.pinned svg {
-    overflow: visible;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-  .halo {
-    fill: var(--bg);
-    stroke: var(--bg);
-    stroke-width: 36;
-    stroke-linejoin: round;
+    --fade: linear-gradient(to bottom, #000 86%, transparent);
   }
   /* Behind the model, in the page colour: a wash that is solid behind the crag's mass and
      fades out softly on every side, plus a short fade under the header. List text scrolling up
@@ -774,8 +695,12 @@ onBeforeUnmount(() => {
   }
   .route,
   .pill,
-  .spot {
+  .num,
+  .stage {
     transition: none;
+  }
+  .stage {
+    transform: none;
   }
 }
 </style>
