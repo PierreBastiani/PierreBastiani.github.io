@@ -73,8 +73,10 @@ onBeforeUnmount(() => clearTimeout(timer))
     >
       <a ref="figure" class="figure" href="#contact" aria-label="Pierre Bastiani, me contacter"></a>
       <div class="bridge">
-        <a class="card" href="#contact" :tabindex="open ? 0 : -1" @click="open = false">
-          <PortraitImage :size="44" alt="" />
+        <a class="card print" href="#contact" :tabindex="open ? 0 : -1" @click="open = false">
+          <!-- a printed route card: lettering band, the portrait in a frame, a perforation -->
+          <span class="band" aria-hidden="true"><span>Relais du sommet</span><span>802 m</span></span>
+          <span class="frame"><PortraitImage :size="48" alt="" /></span>
           <span class="who">
             <span class="name">{{ contact.name }}</span>
             <span class="role">{{ profile.role }}</span>
@@ -110,7 +112,6 @@ onBeforeUnmount(() => clearTimeout(timer))
 .figure {
   position: absolute;
   inset: 0;
-  border-radius: 0.6rem;
   pointer-events: auto;
 }
 /* The bridge holds the card and reaches back to the figure, so the pointer never crosses a
@@ -125,18 +126,21 @@ onBeforeUnmount(() => clearTimeout(timer))
 .zone.open .bridge {
   pointer-events: auto;
 }
+/* A printed card, like a ticket or a guidebook route card: sharp corners, a double ink rule,
+   the lettering band of the posters along the top, the grain of the rest of the drawings. */
 .card {
-  width: 16rem;
+  width: 17rem;
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 0.55rem 0.7rem;
+  gap: 0.6rem 0.75rem;
   align-items: center;
-  padding: 0.8rem 0.9rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  padding: 0 0.9rem 0.8rem;
+  border: 1.5px solid var(--ink);
   background: var(--surface);
+  box-shadow:
+    inset 0 0 0 3px var(--surface),
+    inset 0 0 0 3.75px var(--ink);
   color: var(--ink);
-  box-shadow: 0 6px 20px -12px rgb(0 0 0 / 0.35);
   font-size: 0.85rem;
   line-height: 1.35;
   text-decoration: none;
@@ -146,7 +150,13 @@ onBeforeUnmount(() => clearTimeout(timer))
   transition:
     opacity var(--dur-hover) var(--ease),
     translate var(--dur-hover) var(--ease),
+    border-color var(--dur-hover),
     visibility 0s linear var(--dur-hover);
+}
+/* everything sits above the grain */
+.card > * {
+  position: relative;
+  z-index: 2;
 }
 .zone.open .card {
   opacity: 1;
@@ -154,17 +164,35 @@ onBeforeUnmount(() => clearTimeout(timer))
   visibility: visible;
   transition:
     opacity var(--dur-hover) var(--ease),
-    translate var(--dur-hover) var(--ease);
+    translate var(--dur-hover) var(--ease),
+    border-color var(--dur-hover);
 }
 .card:hover {
-  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  border-color: var(--accent-text);
   color: var(--ink);
+}
+.band {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 3.75px -0.9rem 0.2rem;
+  padding: 0.35rem 0.9rem;
+  background: var(--ground);
+  color: var(--on-ground);
+  font: 500 0.66rem / 1.2 var(--f-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.frame {
+  display: block;
+  padding: 2px;
+  border: 1px solid var(--ink);
 }
 .card :deep(img) {
   display: block;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 48px;
+  height: 48px;
   object-fit: cover;
 }
 .who {
@@ -180,6 +208,11 @@ onBeforeUnmount(() => clearTimeout(timer))
 .avail,
 .cta {
   grid-column: 1 / -1;
+}
+.avail {
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--muted);
+  font: 400 0.74rem / 1.45 var(--f-mono);
 }
 .cta {
   font-weight: 600;
