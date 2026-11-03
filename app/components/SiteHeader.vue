@@ -60,9 +60,10 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
   top: 0;
   z-index: 20;
   padding-top: env(safe-area-inset-top, 0px);
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  /* Opaque, from the very top (safe area included): nothing that scrolls under the header
+     shows through it, as a translucent blur let section labels do. */
+  background: var(--bg);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 12%, transparent);
 }
 .bar {
   display: flex;
