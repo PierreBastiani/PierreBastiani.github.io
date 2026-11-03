@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ridgePath, type RidgeOptions } from '@/lib/ridge'
+import { ridgeFacets, ridgePath, type RidgeOptions } from '@/lib/ridge'
 import SummitSetup from './hero/SummitSetup.vue'
 
 // The closing band of the page: the same view as the hero, lower and wider, at the end of the
 // day, with the desk on the summit. Reuses the hero's ridge generator and summit drawing
-// (imported, not edited); the ridges here are simpler copies of the hero's three hill planes.
+// (imported, not edited); the ridges here are simpler copies of the hero's three hill planes,
+// printed the same way: flat inks, a shadow flat per slope, the grain on top.
 const far: RidgeOptions = {
   seed: 5,
   base: 574,
@@ -39,23 +40,27 @@ const near: RidgeOptions = {
   ],
 }
 const hills = { far: ridgePath(far), mid: ridgePath(mid), near: ridgePath(near) }
+const shade = {
+  far: ridgeFacets(far, { minProm: 10, smooth: 60 }),
+  mid: ridgeFacets(mid, { minProm: 14, smooth: 40 }),
+  near: ridgeFacets(near, { minProm: 16, smooth: 40 }),
+}
 </script>
 
 <template>
-  <div class="strip" aria-hidden="true">
+  <div class="strip print" aria-hidden="true">
     <svg viewBox="-400 430 2800 570" preserveAspectRatio="xMidYMax slice" focusable="false">
-      <defs>
-        <linearGradient id="strip-sky" x1="0" y1="430" x2="0" y2="560" gradientUnits="userSpaceOnUse">
-          <stop offset="0" style="stop-color: var(--sky-mid)" />
-          <stop offset="1" style="stop-color: var(--sky-low)" />
-        </linearGradient>
-      </defs>
-      <rect x="-400" y="430" width="2800" height="150" fill="url(#strip-sky)" />
+      <rect x="-400" y="430" width="2800" height="150" fill="var(--sky-mid)" />
+      <rect x="-400" y="494" width="2800" height="86" fill="var(--sky-low)" />
+      <circle cx="1330" cy="536" r="34" fill="var(--sun)" opacity="0.3" />
       <circle cx="1330" cy="536" r="20" fill="var(--sun)" />
-      <rect x="-400" y="520" width="2800" height="60" fill="var(--sea-haze)" />
+      <rect x="-400" y="520" width="2800" height="60" fill="var(--sea-fill)" />
       <path :d="hills.far" fill="var(--hill-far)" />
+      <path :d="shade.far" fill="var(--hill-far-shade)" />
       <path :d="hills.mid" fill="var(--hill-mid)" />
+      <path :d="shade.mid" fill="var(--hill-mid-shade)" />
       <path :d="hills.near" fill="var(--hill-near)" />
+      <path :d="shade.near" fill="var(--hill-near-shade)" />
       <SummitSetup />
     </svg>
   </div>
