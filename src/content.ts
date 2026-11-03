@@ -166,12 +166,17 @@ export const localOffer = {
   title: 'Ce que je règle pour vous',
   intro:
     'Je passe dans votre commerce, je regarde ce qui vous fait perdre du temps sur l’ordi ou le téléphone, et je le règle.',
+  // `visual` picks the before/after drawing in OfferVisual.vue; `before`/`after` caption it.
   items: [
-    { title: 'Votre fiche Google à jour', text: 'Horaires, photos, réponses aux avis\u00a0: les clients du coin vous trouvent.' },
-    { title: 'Un site qui s’affiche', text: 'Simple, rapide, et vous le modifiez vous-même.' },
-    { title: 'Fini les ressaisies', text: 'Devis, commandes et plannings qui se remplissent tout seuls.' },
-    { title: 'Les petits pépins informatiques', text: 'Wi-Fi, imprimante, sauvegardes, mots de passe\u00a0: je règle, et je vous explique.' },
-  ],
+    { title: 'Votre fiche Google à jour', text: 'Horaires, photos, réponses aux avis\u00a0: les clients du coin vous trouvent.',
+      visual: 'google', before: 'Une fiche vide', after: 'Une fiche complète' },
+    { title: 'Un site qui s’affiche', text: 'Simple, rapide, et vous le modifiez vous-même.',
+      visual: 'site', before: 'Illisible sur un téléphone', after: 'Clair, avec un bouton pour appeler' },
+    { title: 'Fini les ressaisies', text: 'Devis, commandes et plannings qui se remplissent tout seuls.',
+      visual: 'orders', before: 'Le cahier, puis l’ordi', after: 'Une seule liste, à jour' },
+    { title: 'Les petits pépins informatiques', text: 'Wi-Fi, imprimante, sauvegardes, mots de passe\u00a0: je règle, et je vous explique.',
+      visual: 'fix', before: 'Les câbles en vrac', after: 'Rangé, étiqueté, ça marche' },
+  ] as { title: string; text: string; visual: 'google' | 'site' | 'orders' | 'fix'; before: string; after: string }[],
   steps: [
     { title: '20\u00a0min ensemble', text: 'Vous me montrez ce qui vous prend du temps.' },
     { title: 'Je viens sur place', text: 'Je mets en place avec vous et votre équipe.' },
@@ -179,7 +184,31 @@ export const localOffer = {
   ],
   offer:
     'Je lance cette activité et je veux d’abord vérifier que je peux vraiment être utile aux commerces d’ici. Pour les 3\u00a0premiers\u00a0: une demi-journée offerte. Vous me dites franchement si ça vous a servi.',
+  how: 'Comment ça se passe',
+  area: {
+    title: 'Je me déplace ici',
+    text: 'À La Colle-sur-Loup et à Saint-Paul-de-Vence, je viens dans votre commerce.',
+  },
+  me: {
+    line: 'J’habite à Saint-Paul-de-Vence et je suis développeur depuis 2020.',
+  },
+  trial: 'Essai offert',
+  // Questions a shop owner asks, answered only with what Pierre has said.
+  faq: {
+    title: 'Vos questions',
+    items: [
+      { q: 'La première demi-journée est vraiment offerte\u00a0?', a: 'Oui, pour les 3\u00a0premiers commerces. Ensuite, vous me dites franchement si ça vous a servi.' },
+      { q: 'Faut-il s’y connaître en informatique\u00a0?', a: 'Non. Vous me montrez ce qui vous prend du temps, je m’en occupe et je vous explique ce que j’ai fait.' },
+      { q: 'Je garde les outils après\u00a0?', a: 'Oui. Les outils sont à vous, et je vous montre comment vous en servir.' },
+      { q: 'Vous venez où\u00a0?', a: 'Dans votre commerce, à La Colle-sur-Loup ou à Saint-Paul-de-Vence.' },
+    ],
+  },
+  call: { title: 'Le plus simple, c’est de m’appeler.', mail: 'Écrire un mail', bar: 'Appeler' },
 }
+
+// What local shop owners say, word for word, with their name and shop as they agree to show
+// it. The block renders nothing while the list is empty.
+export const localTestimonials: { quote: string; author: string; shop?: string }[] = []
 
 // Section headings. `quiet` is the second, muted line of a two-tone heading.
 export const sections = {
