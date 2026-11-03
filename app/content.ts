@@ -128,8 +128,8 @@ export const projects: Project[] = [
   {
     name: 'pierre.kensae.com',
     href: 'https://github.com/PierreBastiani/PierreBastiani.github.io',
-    text: 'Ce site, en Vue 3 et Vite. Le paysage en calques et la carte topo en 3D sont du SVG dessiné à la main, sans librairie 3D\u00a0; les pages sont prérendues, avec deux thèmes, Esterel en clair et crépuscule nordique en sombre.',
-    tags: ['Vue', 'Vite', 'SVG'],
+    text: 'Ce site, en Nuxt 4, généré en pages statiques. Le paysage en calques et la carte topo en 3D sont du SVG dessiné à la main, sans librairie 3D\u00a0; deux thèmes, Esterel en clair et crépuscule nordique en sombre.',
+    tags: ['Nuxt', 'Vue', 'SVG'],
     art: 'site',
   },
 ]
