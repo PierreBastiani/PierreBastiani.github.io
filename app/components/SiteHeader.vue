@@ -12,8 +12,10 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
 <template>
   <header class="site-header vt-header">
     <div class="wrap bar">
-      <NuxtLink v-if="props.variant === 'geek'" class="name" :to="links.home" translate="no">{{ contact.name }}</NuxtLink>
-      <a v-else class="name" href="#top" translate="no">{{ contact.name }}</a>
+      <NuxtLink v-if="props.variant === 'geek'" class="name" :to="links.home" translate="no">
+        <BrandMark />{{ contact.name }}
+      </NuxtLink>
+      <a v-else class="name" href="#top" translate="no"><BrandMark />{{ contact.name }}</a>
 
       <nav v-if="props.variant !== 'geek'" aria-label="Sections">
         <ul>
@@ -69,6 +71,9 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
   min-height: var(--header-h);
 }
 .name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   font: 650 1rem/1 var(--f-display);
   text-decoration: none;
   letter-spacing: -0.01em;
