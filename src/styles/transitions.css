@@ -18,15 +18,15 @@
 }
 
 ::view-transition-group(*) {
-  animation-duration: 0.45s;
-  animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+  animation-duration: var(--dur-fade);
+  animation-timing-function: var(--ease);
 }
 /* The page body: a short fade with a small lift, so the swap reads as one move. */
 ::view-transition-old(root) {
-  animation: 0.25s ease-in both vt-out;
+  animation: var(--dur-hover) ease-in both vt-out;
 }
 ::view-transition-new(root) {
-  animation: 0.4s 0.05s cubic-bezier(0.25, 0.8, 0.25, 1) both vt-in;
+  animation: var(--dur-fade) 50ms var(--ease) both vt-in;
 }
 @keyframes vt-out {
   to {

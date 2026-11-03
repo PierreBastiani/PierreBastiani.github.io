@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, useId, watch } from 'vue'
 import { routes, sections } from '@/content'
 import {
   DZ,
@@ -113,10 +113,48 @@ function shotOf(id: string): Camera {
     theta,
     phi: deg(28),
     distance: OVERVIEW.distance,
-    zoom: narrow ? 1.15 : 1.45, // pinned on a phone the crag isn't clipped, so it zooms less
+    zoom: narrow ? 1.05 : 1.45, // pinned on a phone the crag isn't clipped, so it barely zooms
     target: [(fx + tx) / 2, (fh + th) / 2, (fz + tz) / 2],
     offset: [box.value.x + box.value.w / 2, box.value.y + box.value.h / 2],
   }
+}
+
+// On a phone the crag isn't clipped, so pan each view to keep it on screen: the whole crag
+// when it fits the frame, otherwise at least the active route's summit, with room above it
+// for its tag.
+let stageWidth = 0
+function fitInFrame(c: Camera, id: string | null): Camera {
+  if (!narrow || !stageWidth) return c
+  const b = box.value
+  const unit = b.w / stageWidth // scene units per CSS px
+  const left = b.x + 12 * unit
+  const right = b.x + b.w - 12 * unit
+  let x0 = Infinity
+  let x1 = -Infinity
+  for (const r of rings) {
+    for (const [x, z] of r.plan) {
+      const [sx] = project([x, r.level * DZ, z], c)
+      x0 = Math.min(x0, sx)
+      x1 = Math.max(x1, sx)
+    }
+  }
+  let dx = 0
+  if (x1 - x0 <= right - left) {
+    if (x0 < left) dx = left - x0
+    if (x1 + dx > right) dx = right - x1
+  } else {
+    dx = (left + right) / 2 - (x0 + x1) / 2
+  }
+  let dy = 0
+  if (id) {
+    const pts = draped[id]!
+    const [sx, sy] = project(pts[pts.length - 1]!, c)
+    if (sx + dx < left) dx = left - sx
+    if (sx + dx > right) dx = right - sx
+    const roof = b.y + 46 * unit // the tag above the summit
+    if (sy < roof) dy = roof - sy
+  }
+  return { ...c, offset: [c.offset[0] + dx, c.offset[1] + dy] }
 }
 
 const cam: Camera = { ...OVERVIEW, target: [...OVERVIEW.target], offset: [...OVERVIEW.offset] }
@@ -130,11 +168,25 @@ const frame = shallowRef(render(cam))
 // pointer can't toggle it.
 const fromList = ref<string | null>(null)
 const fromMap = ref<string | null>(null)
-const fromScroll = ref<string | null>(null)
+const firstReadable = ref<string | null>(null) // reading: first heading fully in view below the map
+const tapped = ref<string | null>(null) // a tap wins until reading moves on
+const readingOn = ref(false)
+const fromScroll = computed(() => {
+  if (!readingOn.value) return null
+  if (narrow && !pinned.value) return null // before the map pins, the reader is on the intro
+  return tapped.value ?? firstReadable.value
+})
 const active = computed(() => fromList.value ?? fromMap.value ?? fromScroll.value)
 const map = ref<HTMLElement | null>(null)
 const list = ref<HTMLElement | null>(null)
-const pinned = ref(false) // phones: the map is stuck under the header with the list below
+// Phones: the map is stuck under the header with the list below (or past that, leaving with
+// the end of the section). While the section is under the header, a cover fixed to the top of
+// the screen keeps anything from showing through the translucent header.
+const pinned = ref(false)
+const coverOn = ref(false)
+const stage = ref<HTMLElement | null>(null)
+const section = ref<HTMLElement | null>(null)
+const haloId = `crag-halo-${useId()}`
 const drawn = ref(true)
 
 // Grades sit in HTML pills over the figure, so they keep a readable size on a phone.
@@ -174,11 +226,14 @@ let scrollTurn = 0
 function retarget() {
   const base = active.value ? shotOf(active.value) : OVERVIEW
   const sway = active.value ? 0.35 : 1 // a close-up only sways a little with the pointer
-  aim = {
-    ...base,
-    theta: base.theta + clamp(scrollTurn + pointer.x * deg(14), deg(14)) * sway,
-    phi: base.phi - pointer.y * deg(5) * sway,
-  }
+  aim = fitInFrame(
+    {
+      ...base,
+      theta: base.theta + clamp(scrollTurn + pointer.x * deg(14), deg(14)) * sway,
+      phi: base.phi - pointer.y * deg(5) * sway,
+    },
+    active.value,
+  )
   if (reduce) {
     Object.assign(cam, { ...aim, target: [...aim.target], offset: [...aim.offset] })
     frame.value = render(cam)
@@ -233,7 +288,10 @@ function onScroll() {
   if (!map.value) return
   const r = map.value.getBoundingClientRect()
   const h = window.innerHeight
-  pinned.value = narrow && Math.abs(r.top - (parseFloat(getComputedStyle(map.value).top) || 0)) < 1
+  const stickyTop = parseFloat(getComputedStyle(map.value).top) || 0
+  pinned.value = narrow && r.top <= stickyTop + 0.5
+  const sr = section.value?.getBoundingClientRect()
+  coverOn.value = narrow && !!sr && sr.top < stickyTop && sr.bottom > 0
   if (reduce || r.bottom < 0 || r.top > h) return
   if (!drawn.value && r.top < h * 0.85) drawn.value = true
   scrollTurn = -((r.top + r.height / 2) / h - 0.5) * deg(10)
@@ -253,44 +311,51 @@ function onItemFocus(id: string, e: FocusEvent) {
   if ((e.target as Element).matches(':focus-visible')) fromList.value = id
 }
 function onItemTap(id: string) {
-  if (reading) fromScroll.value = id
+  if (readingOn.value) tapped.value = id
 }
 
-// Reading: a 2 px line a little below the pinned map, where the eye lands on the list, so the
-// active item's heading is still in view. The item crossing it becomes active and
-// stays active through the gap to the next item, so boundaries never flicker. Above the first
-// item the crag goes back to the overview; after the last one it keeps the last route.
+// Reading: the active item is the first one whose heading is fully visible below the pinned
+// map and its fade. The observer's root starts at the bottom of that fade; every heading that
+// becomes or stops being fully visible reports, and the answer is recomputed from all of them,
+// so a fast fling can't skip an item. Above the first item the crag shows the overview (the
+// map isn't pinned yet); after the last one it keeps the last route.
+const FADE = 24 // px of wash below the map (see .map.pinned::after)
 let reading: IntersectionObserver | null = null
 let resizeTimer = 0
+const readable = new Set<number>()
 function watchReading() {
   reading?.disconnect()
   reading = null
-  const on = window.matchMedia('(max-width: 52rem), (hover: none), (pointer: coarse)').matches
-  if (!on || !map.value || !list.value) {
-    fromScroll.value = null
-    return
-  }
+  readable.clear()
+  readingOn.value = window.matchMedia('(max-width: 52rem), (hover: none), (pointer: coarse)').matches
+  if (!readingOn.value || !map.value || !list.value) return
   const pinnedTop = parseFloat(getComputedStyle(map.value).top) || 0
-  const below = pinnedTop + map.value.offsetHeight
-  const line = Math.round(below + Math.min(120, 0.25 * (window.innerHeight - below)))
-  const items = [...list.value.children] as HTMLElement[]
+  const line = Math.round(pinnedTop + map.value.offsetHeight + FADE)
+  const heads = [...list.value.querySelectorAll('h3')]
   reading = new IntersectionObserver(
     (entries) => {
       for (const e of entries) {
-        const id = (e.target as HTMLElement).dataset.route!
-        if (e.isIntersecting) fromScroll.value = id
-        else if (e.target === items[0] && id === fromScroll.value && e.boundingClientRect.top >= line) fromScroll.value = null
+        const i = heads.indexOf(e.target as HTMLHeadingElement)
+        if (e.isIntersecting && e.intersectionRatio > 0.99) readable.add(i)
+        else readable.delete(i)
+      }
+      if (!readable.size) return
+      const id = routes[Math.min(...readable)]!.id
+      if (id !== firstReadable.value) {
+        firstReadable.value = id
+        tapped.value = null
       }
     },
-    { rootMargin: `-${line}px 0px -${Math.max(0, window.innerHeight - line - 2)}px 0px` },
+    { rootMargin: `-${line}px 0px 0px 0px`, threshold: [0, 1] },
   )
-  items.forEach((el) => reading!.observe(el))
+  heads.forEach((el) => reading!.observe(el))
 }
 // Pick the frame for the layout, then place the reading line under the map's new height.
 async function layout() {
   narrow = window.matchMedia('(max-width: 52rem)').matches
   box.value = narrow ? TIGHT : WIDE
   await nextTick()
+  stageWidth = stage.value?.offsetWidth ?? 0
   watchReading()
   retarget()
   onScroll()
@@ -319,7 +384,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section id="competences" class="routes" aria-labelledby="routes-title">
+  <section id="competences" ref="section" class="routes" aria-labelledby="routes-title">
+    <div class="header-cover" :class="{ on: coverOn }" aria-hidden="true"></div>
     <div class="wrap grid">
       <header class="head section-head">
         <p class="eyebrow">{{ sections.skills.label }}</p>
@@ -331,9 +397,23 @@ onBeforeUnmount(() => {
       </header>
 
       <figure ref="map" class="map" :class="{ drawn, pinned, focused: !!active }" @pointermove="onPointer" @pointerleave="onLeave">
-        <div class="stage">
+        <div ref="stage" class="stage">
           <svg :viewBox="viewBox" role="img" aria-labelledby="map-title">
             <title id="map-title">Falaise en relief à deux sommets, avec cinq voies, une par compétence</title>
+            <!-- pinned on a phone: a soft halo of the page colour around the crag, drawn inside
+                 the SVG with a filter region well beyond it, so it never ends on a hard edge -->
+            <template v-if="pinned">
+              <defs>
+                <filter :id="haloId" x="-25%" y="-25%" width="150%" height="150%">
+                  <feGaussianBlur stdDeviation="14" />
+                </filter>
+              </defs>
+              <g class="halo" :filter="`url(#${haloId})`">
+                <template v-for="(lv, i) in frame.levels" :key="i">
+                  <path v-for="(d, j) in lv.tops" :key="j" :d="d" />
+                </template>
+              </g>
+            </template>
             <g v-for="(lv, i) in frame.levels" :key="i" class="level" :class="{ index: lv.index }" :style="{ '--t': lv.t }">
               <path v-for="(d, j) in lv.sides" :key="'s' + j" class="side" :d="d" />
               <path v-for="(d, j) in lv.tops" :key="'e' + j" class="edge" :d="d" />
@@ -391,7 +471,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .routes {
-  padding-block: var(--space-section);
+  padding-top: var(--space-section);
 }
 .grid {
   display: grid;
@@ -412,6 +492,17 @@ onBeforeUnmount(() => {
 .stage {
   position: relative;
   overflow: hidden;
+}
+.header-cover {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-h);
+  z-index: 19;
+  background: var(--bg);
+  pointer-events: none;
 }
 .map svg {
   display: block;
@@ -465,8 +556,8 @@ onBeforeUnmount(() => {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   transition:
-    stroke-dashoffset 1.6s cubic-bezier(0.3, 0.7, 0.2, 1),
-    stroke 0.2s;
+    stroke-dashoffset var(--dur-draw) var(--ease-draw),
+    stroke var(--dur-hover);
 }
 .route .casing {
   stroke: var(--route-casing);
@@ -485,10 +576,10 @@ onBeforeUnmount(() => {
   stroke: var(--route-casing);
   stroke-width: 3px;
   vector-effect: non-scaling-stroke;
-  transition: fill 0.2s;
+  transition: fill var(--dur-hover);
 }
 .route {
-  transition: opacity 0.3s;
+  transition: opacity var(--dur-hover);
 }
 .route.on .line {
   stroke: var(--accent);
@@ -513,9 +604,9 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   cursor: default;
   transition:
-    opacity 0.3s,
-    background-color 0.2s,
-    color 0.2s;
+    opacity var(--dur-hover),
+    background-color var(--dur-hover),
+    color var(--dur-hover);
 }
 .pill.on {
   z-index: 1;
@@ -544,14 +635,14 @@ onBeforeUnmount(() => {
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  transition: color 0.2s;
+  transition: color var(--dur-hover);
 }
 .g {
   font: 500 0.8em var(--f-mono);
   color: var(--muted);
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-  transition: color 0.2s;
+  transition: color var(--dur-hover);
 }
 .list li.on .g {
   color: var(--accent-text);
@@ -567,7 +658,11 @@ onBeforeUnmount(() => {
   .grid {
     grid-template-columns: 1fr;
     grid-template-areas: 'head' 'map' 'list';
-    gap: 3rem;
+    /* the head already carries --space-head below it; the map sits closer to its list */
+    gap: 0;
+  }
+  .map {
+    margin-bottom: 1.5rem;
   }
   /* Pinned under the header with no background: the list shows through the empty parts and
      passes behind the crag, which keeps a soft halo of the page colour around it. */
@@ -586,30 +681,34 @@ onBeforeUnmount(() => {
     overflow: visible;
     -webkit-mask-image: none;
     mask-image: none;
-    filter: drop-shadow(0 0 1px var(--bg)) drop-shadow(0 0 10px var(--bg));
   }
-  /* Behind the model, in the page colour: a cover from the top of the screen down to the map
-     (nothing shows through the translucent header), then a wash over the map that is solid
-     behind the crag's mass and fades out toward its foot. List text scrolling up dissolves as
-     it passes behind the model and is crisp again below it. CSS only, nothing runs per frame. */
-  .map.pinned::before,
+  .halo {
+    fill: var(--bg);
+    stroke: var(--bg);
+    stroke-width: 36;
+    stroke-linejoin: round;
+  }
+  /* Behind the model, in the page colour: a wash that is solid behind the crag's mass and
+     fades out softly on every side, plus a short fade under the header. List text scrolling up
+     dissolves as it passes behind the model and is crisp again below it. It moves with the map,
+     so when the section ends the crag, its wash and its tags leave together. CSS only. */
   .map.pinned::after {
     content: '';
     position: absolute;
+    top: 0;
+    bottom: -1.5rem;
     left: calc(-1 * var(--gutter));
     right: calc(-1 * var(--gutter-r));
     z-index: -1;
     pointer-events: none;
+    background:
+      linear-gradient(var(--bg), transparent 1.5rem),
+      radial-gradient(ellipse 72% 64% at 50% 46%, var(--bg) 55%, transparent 100%);
   }
-  .map.pinned::before {
-    bottom: 100%;
-    height: calc(var(--header-h) + 1px);
-    background: var(--bg);
-  }
-  .map.pinned::after {
-    top: 0;
-    bottom: -1.5rem;
-    background: linear-gradient(var(--bg) 55%, transparent);
+  /* fixed to the screen under the header (z-index 20): opaque page colour while the skills
+     section is under the header, so nothing scrolls through the header's translucency */
+  .header-cover.on {
+    display: block;
   }
 }
 @media (prefers-reduced-motion: reduce) {

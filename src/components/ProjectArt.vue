@@ -146,14 +146,14 @@ const ridges = [ridge(150, 14, 0.4), ridge(178, 18, 2.1), ridge(206, 16, 4)]
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: transform var(--dur-move) var(--ease);
 }
 .layer {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: transform var(--dur-move) var(--ease);
 }
 
 /* palette: every colour is a token (main.css, art block) */

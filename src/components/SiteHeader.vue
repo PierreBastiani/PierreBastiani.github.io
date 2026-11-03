@@ -94,8 +94,8 @@ nav a {
   white-space: nowrap;
   color: var(--muted);
   transition:
-    color 0.2s,
-    background-color 0.2s;
+    color var(--dur-hover),
+    background-color var(--dur-hover);
 }
 nav a:hover {
   color: var(--ink);
@@ -124,8 +124,8 @@ nav a:hover {
   color: var(--muted);
   cursor: pointer;
   transition:
-    color 0.2s,
-    background-color 0.2s;
+    color var(--dur-hover),
+    background-color var(--dur-hover);
 }
 .theme svg {
   width: 1.1rem;
