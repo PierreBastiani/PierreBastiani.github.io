@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { contact, localOffer, localTestimonials } from '@/content'
 import OfferVisual from './OfferVisual.vue'
-import LocalMap from './LocalMap.vue'
 import PortraitImage from './PortraitImage.vue'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
@@ -44,14 +43,6 @@ onBeforeUnmount(() => io?.disconnect())
         </ol>
       </div>
 
-      <!-- where I go -->
-      <div class="area">
-        <div class="area-text">
-          <h2 class="sub-h">{{ localOffer.area.title }}</h2>
-          <p>{{ localOffer.area.text }}</p>
-        </div>
-        <LocalMap />
-      </div>
 
       <!-- who I am, and the honest offer -->
       <div class="trial">
@@ -125,7 +116,6 @@ h2 {
   margin-bottom: 1.5rem;
 }
 .how,
-.area,
 .trial,
 .faq,
 .call {
@@ -197,13 +187,6 @@ h2 {
 }
 .t {
   color: var(--muted);
-}
-
-/* area */
-.area {
-  display: grid;
-  gap: 1.5rem;
-  align-items: center;
 }
 
 /* who, and the free half-day */
@@ -385,10 +368,6 @@ blockquote {
   .lane li {
     padding-left: 0;
     padding-top: 3.4rem;
-  }
-  .area {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-    gap: clamp(2rem, 5vw, 4rem);
   }
   .trial {
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
