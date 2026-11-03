@@ -182,6 +182,9 @@ export const localOffer = {
     line: 'J’habite à Saint-Paul-de-Vence et je suis développeur depuis 2020.',
   },
   trial: 'Essai offert',
+  // printed in the cards' lettering bands
+  trialFor: '3\u00a0premiers commerces',
+  howCount: '3\u00a0étapes',
   // Questions a shop owner asks, answered only with what Pierre has said.
   faq: {
     title: 'Vos questions',
@@ -192,7 +195,12 @@ export const localOffer = {
       { q: 'Vous venez où\u00a0?', a: 'Dans votre commerce, à La Colle-sur-Loup ou à Saint-Paul-de-Vence.' },
     ],
   },
-  call: { title: 'Le plus simple, c’est de m’appeler.', mail: 'Écrire un mail', bar: 'Appeler' },
+  call: {
+    title: 'Le plus simple, c’est de m’appeler.',
+    mail: 'Écrire un mail',
+    bar: 'Appeler',
+    band: 'La Colle-sur-Loup · Saint-Paul-de-Vence',
+  },
 }
 
 // What local shop owners say, word for word, with their name and shop as they agree to show
