@@ -3,13 +3,14 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, useId,
 import { routes, sections } from '@/content'
 import {
   DZ,
-  SUMMITS,
+  INDEX_EVERY,
+  contourRings,
+  hachures,
   heightAt,
   pathOf,
   project,
-  ringLevel,
-  ringPlan,
   routePlan,
+  spotHeights,
   type Camera,
   type Pt,
   type Vec3,
@@ -24,10 +25,14 @@ const lines: Record<string, Pt[]> = {
   data: [[330, 640], [318, 590], [296, 540]],
 }
 
-// Plan geometry, computed once: every ring with its level, and the routes draped on the ground.
-const rings = SUMMITS.flatMap((s) => Array.from({ length: s.rings }, (_, i) => ({ level: ringLevel(s, i + 1), plan: ringPlan(s, i + 1) })))
+// Plan geometry, computed once: every contour ring with its level, the rock hachures, the
+// spot heights, and the routes draped on the ground.
+const rings = contourRings()
 const top = Math.max(...rings.map((r) => r.level))
 const byLevel = Array.from({ length: top }, (_, i) => rings.filter((r) => r.level === i + 1))
+const rock = hachures(rings)
+const rockByLevel = Array.from({ length: top + 1 }, (_, i) => rock.filter((h) => h.level === i))
+const spots = spotHeights()
 
 // Each route starts at the foot of the crag: the flat approach in front of it is dropped.
 function drape(pts: Pt[]): Vec3[] {
@@ -49,12 +54,15 @@ function render(c: Camera) {
       const level = i + 1
       return {
         t: (level / top).toFixed(3),
-        index: level % 4 === 0,
+        index: level % INDEX_EVERY === 0,
         // the slab's lower outline shows as its side, the upper one as its top
         sides: ring.map((r) => pathOf(r.plan.map(([x, z]) => project([x, (level - 1) * DZ, z], c)), true)),
         tops: ring.map((r) => pathOf(r.plan.map(([x, z]) => project([x, level * DZ, z], c)), true)),
+        // hachures that start on this slab, one path of short strokes
+        rock: rockByLevel[level]!.map((h) => pathOf([project(h.a, c), project(h.b, c), project(h.c, c)], true)).join(' '),
       }
     }),
+    spots: spots.map((s) => project(s.at, c)),
     routes: Object.fromEntries(
       Object.entries(draped).map(([id, pts]) => {
         const p = pts.map((v) => project(v, c))
@@ -188,6 +196,15 @@ const stage = ref<HTMLElement | null>(null)
 const section = ref<HTMLElement | null>(null)
 const haloId = `crag-halo-${useId()}`
 const drawn = ref(true)
+
+// Spot heights, like the pills: HTML over the figure so the numbers stay readable.
+const spotTags = computed(() =>
+  spots.map((s, i) => {
+    const [x, y] = frame.value.spots[i]!
+    const b = box.value
+    return { metres: s.metres, left: `${((x - b.x) / b.w) * 100}%`, top: `${((y - b.y) / b.h) * 100}%` }
+  }),
+)
 
 // Grades sit in HTML pills over the figure, so they keep a readable size on a phone.
 // The active one also carries the skill's name.
@@ -418,6 +435,7 @@ onBeforeUnmount(() => {
               <path v-for="(d, j) in lv.sides" :key="'s' + j" class="side" :d="d" />
               <path v-for="(d, j) in lv.tops" :key="'e' + j" class="edge" :d="d" />
               <path v-for="(d, j) in lv.tops" :key="'t' + j" class="top" :d="d" />
+              <path v-if="lv.rock" class="rock" :d="lv.rock" />
             </g>
             <g
               v-for="r in routes"
@@ -432,6 +450,15 @@ onBeforeUnmount(() => {
               <circle class="end" :cx="frame.routes[r.id]!.end[0]" :cy="frame.routes[r.id]!.end[1]" r="11" />
             </g>
           </svg>
+          <span
+            v-for="(s, i) in spotTags"
+            :key="'h' + i"
+            class="spot"
+            :class="{ dim: !!active }"
+            :style="{ left: s.left, top: s.top }"
+            aria-hidden="true"
+            >{{ s.metres }}</span
+          >
           <span
             v-for="p in pills"
             :key="p.id"
@@ -523,12 +550,16 @@ onBeforeUnmount(() => {
 .edge {
   fill: none;
   stroke: var(--topo-edge);
-  stroke-width: 2px;
-  stroke-linejoin: round;
+  stroke-width: calc(2 * var(--w-hair)); /* half of it shows: the top is painted over the inner half */
+  stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
 }
 .level.index .edge {
-  stroke-width: 3.2px;
+  stroke-width: calc(2 * var(--w-line));
+}
+/* rock hachures: filled wedges on the cliff risers, drawn after the slab they hang from */
+.rock {
+  fill: var(--topo-rock);
 }
 .top {
   fill: var(--topo-low);
@@ -550,8 +581,8 @@ onBeforeUnmount(() => {
 .route .casing,
 .route .line {
   fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
@@ -561,11 +592,11 @@ onBeforeUnmount(() => {
 }
 .route .casing {
   stroke: var(--route-casing);
-  stroke-width: 8px;
+  stroke-width: calc(var(--w-heavy) + 4px);
 }
 .route .line {
   stroke: var(--route);
-  stroke-width: 4px;
+  stroke-width: var(--w-heavy);
 }
 .map.drawn .route .casing,
 .map.drawn .route .line {
@@ -574,7 +605,7 @@ onBeforeUnmount(() => {
 .route .end {
   fill: var(--route);
   stroke: var(--route-casing);
-  stroke-width: 3px;
+  stroke-width: var(--w-heavy);
   vector-effect: non-scaling-stroke;
   transition: fill var(--dur-hover);
 }
@@ -596,7 +627,6 @@ onBeforeUnmount(() => {
   position: absolute;
   transform: translate(0.75rem, -50%);
   padding: 0.12rem 0.45rem;
-  border-radius: 999px;
   background: var(--route);
   color: var(--bg);
   font: 600 0.78rem / 1.2 var(--f-mono);
@@ -614,6 +644,31 @@ onBeforeUnmount(() => {
   padding: 0.2rem 0.6rem;
   background: var(--accent);
   color: var(--on-accent);
+}
+.spot {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transform: translate(calc(-100% + 0.2rem), -60%);
+  color: var(--ink);
+  font: 500 0.7rem / 1 var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity var(--dur-hover);
+}
+/* the survey triangle, on the summit point */
+.spot::after {
+  content: '';
+  width: 0.45rem;
+  height: 0.4rem;
+  background: currentColor;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.spot.dim {
+  opacity: 0.4;
 }
 .pill .name {
   font: 600 0.8rem / 1.2 var(--f-body);
@@ -718,7 +773,8 @@ onBeforeUnmount(() => {
     stroke-dashoffset: 0;
   }
   .route,
-  .pill {
+  .pill,
+  .spot {
     transition: none;
   }
 }
