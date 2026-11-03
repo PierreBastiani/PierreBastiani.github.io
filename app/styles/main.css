@@ -66,6 +66,31 @@
   --topo-edge: #c2a089;
   --route-casing: #fbf5ee;
 
+  /* Inks: the print palette every drawing is made of (2026-11-03 illustration pass, after
+     Roger Broders' PLM posters and Swiss maps). A drawing picks from these eight, as flats;
+     a darker or lighter shade of one is an overprint (color-mix of two inks), never a new
+     colour and never a gradient. Scene and map tokens below point at them, so the dusk
+     blocks only need to swap the inks. */
+  --ink-shell: #f4e8dc; /* paper: walls, clouds, lit rock, highlights */
+  --ink-sky: #c3d2e6;
+  --ink-lilac: #a497c0; /* distance and shadow */
+  --ink-sea: #1d4466;
+  --ink-sage: #8f9c76; /* garrigue */
+  --ink-ochre: #e4b47e; /* low sun on stone and sand */
+  --ink-porphyry: #c27a55; /* the accent: roofs, the beanie, one mark per drawing */
+  --ink-oxblood: #5e2f22; /* the darkest ink: figures, ground, lettering */
+
+  /* Line: three weights, in screen pixels whatever the drawing's scale (with .ink-*,
+     vector-effect: non-scaling-stroke). Contour, line, hair. Square ends, mitred corners. */
+  --w-heavy: 2.25px;
+  --w-line: 1.25px;
+  --w-hair: 0.75px;
+
+  /* Print grain: one noise tile, laid over a drawing with soft-light (see .print). The
+     same tile reads as ink grain on dark flats and paper tooth on light ones. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='2.4' intercept='-.7'/%3E%3CfeFuncG type='linear' slope='2.4' intercept='-.7'/%3E%3CfeFuncB type='linear' slope='2.4' intercept='-.7'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E");
+  --grain-opacity: 0.4;
+
   --f-display: 'Hanken Grotesk Variable', 'Helvetica Neue', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --f-body: 'Hanken Grotesk Variable', 'Helvetica Neue', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --f-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -139,6 +164,15 @@
     --topo-side: #131b2e;
     --topo-edge: #56658a;
     --route-casing: #131b2e;
+    --ink-shell: #d9c3b0;
+    --ink-sky: #29344f;
+    --ink-lilac: #5c5b7f;
+    --ink-sea: #111a2d;
+    --ink-sage: #3d4964;
+    --ink-ochre: #f2c595;
+    --ink-porphyry: #d27850;
+    --ink-oxblood: #0e1524;
+    --grain-opacity: 0.32;
     color-scheme: dark;
   }
 }
@@ -194,6 +228,15 @@
   --topo-side: #131b2e;
   --topo-edge: #56658a;
   --route-casing: #131b2e;
+  --ink-shell: #d9c3b0;
+  --ink-sky: #29344f;
+  --ink-lilac: #5c5b7f;
+  --ink-sea: #111a2d;
+  --ink-sage: #3d4964;
+  --ink-ochre: #f2c595;
+  --ink-porphyry: #d27850;
+  --ink-oxblood: #0e1524;
+  --grain-opacity: 0.32;
   color-scheme: dark;
 }
 
@@ -493,4 +536,44 @@ main > .section:last-child {
   --art-floor: #1f2a42;
   --art-window: #3a4560;
   --art-sun: #f4c79a;
+}
+
+/* Printed drawings. .print lays the grain over a drawing (the drawing's box must be
+   positioned); .ink-heavy/.ink-line/.ink-hair are the only three stroke weights. Inside a
+   drawing nothing is rounded: square ends, mitred joins, no rx. */
+.print {
+  position: relative;
+  isolation: isolate;
+}
+.print::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--grain);
+  mix-blend-mode: soft-light;
+  opacity: var(--grain-opacity);
+  pointer-events: none;
+}
+.ink-heavy,
+.ink-line,
+.ink-hair {
+  fill: none;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+}
+.ink-heavy {
+  stroke-width: var(--w-heavy);
+}
+.ink-line {
+  stroke-width: var(--w-line);
+}
+.ink-hair {
+  stroke-width: var(--w-hair);
+}
+@media (forced-colors: active) {
+  .print::after {
+    display: none;
+  }
 }

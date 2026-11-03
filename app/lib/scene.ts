@@ -26,7 +26,6 @@ export function rng(seed: number) {
 }
 
 const f1 = (n: number) => n.toFixed(1)
-const poly = (pts: Pt[]) => `M${pts.map(([x, y]) => `${f1(x)} ${f1(y)}`).join(' L')} Z`
 
 // A flat-bottomed cloud: the outline of overlapping circles, flattened.
 export function cloud(seed: number, base: number, from: number, to: number, rMin: number, rMax: number) {
