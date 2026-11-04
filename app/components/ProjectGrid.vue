@@ -16,7 +16,7 @@ import ProjectArt from './ProjectArt.vue'
 
       <ul class="grid">
         <li v-for="p in projects" :key="p.name" class="card">
-          <ProjectArt :kind="p.art" />
+          <ProjectArt :kind="p.art" :label="p.name" :sub="p.tags[0]" />
           <h3 translate="no">
             <a :href="p.href">{{ p.name }}<span class="arrow" aria-hidden="true">&nbsp;↗</span></a>
           </h3>
@@ -67,7 +67,6 @@ h3 a::after {
   content: '';
   position: absolute;
   inset: -0.75rem;
-  border-radius: 1.25rem;
 }
 .card:hover h3 a {
   color: var(--accent-text);
