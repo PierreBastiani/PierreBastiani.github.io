@@ -48,7 +48,8 @@ const call = props.variant === 'geek' ? useContactPhone() : null
     <div class="aside">
       <ul class="facts">
         <li v-for="f in facts" :key="f.text">
-          {{ f.text }}<template v-if="f.en"> · <span lang="en">{{ f.en }}</span></template>
+          <!-- hyphenated place names stay whole in the narrow cartouche -->
+          <template v-for="(word, i) in f.text.split(' ')" :key="i">{{ i ? ' ' : '' }}<span class="nw">{{ word }}</span></template><template v-if="f.en"> · <span lang="en">{{ f.en }}</span></template>
         </li>
       </ul>
       <ul v-if="variant === 'main'" class="stack" aria-label="Outils principaux">
@@ -75,22 +76,22 @@ const call = props.variant === 'geek' ? useContactPhone() : null
   gap: 0.9rem;
   justify-items: start;
 }
+/* Availability: a small printed tag, mono caps in an ink frame, a square porphyry mark. */
 .status {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.3rem 0.8rem 0.3rem 0.65rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--on-ground) 9%, transparent);
-  font-size: var(--step--1);
-  font-weight: 500;
+  gap: 0.6rem;
+  padding: 0.35rem 0.7rem 0.3rem 0.6rem;
+  border: 1px solid var(--on-ground);
+  font: 500 0.72rem / 1.3 var(--f-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 .dot {
+  flex: none;
   width: 0.5rem;
   height: 0.5rem;
-  border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 .role {
   font-weight: 500;
@@ -108,43 +109,51 @@ const call = props.variant === 'geek' ? useContactPhone() : null
   fill: none;
   stroke: currentColor;
   stroke-width: 1.7;
-  stroke-linejoin: round;
+  stroke-linejoin: miter;
 }
 
-/* Facts: Geist Mono, separated by thin rules */
+/* The facts and the tools: a cartouche on the band. Ink frame with an inner rule, facts in
+   Geist Mono caps between hairlines, the tool marks printed in the paper ink on the last rule. */
 .aside {
-  display: grid;
-  gap: 1.5rem;
-  justify-items: start;
+  width: min(100%, 22rem);
+  padding: 0.35rem 1rem;
+  border: 1.5px solid var(--on-ground);
+  box-shadow:
+    inset 0 0 0 3px var(--ground),
+    inset 0 0 0 4px color-mix(in srgb, var(--on-ground) 55%, transparent);
 }
 .facts {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  font: 400 0.8rem / 1.5 var(--f-mono);
-  color: color-mix(in srgb, var(--on-ground) 70%, transparent);
+  font: 400 0.75rem / 1.5 var(--f-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--on-ground) 82%, transparent);
 }
 .facts li {
   padding-block: 0.55rem;
-  border-top: 1px solid color-mix(in srgb, var(--on-ground) 14%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--on-ground) 22%, transparent);
 }
-.facts li:last-child {
-  border-bottom: 1px solid color-mix(in srgb, var(--on-ground) 14%, transparent);
+.facts li:first-child {
+  border-top: 0;
 }
 .stack {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0.8rem 0 0.65rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.9rem 1.15rem;
-  color: color-mix(in srgb, var(--on-ground) 55%, transparent);
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--on-ground) 55%, transparent);
+  color: var(--on-ground);
 }
 .stack svg {
   display: block;
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 1.2rem;
+  height: 1.2rem;
   fill: currentColor;
 }
 @media (max-width: 52rem) {
@@ -152,15 +161,17 @@ const call = props.variant === 'geek' ? useContactPhone() : null
     grid-template-columns: 1fr;
   }
   .aside {
-    justify-items: stretch;
+    width: 100%;
   }
 }
 
-/* On a narrow phone the secondary buttons keep their icon only; the name stays
+/* On a narrow phone the secondary buttons keep their icon only, in a square; the name stays
    as the link text for screen readers. */
 @media (max-width: 25rem) {
   .compact {
-    padding-inline: 0.85rem;
+    justify-content: center;
+    width: 2.75rem;
+    padding-inline: 0;
   }
   .compact .label {
     position: absolute;
