@@ -246,10 +246,6 @@ dd {
   color: var(--accent-text);
   font-weight: 600;
 }
-/* square buttons in this printed block (radius 0–2 px), colours unchanged */
-.logbook .btn {
-  border-radius: 2px;
-}
 .note {
   color: var(--muted);
   font-size: var(--step--1);
