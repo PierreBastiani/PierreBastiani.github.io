@@ -130,6 +130,10 @@ function step() {
   if (far) raf = requestAnimationFrame(step)
 }
 
+// The camera is re-framing (a highlight changed), as opposed to only swaying with the pointer.
+const reframing = () =>
+  Math.abs(aim.zoom - cam.zoom) > 0.002 || Math.abs(aim.x - cam.x) > 1.5 || Math.abs(aim.y - cam.y) > 1.5
+
 let pointer = { x: 0, y: 0 }
 let scrollShift = 0
 function retarget() {
@@ -150,7 +154,8 @@ watch(active, retarget)
 
 // Map highlight. Only real pointer movement counts (Chrome also fires pointer events when the
 // scene moves under a still pointer), only after the pointer has stayed on a route for a
-// moment, and never while the camera is still easing.
+// moment, and never while the camera is still re-framing (the sway alone doesn't count: it
+// follows every pointer move, so it would block the highlight for good).
 let candidate: string | null = null
 let dwell = 0
 function routeUnder(e: PointerEvent) {
@@ -165,7 +170,7 @@ function onPointer(e: PointerEvent) {
   }
   if (!e.movementX && !e.movementY) return
   const id = routeUnder(e)
-  if (!id || id === fromMap.value || raf) {
+  if (!id || id === fromMap.value || reframing()) {
     candidate = null
     clearTimeout(dwell)
     return
@@ -174,7 +179,7 @@ function onPointer(e: PointerEvent) {
   candidate = id
   clearTimeout(dwell)
   dwell = window.setTimeout(() => {
-    if (candidate === id && !raf) fromMap.value = id
+    if (candidate === id && !reframing()) fromMap.value = id
     candidate = null
   }, 150)
 }
