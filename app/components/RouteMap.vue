@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { routes, sections } from '@/content'
+import { logbook, routes, sections } from '@/content'
 import {
   DEPTH,
   FAR_HILLS,
@@ -27,6 +27,10 @@ const lines = Object.fromEntries(
     return [id, { d: pathOf(line), ticks: bolts(line), start: line[0]!, end: line[line.length - 1]! }]
   }),
 )
+
+// The legend's grade span, easiest to hardest (French grades sort as strings).
+const grades = routes.map((r) => r.grade).sort()
+const span = `${grades[0]}–${grades[grades.length - 1]}`
 
 // The camera: the point of the wall at the centre of the frame, a zoom, and a sway (pointer,
 // scroll) that only shifts the sky and the foreground against the wall: that's the depth.
@@ -76,14 +80,15 @@ function shotOf(id: string): Camera {
   // close enough to read the route, never so close its foot or its tag leaves the frame
   const zoom = Math.min(narrow ? 1.2 : 1.3, (SCENE.h - 150) / (foot - top))
   let y = (top + foot) / 2
-  y = Math.min(y, top + (C.y - 70) / zoom)
+  // room above the anchor for the open tag, counted from the top of the visible crop (a phone
+  // crops the plate's top, and its tag is bigger against a smaller plate)
+  y = Math.min(y, top + (C.y - box.value.y - (narrow ? 100 : 70)) / zoom)
   return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y, zoom, sx: 0, sy: 0 }
 }
 
 const cam: Camera = { ...OVERVIEW }
 let aim: Camera = { ...cam }
 const frame = shallowRef(render(cam))
-const stage = ref<HTMLElement | null>(null)
 
 // Three sources of highlight, in order: the list (mouse hover, keyboard focus), the map
 // (mouse on a route), and reading (on touch or when the map is pinned above the list, the
@@ -114,7 +119,15 @@ const drawn = ref(true)
 // Grades sit in HTML tags over the figure, so they keep a readable size on a phone: the
 // grade at the top anchor (with the skill's name when active), the route number at the foot.
 const pct = ([x, y]: Pt) => ({ left: `${((x - box.value.x) / box.value.w) * 100}%`, top: `${((y - box.value.y) / box.value.h) * 100}%` })
-const pills = computed(() => routes.map((r) => ({ id: r.id, name: r.name, grade: r.grade, ...pct(frame.value.ends[r.id]!.end) })))
+// --f: where the anchor sits across the plate (0 left, 1 right); the open tag slides by as
+// much of its own width, so near an edge it opens inward instead of being cut by the frame.
+const pills = computed(() =>
+  routes.map((r) => {
+    const end = frame.value.ends[r.id]!.end
+    const f = Math.min(1, Math.max(0, (end[0] - box.value.x) / box.value.w))
+    return { id: r.id, name: r.name, grade: r.grade, f: f.toFixed(3), ...pct(end) }
+  }),
+)
 const feet = computed(() => routes.map((r, i) => ({ id: r.id, n: i + 1, ...pct(frame.value.ends[r.id]!.start) })))
 
 // The camera eases toward its aim and stops once it gets there: nothing runs while idle.
@@ -140,9 +153,6 @@ function retarget() {
   const base = active.value ? shotOf(active.value) : OVERVIEW
   const sway = active.value ? 0.35 : 1 // a close-up only sways a little with the pointer
   aim = inFrame({ ...base, sx: pointer.x * 22 * sway, sy: (pointer.y * 10 + scrollShift) * sway })
-  // the slight tilt of the plate, CSS 3D on the stage
-  stage.value?.style.setProperty('--ry', `${(pointer.x * 2.5 * sway).toFixed(2)}deg`)
-  stage.value?.style.setProperty('--rx', `${(2 - pointer.y * 1.5 * sway).toFixed(2)}deg`)
   if (reduce) {
     Object.assign(cam, aim)
     frame.value = render(cam)
@@ -225,11 +235,11 @@ function onItemTap(id: string) {
 }
 
 // Reading: the active item is the first one whose heading is fully visible below the pinned
-// map and its fade. The observer's root starts at the bottom of that fade; every heading that
+// map and its band. The observer's root starts at the rule under that band; every heading that
 // becomes or stops being fully visible reports, and the answer is recomputed from all of them,
 // so a fast fling can't skip an item. Above the first item the crag shows the overview (the
 // map isn't pinned yet); after the last one it keeps the last route.
-const FADE = 24 // px of wash below the map (see .map.pinned::after)
+const FADE = 13 // px of opaque band and its rule below the map (--band-foot, .map.pinned::after)
 let reading: IntersectionObserver | null = null
 let resizeTimer = 0
 const readable = new Set<number>()
@@ -307,7 +317,13 @@ onBeforeUnmount(() => {
       </header>
 
       <figure ref="map" class="map" :class="{ drawn, pinned, focused: !!active }" @pointermove="onPointer" @pointerleave="onLeave">
-        <div ref="stage" class="stage">
+        <!-- the topo, printed: ink frame with an inner rule, a lettering band, the plate with
+             the grain of the hero, and a legend line under it -->
+        <div class="stage">
+          <p class="band" aria-hidden="true">
+            <span>{{ logbook.place }}</span><span>Face sud · {{ routes.length }} voies</span>
+          </p>
+          <div class="plate print">
           <svg :viewBox="viewBox" role="img" aria-labelledby="map-title">
             <title id="map-title">La face sud du Baou, avec cinq voies, une par compétence</title>
             <!-- sky and far hills -->
@@ -364,34 +380,51 @@ onBeforeUnmount(() => {
             :key="p.id"
             class="pill"
             :class="{ on: active === p.id, dim: active && active !== p.id }"
-            :style="{ left: p.left, top: p.top }"
+            :style="{ left: p.left, top: p.top, '--f': p.f }"
             :data-route="p.id"
             aria-hidden="true"
             ><span v-if="active === p.id" class="name">{{ p.name }} · </span><span class="grade">{{ p.grade }}</span></span
           >
+          </div>
+          <p class="legend" aria-hidden="true">
+            <span><i class="key-num">1</i>Départ</span>
+            <span
+              ><svg class="key-ring" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" /><circle cx="8" cy="8" r="2.6" class="dot" /></svg
+              >Relais</span
+            >
+            <span><i class="key-grade">{{ span }}</i>Cotations</span>
+          </p>
         </div>
       </figure>
 
-      <ol ref="list" class="list">
-        <li
-          v-for="r in routes"
-          :key="r.id"
-          :class="{ on: active === r.id }"
-          :data-route="r.id"
-          @mouseenter="onItemEnter(r.id)"
-          @mouseleave="onItemLeave"
-          @focusin="onItemFocus(r.id, $event)"
-          @focusout="fromList = null"
-          @click="onItemTap(r.id)"
-        >
-          <h3>{{ r.name }} <span class="g" translate="no">{{ r.grade }}</span></h3>
-          <p class="stack">{{ r.stack }}</p>
-          <p class="proj">
-            <a v-if="r.project.href" :href="r.project.href">{{ r.project.label }}<span aria-hidden="true">&nbsp;↗</span></a>
-            <template v-else>{{ r.project.label }}</template>
-          </p>
-        </li>
-      </ol>
+      <!-- the route sheet: the guidebook's table under the topo, one ruled row per route -->
+      <div class="sheet">
+        <p class="band cols" aria-hidden="true"><span>N°</span><span>Voie</span><span>Cot.</span></p>
+        <ol ref="list" class="list">
+          <li
+            v-for="(r, i) in routes"
+            :key="r.id"
+            :class="{ on: active === r.id }"
+            :data-route="r.id"
+            @mouseenter="onItemEnter(r.id)"
+            @mouseleave="onItemLeave"
+            @focusin="onItemFocus(r.id, $event)"
+            @focusout="fromList = null"
+            @click="onItemTap(r.id)"
+          >
+            <span class="n" aria-hidden="true">{{ i + 1 }}</span>
+            <div class="what">
+              <h3>{{ r.name }}</h3>
+              <p class="stack">{{ r.stack }}</p>
+              <p class="proj">
+                <a v-if="r.project.href" :href="r.project.href">{{ r.project.label }}<span aria-hidden="true">&nbsp;↗</span></a>
+                <template v-else>{{ r.project.label }}</template>
+              </p>
+            </div>
+            <span class="g" translate="no"><span class="visually-hidden">Cotation </span>{{ r.grade }}</span>
+          </li>
+        </ol>
+      </div>
     </div>
   </section>
 </template>
@@ -402,8 +435,8 @@ onBeforeUnmount(() => {
 }
 .grid {
   display: grid;
-  gap: 0 clamp(3rem, 6vw, 6rem);
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 0 clamp(2rem, 4vw, 3.5rem);
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   grid-template-areas: 'head head' 'map list';
   align-items: start;
 }
@@ -416,9 +449,87 @@ onBeforeUnmount(() => {
   position: sticky;
   top: calc(var(--header-h) + 2rem);
 }
+/* The printed object: ink frame, a paper margin, an inner rule round the plate. Close-ups
+   run past the plate's edge and are cut straight, as on a print. */
 .stage {
   position: relative;
+  padding: 4px;
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+}
+.plate {
   overflow: hidden;
+  outline: 1px solid var(--ink);
+}
+/* the lettering band shared by the plate and the sheet: the poster's band, in mono caps */
+.band {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.45rem 0.9rem;
+  background: var(--ground);
+  color: var(--on-ground);
+  font: 500 0.72rem / 1.3 var(--f-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.stage .band {
+  flex-wrap: wrap;
+  gap: 0.1rem 1rem;
+  margin-bottom: 4px;
+}
+.stage .band span {
+  white-space: nowrap;
+}
+/* the legend under the plate: the same symbols as on it */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.5rem;
+  margin: 0;
+  padding: 0.55rem 0.5rem 0.3rem;
+  font: 500 0.7rem / 1.3 var(--f-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.legend i {
+  font-style: normal;
+}
+.key-num {
+  min-width: 1.15rem;
+  padding: 0.05rem 0.25rem;
+  border: 1.5px solid var(--route);
+  background: var(--route-casing);
+  color: var(--route);
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0;
+}
+.key-ring {
+  width: 1rem;
+  height: 1rem;
+  fill: var(--route-casing);
+  stroke: var(--route);
+  stroke-width: var(--w-line);
+}
+.key-ring .dot {
+  fill: var(--route);
+  stroke: none;
+}
+.key-grade {
+  padding: 0.05rem 0.35rem;
+  text-transform: none;
+  background: var(--route);
+  color: var(--bg);
+  font-weight: 600;
+  letter-spacing: 0;
 }
 .header-cover {
   display: none;
@@ -431,23 +542,12 @@ onBeforeUnmount(() => {
   background: var(--bg);
   pointer-events: none;
 }
-.map svg {
+.plate > svg {
   display: block;
   width: 100%;
   height: auto;
-  /* close-ups run past the frame: fade its edges instead of cutting the crag with a straight line */
-  --fade: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent),
-    linear-gradient(to bottom, transparent, #000 4%, #000 92%, transparent);
-  -webkit-mask-image: var(--fade);
-  -webkit-mask-composite: source-in;
-  mask-image: var(--fade);
-  mask-composite: intersect;
 }
 /* the plate: the hero's inks, flat, the low sun from the right */
-.stage {
-  transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform var(--dur-move) var(--ease);
-}
 .sky {
   fill: var(--sky-top);
 }
@@ -573,11 +673,17 @@ onBeforeUnmount(() => {
   font: 600 0.72rem / 1.1 var(--f-mono);
   text-align: center;
   pointer-events: none;
-  transition: opacity var(--dur-hover);
+  z-index: 2; /* labels sit above the grain */
+  transition:
+    opacity var(--dur-hover),
+    background-color var(--dur-hover),
+    color var(--dur-hover);
 }
+/* the active route's number, printed solid in the accent, the same in the sheet */
 .num.on {
-  border-color: var(--accent-text);
-  color: var(--accent-text);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 /* grade tags: page-colour text on the route colour, on-accent text on the accent when active */
 .pill {
@@ -590,14 +696,15 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   cursor: default;
+  z-index: 2;
   transition:
     opacity var(--dur-hover),
     background-color var(--dur-hover),
     color var(--dur-hover);
 }
 .pill.on {
-  z-index: 1;
-  transform: translate(-50%, calc(-100% - 0.6rem));
+  z-index: 3;
+  transform: translate(calc(-100% * var(--f, 0.5)), calc(-100% - 0.6rem));
   padding: 0.2rem 0.6rem;
   background: var(--accent);
   color: var(--on-accent);
@@ -605,27 +712,74 @@ onBeforeUnmount(() => {
 .pill .name {
   font: 600 0.8rem / 1.2 var(--f-body);
 }
-.list {
+/* The route sheet: an ink-ruled card, the band as column heads, hairline rules between rows.
+   Number in the map's square, the route in the middle, the grade in a mono column. */
+.sheet {
   grid-area: list;
+  border: 1.5px solid var(--ink);
+  background: var(--bg);
+}
+.cols,
+.list li {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr) 3rem;
+  column-gap: 1rem;
+}
+.cols {
+  padding-inline: 0.9rem;
+}
+.cols span:last-child {
+  text-align: right;
+}
+.list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: clamp(2rem, 3.5vw, 2.75rem);
 }
 .list li {
+  align-items: start;
+  padding: 0.95rem 0.9rem 1rem;
+  border-top: 1px solid var(--line);
+  transition: background-color var(--dur-hover);
+}
+.list li:first-child {
+  border-top: 0;
+}
+.list li.on {
+  background: var(--wash);
+}
+.list .n {
   display: grid;
-  gap: 0.35rem;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-top: 0.1rem;
+  border: 1.5px solid var(--route);
+  background: var(--route-casing);
+  color: var(--route);
+  font: 600 0.8rem / 1.1 var(--f-mono);
+  text-align: center;
+  transition:
+    background-color var(--dur-hover),
+    border-color var(--dur-hover),
+    color var(--dur-hover);
+}
+.list li.on .n {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.what {
+  display: grid;
+  gap: 0.25rem;
 }
 .list h3 {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
   transition: color var(--dur-hover);
 }
 .g {
-  font: 500 0.8em var(--f-mono);
+  padding-top: 0.1rem;
+  text-align: right;
+  font: 600 var(--step-0) / 1.35 var(--f-mono);
   color: var(--muted);
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
@@ -636,9 +790,13 @@ onBeforeUnmount(() => {
 }
 .stack {
   color: var(--muted);
+  font-size: var(--step--1);
+  line-height: 1.45;
 }
 .proj {
-  margin-top: 0.15rem;
+  margin-top: 0.2rem;
+  font-size: var(--step--1);
+  line-height: 1.45;
   font-weight: 500;
 }
 @media (max-width: 52rem) {
@@ -651,9 +809,9 @@ onBeforeUnmount(() => {
   .map {
     margin-bottom: 1.5rem;
   }
-  /* Pinned under the header with no background: the list shows through the empty parts and
-     passes behind the crag, which keeps a soft halo of the page colour around it. */
+  /* Pinned under the header; the list passes behind it. */
   .map {
+    --band-foot: 12px;
     position: sticky;
     top: var(--header-h);
     z-index: 1;
@@ -661,30 +819,30 @@ onBeforeUnmount(() => {
   .map.pinned {
     pointer-events: none; /* taps reach the list links behind; the map needs none on a phone */
   }
-  /* the plate fades into the page colour at its foot, over an opaque stage, so the list
-     passing behind it never shows through the fade */
-  .map.pinned .stage {
-    background: var(--bg);
+  /* on a phone the legend gives its height back to the list */
+  .band {
+    padding-inline: 0.7rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
   }
-  .map.pinned svg {
-    --fade: linear-gradient(to bottom, #000 86%, transparent);
+  .legend {
+    display: none;
   }
-  /* Behind the model, in the page colour: a wash that is solid behind the crag's mass and
-     fades out softly on every side, plus a short fade under the header. List text scrolling up
-     dissolves as it passes behind the model and is crisp again below it. It moves with the map,
-     so when the section ends the crag, its wash and its tags leave together. CSS only. */
+  /* Behind the pinned print, an opaque band of page colour, edge to edge, cut by an ink rule
+     a little under the frame: list text scrolling up slides under the rule and is gone, so it
+     never shows round the print. It moves with the map, so when the section ends the print,
+     its band and its tags leave together. CSS only. */
   .map.pinned::after {
     content: '';
     position: absolute;
     top: 0;
-    bottom: -1.5rem;
+    bottom: calc(-1 * var(--band-foot));
     left: calc(-1 * var(--gutter));
     right: calc(-1 * var(--gutter-r));
     z-index: -1;
     pointer-events: none;
-    background:
-      linear-gradient(var(--bg), transparent 1.5rem),
-      radial-gradient(ellipse 72% 64% at 50% 46%, var(--bg) 55%, transparent 100%);
+    background: var(--bg);
+    border-bottom: 1px solid var(--ink);
   }
   /* fixed to the screen under the header (z-index 20): opaque page colour while the skills
      section is under the header, so nothing scrolls through the header's translucency */
@@ -701,11 +859,10 @@ onBeforeUnmount(() => {
   .route,
   .pill,
   .num,
-  .stage {
+  .list li,
+  .list .n,
+  .g {
     transition: none;
-  }
-  .stage {
-    transform: none;
   }
 }
 </style>
