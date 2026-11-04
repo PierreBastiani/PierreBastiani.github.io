@@ -358,12 +358,6 @@ blockquote {
 .call .btns {
   margin-top: 0.75rem;
 }
-/* square buttons in the printed blocks (radius 0–2 px); same inks as everywhere */
-.call .btn,
-.call-bar .btn {
-  border-radius: 2px;
-}
-
 /* sticky call bar: phones only, opaque, an ink rule on top */
 .call-bar {
   display: none;

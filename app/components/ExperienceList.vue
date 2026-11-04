@@ -437,15 +437,7 @@ onBeforeUnmount(() => {
 }
 /* technologies as printed tags: square, a thin ink rule, mono */
 .pitch .tags {
-  gap: 0.4rem;
   margin-top: 0.15rem;
-}
-.pitch .tags li {
-  padding: 0.05rem 0.45rem;
-  border: 1px solid color-mix(in srgb, var(--ink) 55%, var(--bg));
-  color: var(--ink);
-  font-size: 0.75rem;
-  line-height: 1.5;
 }
 .foot h3 {
   font-size: var(--step-0);
