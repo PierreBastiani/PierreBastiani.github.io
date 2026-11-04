@@ -81,32 +81,37 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
   margin-right: auto;
   white-space: nowrap;
 }
-/* One small pill holds the section links. */
+/* The section links: a framed strip of tabs, ink rule round it and between them, mono caps
+   like the lettering on the printed cards. Hover lays the ground band under a tab. */
 nav ul {
   display: flex;
-  gap: 0.1rem;
   list-style: none;
   margin: 0;
-  padding: 0.25rem;
-  border-radius: 999px;
-  background: var(--wash);
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: 0;
+  border: 1px solid var(--ink);
+  font: 500 0.72rem / 1 var(--f-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+nav li + li {
+  border-left: 1px solid var(--ink);
 }
 nav a {
   display: block;
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
+  padding: 0.7rem 0.9rem 0.65rem;
   text-decoration: none;
   white-space: nowrap;
-  color: var(--muted);
+  color: var(--ink);
   transition:
     color var(--dur-hover),
     background-color var(--dur-hover);
 }
 nav a:hover {
-  color: var(--ink);
-  background: var(--bg);
+  color: var(--on-ground);
+  background: var(--ground);
+}
+nav a:focus-visible {
+  outline-offset: 2px;
 }
 .switch {
   font-size: 0.875rem;
@@ -118,17 +123,17 @@ nav a:hover {
 .switch:hover {
   color: var(--ink);
 }
+/* the theme toggle: a square key in the same ink frame */
 .theme {
   flex: none;
   display: grid;
   place-items: center;
   width: 2.5rem;
   height: 2.5rem;
-  margin-right: -0.5rem;
-  border-radius: 50%;
-  border: 0;
+  border: 1px solid var(--ink);
+  border-radius: 0;
   background: transparent;
-  color: var(--muted);
+  color: var(--ink);
   cursor: pointer;
   transition:
     color var(--dur-hover),
@@ -139,16 +144,16 @@ nav a:hover {
   height: 1.1rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
+  stroke-width: 1.5;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 .theme svg .fill {
   fill: currentColor;
 }
 .theme:hover {
-
-  color: var(--ink);
-  background: var(--wash);
+  color: var(--on-ground);
+  background: var(--ground);
 }
 @media (max-width: 52rem) {
   nav {
