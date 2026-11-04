@@ -327,6 +327,7 @@ onBeforeUnmount(() => {
   --when: 12.5rem;
   --gap: 1.5rem;
   --rail: 3.5rem;
+  --rule-gap: 0.7rem; /* from a pitch's rule down to its first line */
   position: relative;
 }
 .lead {
@@ -381,28 +382,39 @@ onBeforeUnmount(() => {
   column-gap: var(--gap);
   align-items: start;
 }
+/* The topo's ruled column: an ink rule over each pitch, its number on a lettering band,
+   the dates in mono under it. The text column gets a hairline at the same height. */
 .when {
   display: grid;
   justify-items: end;
-  gap: 0.2rem;
+  align-content: start;
+  gap: 0.45rem;
+  padding-top: var(--rule-gap);
+  border-top: 1.5px solid var(--ink);
   text-align: right;
   font: 400 var(--step--1) / 1.5 var(--f-mono);
   font-variant-numeric: tabular-nums;
   color: var(--muted);
 }
 .len {
-  color: var(--quiet);
-  font-size: 0.75rem;
+  padding: 0.1rem 0.45rem;
+  background: var(--ground);
+  color: var(--on-ground);
+  font: 500 0.72rem / 1.3 var(--f-mono);
+  letter-spacing: 0.12em;
 }
 /* invisible box the rope is measured against; sits level with the first line of text */
 .anchor {
   display: block;
   height: 1.4rem;
+  margin-top: calc(var(--rule-gap) + 1.5px);
 }
 .body {
   display: grid;
   gap: 0.6rem;
   max-width: var(--measure);
+  padding-top: var(--rule-gap);
+  border-top: 1px solid var(--line);
 }
 .org {
   display: flex;
@@ -423,6 +435,18 @@ onBeforeUnmount(() => {
 .text {
   color: color-mix(in srgb, var(--ink) 82%, var(--bg));
 }
+/* technologies as printed tags: square, a thin ink rule, mono */
+.pitch .tags {
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+.pitch .tags li {
+  padding: 0.05rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 55%, var(--bg));
+  color: var(--ink);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
 .foot h3 {
   font-size: var(--step-0);
   font-weight: 500;
@@ -442,6 +466,7 @@ onBeforeUnmount(() => {
   .when {
     grid-area: when;
     display: flex;
+    align-items: baseline;
     gap: 0.75rem;
     justify-items: start;
     text-align: left;
@@ -449,8 +474,11 @@ onBeforeUnmount(() => {
   .anchor {
     grid-area: anchor;
   }
+  /* one rule per pitch on a phone: the one over its number and dates */
   .body {
     grid-area: body;
+    padding-top: 0;
+    border-top: 0;
   }
 }
 .track {
@@ -482,9 +510,10 @@ onBeforeUnmount(() => {
 .climber .limb {
   fill: none;
   stroke: color-mix(in srgb, var(--ink) 88%, var(--bg));
-  stroke-width: 2.4;
+  stroke-width: var(--w-heavy);
   stroke-linecap: butt;
   stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
 }
 .climber .harness {
   fill: var(--route);
@@ -494,7 +523,9 @@ onBeforeUnmount(() => {
 }
 .climber .tie {
   stroke: var(--route);
-  stroke-width: 1.6;
+  stroke-width: var(--w-line);
+  stroke-linecap: butt;
+  vector-effect: non-scaling-stroke;
 }
 /* at an anchor he glances toward the text */
 .climber .head {
