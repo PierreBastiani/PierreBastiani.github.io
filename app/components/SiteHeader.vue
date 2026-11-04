@@ -110,8 +110,9 @@ nav a:hover {
   color: var(--on-ground);
   background: var(--ground);
 }
+/* the ring sits inside the tab, clear of the strip's rules */
 nav a:focus-visible {
-  outline-offset: 2px;
+  outline-offset: -5px;
 }
 .switch {
   font-size: 0.875rem;
