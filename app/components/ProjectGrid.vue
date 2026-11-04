@@ -86,10 +86,11 @@ h3 a::after {
 }
 
 /* The gimmick: on hover or keyboard focus the illustration's layers lift apart, like the
-   hero's depth layers. Mouse and trackpad only, and never with reduced motion. */
+   hero's depth layers. The stage scales up as it tilts, so the frame never shows an edge.
+   Mouse and trackpad only, and never with reduced motion. */
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .card:is(:hover, :focus-within) :deep(.stage) {
-    transform: rotateX(16deg) rotateZ(-3deg) scale(0.94);
+    transform: rotateX(14deg) rotateZ(-2deg) scale(1.16);
   }
   .card:is(:hover, :focus-within) :deep(.l1) {
     transform: translate3d(0, -8px, 26px);
