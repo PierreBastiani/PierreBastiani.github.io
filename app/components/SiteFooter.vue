@@ -11,7 +11,7 @@ const year = new Date().getFullYear()
 </script>
 
 <template>
-  <footer class="site-footer">
+  <footer class="site-footer on-ground print">
     <div class="wrap row">
       <p class="copy">© {{ year }} <span translate="no">{{ contact.name }}</span></p>
       <ul>
@@ -27,17 +27,31 @@ const year = new Date().getFullYear()
 </template>
 
 <style scoped>
+/* The page ends on the poster's bottom band: the ground ink with grain, an ink key line on
+   top and an inner rule in the paper ink just under it. */
 .site-footer {
-  padding-block: 2.5rem calc(2.5rem + env(safe-area-inset-bottom, 0px));
+  padding-block: 2.25rem calc(2.25rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1.5px solid var(--ink);
+  background: var(--ground);
+  color: color-mix(in srgb, var(--on-ground) 85%, transparent);
+  box-shadow:
+    inset 0 4px 0 var(--ground),
+    inset 0 5px 0 color-mix(in srgb, var(--on-ground) 55%, transparent);
   font-size: var(--step--1);
-  color: var(--muted);
 }
 .row {
+  position: relative;
+  z-index: 2; /* above the grain */
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem 2rem;
+}
+.copy {
+  font: 500 0.72rem / 1.3 var(--f-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 ul {
   display: flex;
@@ -54,7 +68,9 @@ a {
   text-decoration: none;
 }
 a:hover {
-  color: var(--accent-text);
+  color: var(--on-ground);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
 }
 a :deep(.icon) {
   flex: none;
