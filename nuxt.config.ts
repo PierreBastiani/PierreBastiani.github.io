@@ -46,10 +46,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-11-03',
   devtools: { enabled: true },
   ssr: true,
-  // Component CSS ships as files, as before the move to Nuxt, instead of being inlined into each
-  // page: cached across the two pages, and the HTML stays HTML (the W3C validator's CSS checker
-  // doesn't know container-query units or vector-effect and would flag the inlined styles).
-  features: { inlineStyles: false },
+  // Component CSS is inlined into each page (Nuxt's default): as files, the first paint waited for
+  // three to seven stylesheets, and Lighthouse mobile went 95 → 97 with it inlined. The W3C
+  // validator's CSS checker doesn't know container-query units or vector-effect, so it flags the
+  // inlined styles; those are gaps in the checker, the HTML itself validates.
+  features: { inlineStyles: true },
 
   css: [
     '@fontsource-variable/hanken-grotesk',
