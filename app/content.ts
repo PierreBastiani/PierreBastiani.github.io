@@ -20,6 +20,8 @@ export const links = {
   geek: '/geek-du-quartier/',
   source: 'https://github.com/PierreBastiani/PierreBastiani.github.io',
   home: '/',
+  legal: '/mentions-legales/',
+  privacy: '/mentions-legales/#confidentialite',
 }
 
 export const profile = {
@@ -143,16 +145,44 @@ export interface Route {
 }
 
 export const routes: Route[] = [
-  { id: 'ship', name: 'Mise en prod & exploitation', grade: '7a', stack: 'Kubernetes, OpenShift, Docker, HAProxy, CI/CD',
-    project: { label: 'homelab', href: 'https://github.com/PierreBastiani/homelab' } },
-  { id: 'build', name: 'Produit web', grade: '6c', stack: 'Ruby on Rails, Vue, intégrations paiement et caisse',
-    project: { label: 'Commande en ligne pour restaurants (LivePepper)' } },
-  { id: 'ai', name: 'IA appliquée', grade: '6b+', stack: 'Agents Claude Code, LLM locaux, YOLO',
-    project: { label: 'Classification de plumes', href: 'https://github.com/GaetanCrd/Classification' } },
-  { id: 'home', name: 'Domotique & réseau', grade: '7b', stack: 'Home Assistant, Node-RED, ESPHome, réseau',
-    project: { label: 'gree-smartir', href: 'https://github.com/PierreBastiani/gree-smartir' } },
-  { id: 'data', name: 'Données & scraping', grade: '6a', stack: 'Scrapers, pipelines de données, Rust',
-    project: { label: 'smarket', href: 'https://github.com/PierreBastiani/smarket' } },
+  {
+    id: 'ship',
+    name: 'Mise en prod & exploitation',
+    grade: '7a',
+    stack: 'Kubernetes, OpenShift, Docker, HAProxy, CI/CD',
+    project: { label: 'homelab', href: 'https://github.com/PierreBastiani/homelab' },
+  },
+  {
+    id: 'build',
+    name: 'Produit web',
+    grade: '6c',
+    stack: 'Ruby on Rails, Vue, intégrations paiement et caisse',
+    project: { label: 'Commande en ligne pour restaurants (LivePepper)' },
+  },
+  {
+    id: 'ai',
+    name: 'IA appliquée',
+    grade: '6b+',
+    stack: 'Agents Claude Code, LLM locaux, YOLO',
+    project: {
+      label: 'Classification de plumes',
+      href: 'https://github.com/GaetanCrd/Classification',
+    },
+  },
+  {
+    id: 'home',
+    name: 'Domotique & réseau',
+    grade: '7b',
+    stack: 'Home Assistant, Node-RED, ESPHome, réseau',
+    project: { label: 'gree-smartir', href: 'https://github.com/PierreBastiani/gree-smartir' },
+  },
+  {
+    id: 'data',
+    name: 'Données & scraping',
+    grade: '6a',
+    stack: 'Scrapers, pipelines de données, Rust',
+    project: { label: 'smarket', href: 'https://github.com/PierreBastiani/smarket' },
+  },
 ]
 
 export const localOffer = {
@@ -161,15 +191,41 @@ export const localOffer = {
     'Je passe dans votre commerce, je regarde ce qui vous fait perdre du temps sur l’ordi ou le téléphone, et je le règle.',
   // `visual` picks the before/after drawing in OfferVisual.vue; `before`/`after` caption it.
   items: [
-    { title: 'Votre fiche Google à jour', text: 'Horaires, photos, réponses aux avis\u00a0: les clients du coin vous trouvent.',
-      visual: 'google', before: 'Une fiche vide', after: 'Une fiche complète' },
-    { title: 'Un site qui s’affiche', text: 'Simple, rapide, et vous le modifiez vous-même.',
-      visual: 'site', before: 'Illisible sur un téléphone', after: 'Clair, avec un bouton pour appeler' },
-    { title: 'Fini les ressaisies', text: 'Devis, commandes et plannings qui se remplissent tout seuls.',
-      visual: 'orders', before: 'Le cahier, puis l’ordi', after: 'Une seule liste, à jour' },
-    { title: 'Les petits pépins informatiques', text: 'Wi-Fi, imprimante, sauvegardes, mots de passe\u00a0: je règle, et je vous explique.',
-      visual: 'fix', before: 'Les câbles en vrac', after: 'Rangé, étiqueté, ça marche' },
-  ] as { title: string; text: string; visual: 'google' | 'site' | 'orders' | 'fix'; before: string; after: string }[],
+    {
+      title: 'Votre fiche Google à jour',
+      text: 'Horaires, photos, réponses aux avis\u00a0: les clients du coin vous trouvent.',
+      visual: 'google',
+      before: 'Une fiche vide',
+      after: 'Une fiche complète',
+    },
+    {
+      title: 'Un site qui s’affiche',
+      text: 'Simple, rapide, et vous le modifiez vous-même.',
+      visual: 'site',
+      before: 'Illisible sur un téléphone',
+      after: 'Clair, avec un bouton pour appeler',
+    },
+    {
+      title: 'Fini les ressaisies',
+      text: 'Devis, commandes et plannings qui se remplissent tout seuls.',
+      visual: 'orders',
+      before: 'Le cahier, puis l’ordi',
+      after: 'Une seule liste, à jour',
+    },
+    {
+      title: 'Les petits pépins informatiques',
+      text: 'Wi-Fi, imprimante, sauvegardes, mots de passe\u00a0: je règle, et je vous explique.',
+      visual: 'fix',
+      before: 'Les câbles en vrac',
+      after: 'Rangé, étiqueté, ça marche',
+    },
+  ] as {
+    title: string
+    text: string
+    visual: 'google' | 'site' | 'orders' | 'fix'
+    before: string
+    after: string
+  }[],
   steps: [
     { title: '20\u00a0min ensemble', text: 'Vous me montrez ce qui vous prend du temps.' },
     { title: 'Je viens sur place', text: 'Je mets en place avec vous et votre équipe.' },
@@ -189,10 +245,22 @@ export const localOffer = {
   faq: {
     title: 'Vos questions',
     items: [
-      { q: 'La première demi-journée est vraiment offerte\u00a0?', a: 'Oui, pour les 3\u00a0premiers commerces. Ensuite, vous me dites franchement si ça vous a servi.' },
-      { q: 'Faut-il s’y connaître en informatique\u00a0?', a: 'Non. Vous me montrez ce qui vous prend du temps, je m’en occupe et je vous explique ce que j’ai fait.' },
-      { q: 'Je garde les outils après\u00a0?', a: 'Oui. Les outils sont à vous, et je vous montre comment vous en servir.' },
-      { q: 'Vous venez où\u00a0?', a: 'Dans votre commerce, à La Colle-sur-Loup ou à Saint-Paul-de-Vence.' },
+      {
+        q: 'La première demi-journée est vraiment offerte\u00a0?',
+        a: 'Oui, pour les 3\u00a0premiers commerces. Ensuite, vous me dites franchement si ça vous a servi.',
+      },
+      {
+        q: 'Faut-il s’y connaître en informatique\u00a0?',
+        a: 'Non. Vous me montrez ce qui vous prend du temps, je m’en occupe et je vous explique ce que j’ai fait.',
+      },
+      {
+        q: 'Je garde les outils après\u00a0?',
+        a: 'Oui. Les outils sont à vous, et je vous montre comment vous en servir.',
+      },
+      {
+        q: 'Vous venez où\u00a0?',
+        a: 'Dans votre commerce, à La Colle-sur-Loup ou à Saint-Paul-de-Vence.',
+      },
     ],
   },
   call: {
@@ -212,17 +280,17 @@ export const sections = {
   skills: {
     label: 'Compétences',
     title: 'Cinq voies, une falaise.',
-    quiet: 'Plus la cotation est haute, plus je vais loin dans le sujet.',
+    quiet: 'Plus la cotation est haute, plus je vais loin dans le sujet',
     sub: 'Ce que je construis et fais tourner, coté comme des voies d’escalade, avec un projet pour chaque voie.',
   },
   experience: {
     label: 'Parcours',
-    title: 'Six ans sur des applis en production.',
+    title: 'Six ans sur des applis en production',
   },
   projects: {
     label: 'Projets perso',
     title: 'Ce que je construis le week-end.',
-    quiet: 'Le code est public sur GitHub.',
+    quiet: 'Le code est public sur GitHub',
   },
   contact: {
     label: 'Contact',
@@ -244,10 +312,19 @@ export const routeCard = {
   rows: [
     { icon: 'clock', label: 'Engagement', value: 'Temps partiel' },
     { icon: 'pin', label: 'Accès', value: 'Télétravail ou Côte d’Azur' },
-    { icon: 'route', label: 'Type', value: 'Reprise d’applis, CI/CD et migrations, intégrations API, automatisation avec un LLM' },
+    {
+      icon: 'route',
+      label: 'Type',
+      value: 'Reprise d’applis, CI/CD et migrations, intégrations API, automatisation avec un LLM',
+    },
     { icon: 'tag', label: 'Tarif', value: 'Sur Malt', href: 'malt' },
     { icon: 'mail', label: 'Contact', value: '', href: 'email' }, // value: the address, from useContact()
-  ] as { icon: 'clock' | 'pin' | 'route' | 'tag' | 'mail'; label: string; value: string; href?: 'malt' | 'email' }[],
+  ] as {
+    icon: 'clock' | 'pin' | 'route' | 'tag' | 'mail'
+    label: string
+    value: string
+    href?: 'malt' | 'email'
+  }[],
 }
 
 export const logbook = {
@@ -255,7 +332,8 @@ export const logbook = {
   // printed in the card's lettering band, like the summit figure's route card
   place: 'Baou de Saint-Jeannet',
   altitude: '802\u00a0m',
-  intro: 'En haut des voies, une boîte garde un carnet où chacun signe son passage. Laissez-y deux lignes sur votre projet, je réponds par mail.',
+  intro:
+    'En haut des voies, une boîte garde un carnet où chacun signe son passage. Laissez-y deux lignes sur votre projet, je réponds par mail.',
   you: 'Vous',
   sign: 'Signer le carnet de sommet',
   subject: 'Carnet de sommet\u00a0: un projet à discuter',
@@ -288,5 +366,124 @@ export const introFacts = {
     { text: 'La Colle-sur-Loup et Saint-Paul-de-Vence' },
     { text: 'Je viens sur place' },
     { text: 'Demi-journée offerte aux 3\u00a0premiers' },
+    { text: 'Prestations réservées aux professionnels' },
   ],
 } as Record<'main' | 'geek', { text: string; en?: string }[]>
+
+// The legal notice and privacy section (/mentions-legales/). Every value is checked against a
+// primary source in the S8 report (sites-factory, outside this repository). The address, phone
+// and email aren't here: the page reads them from the generate-time env (useContact.ts), and
+// rows with `from` show that value.
+export interface LegalRow {
+  label: string
+  value?: string
+  href?: string
+  from?: 'address' | 'email' | 'phone'
+}
+
+export const legal = {
+  title: 'Mentions légales',
+  quiet: 'Qui publie ce site, et ce qu’il fait de vos données',
+  updated: 'Mise à jour le 12\u00a0novembre 2026',
+  publisher: {
+    title: 'Éditeur',
+    rows: [
+      { label: 'Nom', value: 'Pierre Bastiani, entrepreneur individuel (EI)' },
+      { label: 'Nom commercial', value: 'KENSAE' },
+      { label: 'Adresse', from: 'address' },
+      { label: 'Courriel', from: 'email' },
+      { label: 'Téléphone', from: 'phone' },
+      {
+        label: 'SIREN',
+        value: '893\u00a0999\u00a0672, inscrit au Registre national des entreprises (RNE)',
+      },
+      { label: 'SIRET du siège', value: '893\u00a0999\u00a0672\u00a000023' },
+      { label: 'Activité', value: 'Programmation informatique (code APE 62.01Z)' },
+      { label: 'Clientèle', value: 'Prestations réservées aux professionnels' },
+      { label: 'TVA intracommunautaire', value: 'FR\u00a050\u00a0893\u00a0999\u00a0672' },
+      { label: 'Directeur de la publication', value: 'Pierre Bastiani' },
+    ] as LegalRow[],
+  },
+  host: {
+    title: 'Hébergeur',
+    rows: [
+      { label: 'Nom', value: 'GitHub, Inc. (service GitHub Pages)' },
+      {
+        label: 'Adresse',
+        value: '88 Colin P. Kelly Jr. Street, San Francisco, CA\u00a094107, États-Unis',
+      },
+      {
+        label: 'Contact',
+        value: 'Formulaire de contact de GitHub',
+        href: 'https://support.github.com/',
+      },
+      { label: 'Site', value: 'github.com', href: 'https://github.com' },
+    ] as LegalRow[],
+  },
+  privacy: {
+    title: 'Confidentialité',
+    intro: 'Le responsable des traitements décrits ici est l’éditeur ci-dessus.',
+    blocks: [
+      {
+        title: 'Sur le site',
+        text: [
+          'Le site ne pose aucun cookie, ne mesure pas l’audience et ne charge rien depuis un autre site\u00a0: les polices et les images viennent de pierre.kensae.com.',
+          'Seule exception\u00a0: si vous choisissez le thème clair ou sombre avec le bouton en haut de page, votre navigateur garde ce choix dans son stockage local (clé «\u00a0theme\u00a0»). Il ne quitte pas votre appareil, et revenir au thème automatique l’efface.',
+        ],
+      },
+      {
+        title: 'Chez l’hébergeur',
+        text: [
+          'GitHub, qui héberge le site, enregistre l’adresse IP de chaque visiteur pour la sécurité de son service. Ces journaux relèvent de la déclaration de confidentialité de GitHub, qui prévoit des transferts hors de l’Union européenne, notamment vers les États-Unis, encadrés par les clauses contractuelles types de la Commission européenne et le Data Privacy Framework.',
+        ],
+        link: {
+          label: 'Déclaration de confidentialité de GitHub',
+          href: 'https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement',
+        },
+      },
+      {
+        title: 'Si vous m’écrivez ou m’appelez',
+        text: [
+          'Je reçois votre adresse mail ou votre numéro, et ce que vous me dites. Je m’en sers pour vous répondre et, si nous travaillons ensemble, pour la mission et sa facturation. Ma messagerie est hébergée par Proton AG, en Suisse. Je ne transmets ces informations à personne d’autre et je ne vous inscris à aucune liste d’envoi.',
+          'Je garde les échanges le temps d’y donner suite, et les factures aussi longtemps que la loi l’impose.',
+          'Base légale\u00a0: votre demande quand elle prépare une mission, sinon mon intérêt légitime à répondre à qui m’écrit.',
+        ],
+      },
+      {
+        title: 'Vos droits',
+        text: [
+          'Vous pouvez me demander d’accéder à vos données, de les corriger, de les effacer ou d’en limiter l’usage, et vous opposer à leur traitement.',
+        ],
+        mailTo: 'Pour cela, écrivez-moi à',
+        after:
+          'Si ma réponse ne vous convient pas, vous pouvez adresser une réclamation à la CNIL.',
+        link: {
+          label: 'Adresser une réclamation à la CNIL',
+          href: 'https://www.cnil.fr/fr/plaintes',
+        },
+      },
+    ] as {
+      title: string
+      text: string[]
+      mailTo?: string
+      after?: string
+      link?: { label: string; href: string }
+    }[],
+  },
+  credits: {
+    title: 'Crédits',
+    rows: [
+      { label: 'Textes et illustrations', value: '© Pierre Bastiani' },
+      { label: 'Portrait', value: '© FAIRSHOT' },
+      {
+        label: 'Polices',
+        value: 'Hanken Grotesk et Geist Mono, licence SIL Open Font License 1.1',
+      },
+      {
+        label: 'Logos d’outils',
+        value: 'Simple Icons (CC0)\u00a0; logo Rust © Rust Foundation, CC BY-SA 4.0',
+      },
+      { label: 'Code du site', value: 'Licence MIT, sur GitHub', href: links.source },
+    ] as LegalRow[],
+  },
+}

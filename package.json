@@ -10,8 +10,9 @@
     "preview": "npx -y serve .output/public",
     "typecheck": "nuxt typecheck",
     "postinstall": "nuxt prepare",
-    "lint": "oxlint . --fix && eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli app/"
+    "lint": "oxlint . --fix && eslint . --fix --cache && prettier --check --experimental-cli app/",
+    "format": "prettier --write --experimental-cli app/",
+    "lint:check": "oxlint . && eslint . && prettier --check --experimental-cli app/"
   },
   "dependencies": {
     "@fontsource-variable/geist-mono": "^5.3.0",

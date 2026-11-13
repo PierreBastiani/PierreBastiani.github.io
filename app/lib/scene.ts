@@ -28,10 +28,18 @@ export function rng(seed: number) {
 const f1 = (n: number) => n.toFixed(1)
 
 // A flat-bottomed cloud: the outline of overlapping circles, flattened.
-export function cloud(seed: number, base: number, from: number, to: number, rMin: number, rMax: number) {
+export function cloud(
+  seed: number,
+  base: number,
+  from: number,
+  to: number,
+  rMin: number,
+  rMax: number,
+) {
   const r = rng(seed)
   const puffs: { x: number; r: number }[] = []
-  for (let x = from; x < to; x += rMin + r() * (rMax - rMin)) puffs.push({ x, r: rMin + r() * (rMax - rMin) })
+  for (let x = from; x < to; x += rMin + r() * (rMax - rMin))
+    puffs.push({ x, r: rMin + r() * (rMax - rMin) })
   const pts: string[] = []
   for (let x = from - rMax; x <= to + rMax; x += 4) {
     let top = 0
@@ -126,7 +134,8 @@ export function shoreLights(seed: number) {
   const r = rng(seed)
   const dots: Dot[] = []
   for (const [a, b] of TOWNS) {
-    for (let x = a; x < b; x += 9 + r() * 6) dots.push({ x, y: shoreAt(x) + 1.5 + r() * 5, r: 1 + r() * 0.4 })
+    for (let x = a; x < b; x += 9 + r() * 6)
+      dots.push({ x, y: shoreAt(x) + 1.5 + r() * 5, r: 1 + r() * 0.4 })
   }
   return dots
 }
@@ -136,7 +145,14 @@ export function shoreLights(seed: number) {
 export const VAR_PLAIN = 'M184 549 L316 550 L372 700 L120 700 Z'
 
 // A village: a tight cluster of houses with roofs, stepped up a spur, plus a bell tower.
-export function village(seed: number, cx: number, cy: number, radius: number, count: number, size: number) {
+export function village(
+  seed: number,
+  cx: number,
+  cy: number,
+  radius: number,
+  count: number,
+  size: number,
+) {
   const r = rng(seed)
   const houses: Rect[] = []
   for (let i = 0; i < count; i++) {
@@ -154,7 +170,9 @@ export function village(seed: number, cx: number, cy: number, radius: number, co
 // One lit window in every few houses, for dusk.
 export function windows(houses: Rect[], every: number, seed: number): Dot[] {
   const r = rng(seed)
-  return houses.filter(() => r() < 1 / every).map((h) => ({ x: h.x + h.w * 0.5, y: h.y + h.h * 0.55, r: Math.max(0.9, h.h * 0.22) }))
+  return houses
+    .filter(() => r() < 1 / every)
+    .map((h) => ({ x: h.x + h.w * 0.5, y: h.y + h.h * 0.55, r: Math.max(0.9, h.h * 0.22) }))
 }
 
 // Lines of code for a screen: indent, length, colour index. Same file every load.

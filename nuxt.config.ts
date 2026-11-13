@@ -3,17 +3,22 @@ import { createHash } from 'node:crypto'
 // Static site: `nuxt generate` renders both pages to HTML at build time (SSR on), the client
 // hydrates. GitHub Pages serves .output/public.
 
-// Contact details are not in the repository. They come from NUXT_PUBLIC_CONTACT_EMAIL and
-// NUXT_CONTACT_PHONE (.env locally, repository secrets in CI) and are baked into the generated
-// pages. The phone is a private key: it's read while generating and reaches only the page that
-// shows it (through useState, see composables/useContact.ts), never the main page's HTML or JS.
-// A build without them stops here rather than ship a page with no way to reach me.
+// Contact details are not in the repository. They come from NUXT_PUBLIC_CONTACT_EMAIL,
+// NUXT_CONTACT_PHONE and NUXT_LEGAL_ADDRESS (.env locally, repository secrets in CI) and are baked
+// into the generated pages. The phone and the address are private keys: they're read while
+// generating and reach only the pages that show them (through useAsyncData, see
+// composables/useContact.ts), never the main page's HTML or JS. The address is on the legal
+// notice only. A build without them stops here rather than ship a page with no way to reach me
+// or a legal notice with no address.
 const building = process.argv.some((a) => a === 'generate' || a === 'build')
-const missing = ['NUXT_PUBLIC_CONTACT_EMAIL', 'NUXT_CONTACT_PHONE'].filter((k) => !process.env[k]?.trim())
+const missing = ['NUXT_PUBLIC_CONTACT_EMAIL', 'NUXT_CONTACT_PHONE', 'NUXT_LEGAL_ADDRESS'].filter(
+  (k) => !process.env[k]?.trim(),
+)
 if (building && missing.length) {
   throw new Error(
-    `Missing ${missing.join(' and ')}. Set them in .env (see .env.example) or, in CI, from the ` +
-      'CONTACT_EMAIL and CONTACT_PHONE secrets. The build stops rather than ship a page without contact details.',
+    `Missing ${missing.join(', ')}. Set them in .env (see .env.example) or, in CI, from the ` +
+      'CONTACT_EMAIL, CONTACT_PHONE and LEGAL_ADDRESS secrets. The build stops rather than ship a page ' +
+      'without contact details.',
   )
 }
 
@@ -68,6 +73,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     contactPhone: '',
+    legalAddress: '',
     public: {
       contactEmail: '',
       // the day the pages were generated, for the JSON-LD dateModified
@@ -81,6 +87,10 @@ export default defineNuxtConfig({
     // each page's state (the phone, on the shop page) lives in its own _payload.json, which the
     // client fetches when it navigates there; the main page never carries the phone
     payloadExtraction: true,
+    // 404.html, which GitHub Pages serves for unknown paths, is server-rendered from
+    // app/error.vue (header, footer, fonts) instead of an empty shell that only shows the
+    // error once the JS has loaded
+    prerenderErrorPages: true,
     defaults: {
       // /geek-du-quartier/ keeps its trailing slash, as on the flyers and in the sitemap
       nuxtLink: { trailingSlash: 'append' },
@@ -98,11 +108,15 @@ export default defineNuxtConfig({
 
   nitro: {
     prerender: {
-      routes: ['/', '/geek-du-quartier/', '/.well-known/security.txt'],
+      routes: ['/', '/geek-du-quartier/', '/mentions-legales/', '/.well-known/security.txt'],
       crawlLinks: false,
       autoSubfolderIndex: true,
     },
     hooks: {
+      // the sitemap is a server route too (server/routes/sitemap.xml.ts), dated at generate time
+      'prerender:routes'(routes) {
+        routes.add('/sitemap.xml')
+      },
       'prerender:generate'(route) {
         if (route.fileName?.endsWith('.html') && typeof route.contents === 'string') {
           // Nuxt adds idle prefetch hints for every asset a chunk references (all nine portrait

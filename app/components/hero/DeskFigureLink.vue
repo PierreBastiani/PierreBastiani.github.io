@@ -75,7 +75,9 @@ onBeforeUnmount(() => clearTimeout(timer))
       <div class="bridge">
         <a class="card print" href="#contact" :tabindex="open ? 0 : -1" @click="open = false">
           <!-- a printed route card: lettering band, the portrait in a frame, a perforation -->
-          <span class="band" aria-hidden="true"><span>Relais du sommet</span><span>802 m</span></span>
+          <span class="band" aria-hidden="true"
+            ><span>Relais du sommet</span><span>802 m</span></span
+          >
           <span class="frame"><PortraitImage :size="48" alt="" /></span>
           <span class="who">
             <span class="name">{{ contact.name }}</span>
@@ -216,7 +218,7 @@ onBeforeUnmount(() => clearTimeout(timer))
 }
 .cta {
   font-weight: 600;
-  color: var(--accent-text);
+  color: var(--ink);
 }
 /* narrow screens with a keyboard: the card sits above the figure, the bridge reaches down */
 @media (max-width: 40rem) {

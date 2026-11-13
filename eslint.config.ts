@@ -22,10 +22,10 @@ export default defineConfigWithVueTs(
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 
-  // Nuxt names pages and the root component after their files: index.vue, app.vue
+  // Nuxt names pages and the root components after their files: index.vue, app.vue, error.vue
   {
     name: 'app/nuxt-file-names',
-    files: ['app/pages/**/*.vue', 'app/app.vue'],
+    files: ['app/pages/**/*.vue', 'app/app.vue', 'app/error.vue'],
     rules: { 'vue/multi-word-component-names': 'off' },
   },
 

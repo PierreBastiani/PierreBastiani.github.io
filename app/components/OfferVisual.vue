@@ -43,7 +43,10 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
             <polygon v-for="(p, i) in stars" :key="i" :points="p" class="ink-hair" />
             <path d="M44 76 H96 M44 84 H80" class="ink-hair" />
             <path d="M96 82 H108 V94 H96 Z" class="ink-line" />
-            <path d="M99.5 85.5 C99.5 83.5 104.5 83.5 104.5 86 C104.5 88 102 87.6 102 90 M102 91 V92.6" class="ink-hair" />
+            <path
+              d="M99.5 85.5 C99.5 83.5 104.5 83.5 104.5 86 C104.5 88 102 87.6 102 90 M102 91 V92.6"
+              class="ink-hair"
+            />
             <path :d="sign.outline" class="ink-line" />
           </template>
           <template v-else-if="kind === 'site'">
@@ -53,7 +56,12 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
             <path :d="phone.side" class="shade" />
             <path d="M62 14 H98 V96 H62 Z" class="lit" />
             <!-- a desktop page squeezed in: the lines run off the screen -->
-            <path v-for="i in 8" :key="i" :d="`M65 ${18 + i * 6} H${118 + (i % 3) * 9}`" class="ink-hair" />
+            <path
+              v-for="i in 8"
+              :key="i"
+              :d="`M65 ${18 + i * 6} H${118 + (i % 3) * 9}`"
+              class="ink-hair"
+            />
             <path d="M65 74 H86 V90 H65 Z M65 74 L86 90 M86 74 L65 90" class="ink-hair" />
             <path :d="phone.outline" class="ink-line" />
           </template>
@@ -63,14 +71,24 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
               <path :d="book.front" class="lit" />
               <path :d="book.side" class="shade" />
               <path v-for="i in 7" :key="i" :d="`M17 ${34 + i * 8} H23`" class="ink-line" />
-              <path v-for="i in 6" :key="'s' + i" :d="`M28 ${36 + i * 8} q4 -3 8 0 t8 0 t8 0`" class="ink-hair" />
+              <path
+                v-for="i in 6"
+                :key="'s' + i"
+                :d="`M28 ${36 + i * 8} q4 -3 8 0 t8 0 t8 0`"
+                class="ink-hair"
+              />
               <path :d="book.outline" class="ink-line" />
             </g>
             <path d="M68 70 L92 78" class="ink-hair dashed" />
             <path :d="laptop.cast" class="cast" />
             <path d="M102 50 H140 V88 H102 Z" class="dark" />
             <path d="M105 53 H137 V85 H105 Z" class="lit" />
-            <path v-for="i in 3" :key="'k' + i" :d="`M109 ${58 + i * 7} q3 -2 6 0 t6 0 t6 0`" class="ink-hair" />
+            <path
+              v-for="i in 3"
+              :key="'k' + i"
+              :d="`M109 ${58 + i * 7} q3 -2 6 0 t6 0 t6 0`"
+              class="ink-hair"
+            />
             <path d="M102 50 H140 V88 H102 Z" class="ink-line" />
             <path :d="laptop.front" class="face" />
             <path :d="laptop.top" class="lit" />
@@ -86,7 +104,10 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
             <path :d="router.side" class="shade" />
             <path d="M52 70 h4 v4 h-4 Z M60 70 h4 v4 h-4 Z" class="ink-hair" />
             <path :d="router.outline" class="ink-line" />
-            <path d="M58 82 C34 92 98 94 62 104 S28 110 44 116 M74 82 C110 92 34 98 96 106 S116 110 104 116 M92 82 C70 96 136 100 82 112" class="ink-line" />
+            <path
+              d="M58 82 C34 92 98 94 62 104 S28 110 44 116 M74 82 C110 92 34 98 96 106 S116 110 104 116 M92 82 C70 96 136 100 82 112"
+              class="ink-line"
+            />
           </template>
         </svg>
       </div>
@@ -134,7 +155,10 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
             <path d="M66 60 H94 M66 66 H86" class="ink-hair" />
             <!-- the call button -->
             <path d="M66 76 H94 V88 H66 Z" class="spot" />
-            <path d="M71 79 H73.5 L74.5 81 L73.5 82 C74.3 83.5 75.5 84.7 77 85.5 L78 84.5 L80 85.5 V87 M83 82 H90" class="ink-line" />
+            <path
+              d="M71 79 H73.5 L74.5 81 L73.5 82 C74.3 83.5 75.5 84.7 77 85.5 L78 84.5 L80 85.5 V87 M83 82 H90"
+              class="ink-line"
+            />
             <path :d="phone.outline" class="ink-line" />
           </template>
           <template v-else-if="kind === 'orders'">
@@ -164,12 +188,18 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
             <path d="M52 70 h4 v4 h-4 Z M60 70 h4 v4 h-4 Z" class="ink-hair" />
             <path :d="router.outline" class="ink-line" />
             <path d="M58 82 V100 M70 82 V100 M86 82 V100 M98 82 V100" class="ink-line" />
-            <path d="M52 100 H64 V108 H52 Z M64 100 H76 V108 H64 Z M80 100 H92 V108 H80 Z M92 100 H104 V108 H92 Z" class="lit" />
-            <path d="M52 100 H64 V108 H52 Z M64 100 H76 V108 H64 Z M80 100 H92 V108 H80 Z M92 100 H104 V108 H92 Z" class="ink-hair" />
+            <path
+              d="M52 100 H64 V108 H52 Z M64 100 H76 V108 H64 Z M80 100 H92 V108 H80 Z M92 100 H104 V108 H92 Z"
+              class="lit"
+            />
+            <path
+              d="M52 100 H64 V108 H52 Z M64 100 H76 V108 H64 Z M80 100 H92 V108 H80 Z M92 100 H104 V108 H92 Z"
+              class="ink-hair"
+            />
             <path d="M55 104 H61 M67 104 H73 M83 104 H89 M95 104 H101" class="ink-hair" />
           </template>
         </svg>
-        <!-- the seam: a porphyry marker pointing from before to after -->
+        <!-- the seam: an ink marker pointing from before to after -->
         <span class="seam" aria-hidden="true"></span>
       </div>
     </div>
@@ -232,20 +262,38 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
 .panel :is(.ink-heavy, .ink-line, .ink-hair) {
   stroke: var(--pen);
 }
-.sky { fill: var(--v-sky); }
-.sea { fill: var(--v-sea); }
-.ground { fill: var(--v-ground); }
-.lit { fill: var(--v-lit); }
-.face { fill: var(--v-face); }
+.sky {
+  fill: var(--v-sky);
+}
+.sea {
+  fill: var(--v-sea);
+}
+.ground {
+  fill: var(--v-ground);
+}
+.lit {
+  fill: var(--v-lit);
+}
+.face {
+  fill: var(--v-face);
+}
 .shade,
-.cast { fill: var(--v-shade); }
-.dark { fill: var(--v-dark); }
-.sun { fill: var(--v-sun); }
-.spot { fill: var(--v-spot); }
+.cast {
+  fill: var(--v-shade);
+}
+.dark {
+  fill: var(--v-dark);
+}
+.sun {
+  fill: var(--v-sun);
+}
+.spot {
+  fill: var(--v-spot);
+}
 .dashed {
   stroke-dasharray: 3 3;
 }
-/* the marker on the seam: a square porphyry flag with an ink notch, pointing right */
+/* the marker on the seam: a square ink flag pointing right, in the ink of the rule it sits on */
 .seam {
   position: absolute;
   z-index: 2;
@@ -254,7 +302,7 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
   width: 0.9rem;
   height: 1.3rem;
   transform: translate(-50%, -50%);
-  background: var(--ink-porphyry);
+  background: var(--ink);
   clip-path: polygon(0 0, 55% 0, 100% 50%, 55% 100%, 0 100%);
 }
 
@@ -267,7 +315,7 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
   background: var(--ground);
   color: var(--on-ground);
   font: 500 0.7rem / 1.4 var(--f-mono);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .cap {
@@ -275,22 +323,25 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
   align-content: start;
   justify-items: start;
   gap: 0.3rem;
-  /* room for a two-line caption, so plates side by side end on the same line */
-  min-height: 4.4rem;
+  /* room for the stamp and a two-line caption (three lines, the stamp's padding and border,
+     the gap, the cell's padding), so plates side by side end on the same line; the rem line is
+     for browsers without the lh unit (Safari < 16.4, Firefox < 120): a line is 0.7rem × 1.4 */
+  min-height: calc(2.94rem + 0.1rem + 2px + 0.3rem + 1.1rem);
+  min-height: calc(3lh + 0.1rem + 2px + 0.3rem + 1.1rem);
   padding: 0.5rem 0.7rem 0.6rem;
 }
 .cap + .cap {
-  border-left: 1px solid color-mix(in srgb, var(--on-ground) 35%, transparent);
+  border-left: 1px solid var(--on-ground-line);
 }
 .stamp {
   padding: 0.05rem 0.4rem;
-  border: 1px solid color-mix(in srgb, var(--on-ground) 60%, transparent);
-  font-weight: 650;
-  letter-spacing: 0.14em;
+  border: 1px solid var(--on-ground-rule);
+  font-weight: 500;
+  letter-spacing: 0.12em;
 }
+/* after: the same stamp in full --on-ground, outlined; the accent stays in the drawing */
 .cap + .cap .stamp {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+  border-color: var(--on-ground);
+  color: var(--on-ground);
 }
 </style>

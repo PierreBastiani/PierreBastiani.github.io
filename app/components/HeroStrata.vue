@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ridgeFacets, ridgeLine, ridgePath, ridgeY, type RidgeOptions } from '@/lib/ridge'
-import { VAR_PLAIN, cityBlocks, cloud, coastPath, shoreLights, shoreStrip, village, windows } from '@/lib/scene'
+import {
+  VAR_PLAIN,
+  cityBlocks,
+  cloud,
+  coastPath,
+  shoreLights,
+  shoreStrip,
+  village,
+  windows,
+} from '@/lib/scene'
 import { useParallax } from '@/composables/useParallax'
 import HeroLayer from './hero/HeroLayer.vue'
 import SummitSetup from './hero/SummitSetup.vue'
@@ -19,7 +28,12 @@ const clouds = [
   cloud(12, 500, 300, 470, 7, 12),
 ]
 
-const coast = { land: coastPath(600), shallows: shoreStrip(6, 600), blocks: cityBlocks(41), lights: shoreLights(43) }
+const coast = {
+  land: coastPath(600),
+  shallows: shoreStrip(6, 600),
+  blocks: cityBlocks(41),
+  lights: shoreLights(43),
+}
 
 // Three planes of hills, heights exaggerated. The far one (the Nice side on the left, the hills
 // behind Cagnes and Antibes on the right) stays below the shore towns. The Var valley floor shows
@@ -91,7 +105,12 @@ const front: RidgeOptions = {
     { x: 1720, height: 48, width: 210 },
   ],
 }
-const hills = { far: ridgePath(far), mid: ridgePath(mid), near: ridgePath(near), front: ridgePath(front) }
+const hills = {
+  far: ridgePath(far),
+  mid: ridgePath(mid),
+  near: ridgePath(near),
+  front: ridgePath(front),
+}
 // Printed in two flats per plane: the hill, then its shadow sides (see ridgeFacets).
 const shade = {
   far: ridgeFacets(far, { minProm: 10, smooth: 60 }),
@@ -101,7 +120,16 @@ const shade = {
 
 // Faint strata in the band, like the bedding of the limestone under the summit. Static.
 const strata = Array.from({ length: 10 }, (_, i) =>
-  ridgeLine({ seed: 80 + i, base: 18 + i * 36, amp: 7 + i * 0.5, scale: 0.0035, octaves: 2, x0: -240, x1: 1840, step: 20 }),
+  ridgeLine({
+    seed: 80 + i,
+    base: 18 + i * 36,
+    amp: 7 + i * 0.5,
+    scale: 0.0035,
+    octaves: 2,
+    x0: -240,
+    x1: 1840,
+    step: 20,
+  }),
 )
 
 // Villages sit on the hill tops, a little below the line so they read as built into the slope.
@@ -119,7 +147,11 @@ const towns = {
 const vence = village(27, vx, vy, 42, 14, 10)
 const saintJeannet = village(31, jx, jy, 42, 12, 12)
 const dusk = {
-  mid: [...windows(towns.laGaude.houses, 2, 41), ...windows(towns.saintPaul.houses, 2, 42), ...windows(towns.laColle.houses, 2, 43)],
+  mid: [
+    ...windows(towns.laGaude.houses, 2, 41),
+    ...windows(towns.saintPaul.houses, 2, 42),
+    ...windows(towns.laColle.houses, 2, 43),
+  ],
   near: [...windows(vence.houses, 2, 44), ...windows(saintJeannet.houses, 2, 45)],
 }
 
@@ -140,22 +172,31 @@ useParallax(scene, cardOpen)
         <rect x="-1300" y="452" width="4200" height="88" fill="var(--sky-mid)" />
         <rect x="-1300" y="494" width="4200" height="46" fill="var(--sky-low)" />
         <g class="sun">
-          <circle cx="1560" cy="472" r="62" fill="var(--sun)" opacity="0.22" />
-          <circle cx="1560" cy="472" r="38" fill="var(--sun)" opacity="0.4" />
+          <circle cx="1560" cy="472" r="62" fill="var(--sun-halo)" />
+          <circle cx="1560" cy="472" r="38" fill="var(--sun-halo-2)" />
           <circle cx="1560" cy="472" r="24" fill="var(--sun)" />
         </g>
       </HeroLayer>
 
       <!-- a few flat clouds, each with its shadow flat underneath -->
       <HeroLayer :y0="400" :h="120" :depth="0.05">
-        <path v-for="(d, i) in clouds" :key="'s' + i" :d="d" fill="var(--cloud-shade)" transform="translate(6 4)" />
+        <path
+          v-for="(d, i) in clouds"
+          :key="'s' + i"
+          :d="d"
+          fill="var(--cloud-shade)"
+          transform="translate(6 4)"
+        />
         <path v-for="(d, i) in clouds" :key="i" :d="d" fill="var(--cloud)" />
       </HeroLayer>
 
       <!-- the sea, one block of ink; Cap Ferrat to the east, the Estérel to the west -->
       <HeroLayer :y0="490" :h="90" :depth="0.1">
         <rect x="-1300" y="519" width="4200" height="61" fill="var(--sea-fill)" />
-        <path d="M-1300 520 L-1300 500 L-1200 504 L-1110 498 L-1040 510 L-1000 516 L-960 522 L-900 526 L-880 530 L-940 530 L-1020 524 Z" fill="var(--esterel)" />
+        <path
+          d="M-1300 520 L-1300 500 L-1200 504 L-1110 498 L-1040 510 L-1000 516 L-960 522 L-900 526 L-880 530 L-940 530 L-1020 524 Z"
+          fill="var(--esterel)"
+        />
         <path
           d="M1600 520 L1650 513 L1720 509 L1790 512 L1860 505 L1950 510 L2060 506 L2200 513 L2360 509 L2560 515 L2900 517 L2900 520 Z"
           fill="var(--esterel)"
@@ -171,8 +212,19 @@ useParallax(scene, cardOpen)
       <HeroLayer :y0="515" :h="85" :depth="0.16">
         <path :d="coast.shallows" fill="var(--sea-shore)" />
         <path :d="coast.land" fill="var(--coast)" />
-        <path d="M712 556 C724 546 736 543 748 546 C758 548 766 552 772 556 Z" fill="var(--coast)" />
-        <rect v-for="(b, i) in coast.blocks" :key="i" :x="b.x" :y="b.y" :width="b.w" :height="b.h" fill="var(--city)" />
+        <path
+          d="M712 556 C724 546 736 543 748 546 C758 548 766 552 772 556 Z"
+          fill="var(--coast)"
+        />
+        <rect
+          v-for="(b, i) in coast.blocks"
+          :key="i"
+          :x="b.x"
+          :y="b.y"
+          :width="b.w"
+          :height="b.h"
+          fill="var(--city)"
+        />
         <rect x="738" y="536" width="5" height="9" fill="var(--city)" />
         <g class="lights">
           <circle v-for="(d, i) in coast.lights" :key="i" :cx="d.x" :cy="d.y" :r="d.r" />
@@ -182,9 +234,7 @@ useParallax(scene, cardOpen)
       <!-- the Var valley floor, seen through the notch near the coast -->
       <HeroLayer :y0="545" :h="165" :depth="0.2">
         <path :d="VAR_PLAIN" fill="var(--plain)" />
-        <g class="labels">
-          <path d="M250 590 V568" /><text x="250" y="562">Var</text>
-        </g>
+        <g class="labels"> <path d="M250 590 V568" /><text x="250" y="562">Var</text> </g>
       </HeroLayer>
 
       <!-- far hills: the Nice side on the left, the hills behind Cagnes and Antibes -->
@@ -205,11 +255,29 @@ useParallax(scene, cardOpen)
           <g v-for="(h, i) in v.houses" :key="i">
             <rect :x="h.x" :y="h.y" :width="h.w" :height="h.h" fill="var(--villa)" />
             <rect :x="h.x" :y="h.y" :width="h.w * 0.4" :height="h.h" fill="var(--villa-shade)" />
-            <rect :x="h.x - 0.5" :y="h.y - h.h * 0.3" :width="h.w + 1" :height="h.h * 0.32" fill="var(--roof)" />
+            <rect
+              :x="h.x - 0.5"
+              :y="h.y - h.h * 0.3"
+              :width="h.w + 1"
+              :height="h.h * 0.32"
+              fill="var(--roof)"
+            />
           </g>
         </g>
-        <rect :x="towns.saintPaul.tower.x" :y="towns.saintPaul.tower.y" :width="towns.saintPaul.tower.w" :height="towns.saintPaul.tower.h" fill="var(--villa)" />
-        <rect :x="towns.saintPaul.tower.x" :y="towns.saintPaul.tower.y" :width="towns.saintPaul.tower.w * 0.4" :height="towns.saintPaul.tower.h" fill="var(--villa-shade)" />
+        <rect
+          :x="towns.saintPaul.tower.x"
+          :y="towns.saintPaul.tower.y"
+          :width="towns.saintPaul.tower.w"
+          :height="towns.saintPaul.tower.h"
+          fill="var(--villa)"
+        />
+        <rect
+          :x="towns.saintPaul.tower.x"
+          :y="towns.saintPaul.tower.y"
+          :width="towns.saintPaul.tower.w * 0.4"
+          :height="towns.saintPaul.tower.h"
+          fill="var(--villa-shade)"
+        />
         <rect :x="px - 22" :y="py + 12" width="44" height="6" fill="var(--villa)" />
         <rect :x="px - 22" :y="py + 12" width="16" height="6" fill="var(--villa-shade)" />
         <g class="lights">
@@ -228,7 +296,13 @@ useParallax(scene, cardOpen)
         <g v-for="(h, i) in [...saintJeannet.houses, ...vence.houses]" :key="i">
           <rect :x="h.x" :y="h.y" :width="h.w" :height="h.h" fill="var(--villa)" />
           <rect :x="h.x" :y="h.y" :width="h.w * 0.4" :height="h.h" fill="var(--villa-shade)" />
-          <rect :x="h.x - 0.5" :y="h.y - h.h * 0.3" :width="h.w + 1" :height="h.h * 0.32" fill="var(--roof)" />
+          <rect
+            :x="h.x - 0.5"
+            :y="h.y - h.h * 0.3"
+            :width="h.w + 1"
+            :height="h.h * 0.32"
+            fill="var(--roof)"
+          />
         </g>
         <template v-for="t in [saintJeannet.tower, vence.tower]" :key="t.x">
           <rect :x="t.x" :y="t.y" :width="t.w" :height="t.h" fill="var(--villa)" />
@@ -238,7 +312,9 @@ useParallax(scene, cardOpen)
           <circle v-for="(d, i) in dusk.near" :key="i" :cx="d.x" :cy="d.y" :r="d.r" />
         </g>
         <g class="labels">
-          <path :d="`M${jx} ${jy - 16} V${jy - 40}`" /><text :x="jx" :y="jy - 46">Saint-Jeannet</text>
+          <path :d="`M${jx} ${jy - 16} V${jy - 40}`" /><text :x="jx" :y="jy - 46"
+            >Saint-Jeannet</text
+          >
           <path :d="`M${vx} ${vy - 20} V${vy - 46}`" /><text :x="vx" :y="vy - 52">Vence</text>
         </g>
       </HeroLayer>
@@ -248,10 +324,22 @@ useParallax(scene, cardOpen)
         <SummitSetup />
         <!-- an Aleppo pine on the crest to the west: the poster's frame on wide screens -->
         <g transform="translate(305 22)">
-          <path d="M1434 782 C1428 700 1412 600 1396 482 L1408 480 C1424 600 1442 700 1450 782 Z" fill="var(--trunk-shade)" />
-          <path d="M1442 782 C1436 700 1419 600 1402 481 L1408 480 C1424 600 1442 700 1450 782 Z" fill="var(--trunk)" />
-          <path d="M1399 530 C1380 505 1360 488 1334 474 L1338 468 C1364 482 1386 498 1404 520 Z" fill="var(--trunk-shade)" />
-          <path d="M1402 505 C1424 488 1446 474 1474 462 L1477 468 C1450 480 1428 494 1406 512 Z" fill="var(--trunk)" />
+          <path
+            d="M1434 782 C1428 700 1412 600 1396 482 L1408 480 C1424 600 1442 700 1450 782 Z"
+            fill="var(--trunk-shade)"
+          />
+          <path
+            d="M1442 782 C1436 700 1419 600 1402 481 L1408 480 C1424 600 1442 700 1450 782 Z"
+            fill="var(--trunk)"
+          />
+          <path
+            d="M1399 530 C1380 505 1360 488 1334 474 L1338 468 C1364 482 1386 498 1404 520 Z"
+            fill="var(--trunk-shade)"
+          />
+          <path
+            d="M1402 505 C1424 488 1446 474 1474 462 L1477 468 C1450 480 1428 494 1406 512 Z"
+            fill="var(--trunk)"
+          />
           <path
             d="M1290 470 C1296 452 1320 444 1344 446 C1356 432 1384 428 1404 436 C1420 424 1452 424 1470 436 C1494 432 1522 440 1532 456 C1540 466 1528 474 1510 472 C1490 480 1462 476 1446 470 C1424 480 1392 478 1376 472 C1356 482 1322 482 1306 476 C1296 476 1288 474 1290 470 Z"
             fill="var(--pine)"
@@ -273,14 +361,23 @@ useParallax(scene, cardOpen)
       <div class="title" style="--depth: 0.6">
         <div class="wrap">
           <h1 id="hero-title" :translate="props.noTranslate ? 'no' : undefined">
-            <span v-for="(line, i) in props.title" :key="line" :class="{ indent: i > 0 }">{{ line }}</span>
+            <!-- a space between the lines, so the heading's text reads "Pierre Bastiani" -->
+            <template v-for="(line, i) in props.title" :key="line"
+              >{{ i > 0 ? ' ' : '' }}<span :class="{ indent: i > 0 }">{{ line }}</span></template
+            >
           </h1>
         </div>
       </div>
     </div>
 
     <div class="intro on-ground">
-      <svg class="strata" viewBox="0 0 1600 360" preserveAspectRatio="xMidYMin slice" aria-hidden="true" focusable="false">
+      <svg
+        class="strata"
+        viewBox="0 0 1600 360"
+        preserveAspectRatio="xMidYMin slice"
+        aria-hidden="true"
+        focusable="false"
+      >
         <path v-for="(d, i) in strata" :key="i" :d="d" />
       </svg>
       <div class="wrap inner">
@@ -292,6 +389,8 @@ useParallax(scene, cardOpen)
 
 <style scoped>
 .scene {
+  /* how much of the top of the sky is cut off: none, except on phones (below) */
+  --sky-cut: 0px;
   position: relative;
   height: clamp(24rem, 68svh, 44rem);
   overflow: hidden;
@@ -315,10 +414,14 @@ useParallax(scene, cardOpen)
   transition: opacity var(--dur-fade) var(--ease);
   fill: var(--label);
   stroke: var(--label);
-  stroke-width: 1;
+  stroke-width: var(--w-hair);
   font: 500 15px var(--f-mono);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   text-anchor: middle;
+}
+.labels path {
+  vector-effect: non-scaling-stroke;
 }
 .labels text {
   stroke: none;
@@ -338,7 +441,7 @@ useParallax(scene, cardOpen)
   display: flex;
   align-items: flex-start;
   /* capped by the scene height so the name always sits on the sky, above the horizon at 52% */
-  padding-top: clamp(2.5rem, 9svh, 6rem);
+  padding-top: calc(clamp(2.5rem, 9svh, 6rem) + var(--sky-cut));
   pointer-events: none;
   transform: translate3d(
     calc(var(--px) * var(--depth) * -18px),
@@ -361,6 +464,21 @@ useParallax(scene, cardOpen)
 .title h1 .indent {
   padding-left: 0.5em;
 }
+/* Phones: the top of the sky is cut off, so the line under the name (the role, or the shop's
+   offer) comes up onto the first screen. The scene keeps its size, so the drawing and the
+   figure's card keep their scale; it moves up under the header and the cut part is clipped. */
+@media (max-width: 40rem) {
+  .scene {
+    /* about a seventh of the scene; capped, since the scene itself stops growing at 44rem */
+    --sky-cut: min(10svh, 5.25rem);
+    margin-top: calc(-1 * var(--sky-cut));
+    clip-path: inset(var(--sky-cut) 0 0 0);
+  }
+  /* the name moves up with it, so the sky under it stays as tall as the sky above */
+  .title {
+    padding-top: calc(2.5rem + var(--sky-cut));
+  }
+}
 .intro {
   position: relative;
   /* overlap the scene by a few px, same colour, so rounding at any zoom can't open a seam */
@@ -379,7 +497,7 @@ useParallax(scene, cardOpen)
 .strata path {
   fill: none;
   stroke: none;
-  stroke-width: 1px;
+  stroke-width: var(--w-hair);
   vector-effect: non-scaling-stroke;
 }
 @supports (stroke: color-mix(in srgb, red 50%, blue)) {

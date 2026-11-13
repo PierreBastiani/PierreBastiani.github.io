@@ -14,6 +14,12 @@ const logos: Record<OrgLogo, typeof LivePepperLogo> = {
 // Read like a topo: the newest job is the top pitch (longueur), the first one starts at the foot.
 const pitchNo = (i: number) => experiences.length - i
 
+// A hyphen is a break point, and h3's text-wrap: balance took it on phones
+// ("Développeur back-" / "end puis full-stack", F623). Each hyphenated word is cut out so the
+// template can keep it whole in a nowrap span; the text itself doesn't change.
+const roleParts = (role: string) =>
+  role.split(/(\S+-\S+)/).flatMap((text) => (text ? [{ text, whole: text.includes('-') }] : []))
+
 // ---- The lead line -------------------------------------------------------------------
 // Each job's anchor (relais) is an invisible box in the rail column. Once laid out, we
 // measure them and draw a rope that climbs from the foot, clip to clip through a few
@@ -162,13 +168,18 @@ function place() {
   const g = geo.value
   const fig = climber.value
   if (!el || !g || !fig || !samples.length) return
-  const y = reduce ? g.anchors[0]! : targetY(window.innerHeight / 2 - el.getBoundingClientRect().top, g.anchors)
+  const y = reduce
+    ? g.anchors[0]!
+    : targetY(window.innerHeight / 2 - el.getBoundingClientRect().top, g.anchors)
   const pt = pointAtY(y)
   if (!reduce && lastY !== null && Math.abs(y - lastY) > 0.5) {
     fig.classList.toggle('down', y > lastY)
     fig.classList.toggle('up', y < lastY)
   }
-  fig.classList.toggle('rest', g.anchors.some((a) => Math.abs(a - y) < 2))
+  fig.classList.toggle(
+    'rest',
+    g.anchors.some((a) => Math.abs(a - y) < 2),
+  )
   lastY = y
   fig.style.transform = `translate(${pt.x.toFixed(1)}px, ${pt.y.toFixed(1)}px)`
 }
@@ -236,7 +247,12 @@ onBeforeUnmount(() => {
 
           <!-- guidebook topo symbols: a cross for each bolt, a double ring for each belay, the
                start as a hatched ground line -->
-          <g v-for="(q, i) in line.draws" :key="'q' + i" class="bolt-x" :transform="`translate(${q.x.toFixed(1)} ${(q.y + 6).toFixed(1)})`">
+          <g
+            v-for="(q, i) in line.draws"
+            :key="'q' + i"
+            class="bolt-x"
+            :transform="`translate(${q.x.toFixed(1)} ${(q.y + 6).toFixed(1)})`"
+          >
             <path d="M-3.2,-3.2 L3.2,3.2 M3.2,-3.2 L-3.2,3.2" class="ink-line" />
           </g>
           <g
@@ -264,8 +280,14 @@ onBeforeUnmount(() => {
                 <path d="M-9,-12 H-2 V0 H-9 Z" class="body" />
                 <path d="M-9.5,-2.5 H-1.5 V-0.1 H-9.5 Z" class="harness" />
                 <g class="head">
-                  <path d="M-8.4,-15 L-7.6,-18.4 H-3.4 L-2.6,-15 L-3.6,-12.6 H-7.4 Z" class="body" />
-                  <path d="M-8.9,-16 L-7.8,-19.6 L-5.5,-20.4 L-3.2,-19.6 L-2.1,-16 Z" class="beanie" />
+                  <path
+                    d="M-8.4,-15 L-7.6,-18.4 H-3.4 L-2.6,-15 L-3.6,-12.6 H-7.4 Z"
+                    class="body"
+                  />
+                  <path
+                    d="M-8.9,-16 L-7.8,-19.6 L-5.5,-20.4 L-3.2,-19.6 L-2.1,-16 Z"
+                    class="beanie"
+                  />
                 </g>
                 <path d="M-2,-1.2 L0,0" class="tie" />
               </g>
@@ -276,8 +298,14 @@ onBeforeUnmount(() => {
                   <path d="M-6.5,-12 H0.5 V0 H-6.5 Z" class="body" />
                   <path d="M-7,-2.5 H1 V-0.1 H-7 Z" class="harness" />
                   <g class="head">
-                    <path d="M-5.9,-15 L-5.1,-18.4 H-0.9 L-0.1,-15 L-1.1,-12.6 H-4.9 Z" class="body" />
-                    <path d="M-6.4,-16 L-5.3,-19.6 L-3,-20.4 L-0.7,-19.6 L0.4,-16 Z" class="beanie" />
+                    <path
+                      d="M-5.9,-15 L-5.1,-18.4 H-0.9 L-0.1,-15 L-1.1,-12.6 H-4.9 Z"
+                      class="body"
+                    />
+                    <path
+                      d="M-6.4,-16 L-5.3,-19.6 L-3,-20.4 L-0.7,-19.6 L0.4,-16 Z"
+                      class="beanie"
+                    />
                   </g>
                 </g>
                 <path d="M-1.5,-0.5 L0,0" class="tie" />
@@ -287,9 +315,17 @@ onBeforeUnmount(() => {
         </svg>
 
         <ol class="pitches">
-          <li v-for="(x, i) in experiences" :key="x.period" class="pitch" :class="{ current: i === 0 }">
+          <li
+            v-for="(x, i) in experiences"
+            :key="x.period"
+            class="pitch"
+            :class="{ current: i === 0 }"
+          >
             <p class="when">
-              <span class="len"><span aria-hidden="true">L{{ pitchNo(i) }}</span><span class="visually-hidden">Longueur {{ pitchNo(i) }}</span></span>
+              <span class="len"
+                ><span aria-hidden="true">L{{ pitchNo(i) }}</span
+                ><span class="visually-hidden">Longueur {{ pitchNo(i) }}</span></span
+              >
               <span class="period">{{ x.period }}</span>
             </p>
             <span class="anchor" aria-hidden="true"></span>
@@ -299,7 +335,12 @@ onBeforeUnmount(() => {
                 <span v-else>{{ x.org }}</span>
                 <span v-if="x.orgNote" class="note">{{ x.orgNote }}</span>
               </p>
-              <h3>{{ x.role }}</h3>
+              <h3>
+                <template v-for="(p, j) in roleParts(x.role)" :key="j"
+                  ><span v-if="p.whole" class="word">{{ p.text }}</span
+                  ><template v-else>{{ p.text }}</template></template
+                >
+              </h3>
               <p class="text">{{ x.text }}</p>
               <ul class="tags" aria-label="Technologies" translate="no">
                 <li v-for="t in x.tags" :key="t">{{ t }}</li>
@@ -433,11 +474,14 @@ onBeforeUnmount(() => {
   color: var(--quiet);
 }
 .text {
-  color: color-mix(in srgb, var(--ink) 82%, var(--bg));
+  color: var(--ink);
 }
 /* technologies as printed tags: square, a thin ink rule, mono */
 .pitch .tags {
   margin-top: 0.15rem;
+}
+h3 .word {
+  white-space: nowrap;
 }
 .foot h3 {
   font-size: var(--step-0);

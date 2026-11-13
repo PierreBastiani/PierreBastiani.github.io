@@ -36,7 +36,10 @@ const { phone, phoneHref } = useContactPhone()
 
       <!-- the three steps, printed like a timetable card in a station or a shop's opening hours -->
       <div class="sheet timetable">
-        <h2 class="band"><span>{{ localOffer.how }}</span><span>{{ localOffer.howCount }}</span></h2>
+        <h2 class="band">
+          <span>{{ localOffer.how }}</span
+          >{{ ' ' }}<span>{{ localOffer.howCount }}</span>
+        </h2>
         <ol>
           <li v-for="(step, i) in localOffer.steps" :key="step.title">
             <span class="n" aria-hidden="true">{{ i + 1 }}</span>
@@ -48,10 +51,15 @@ const { phone, phoneHref } = useContactPhone()
 
       <!-- who I am, and the honest offer: a printed card like the summit figure's -->
       <div class="sheet trial print">
-        <h2 class="band"><span>{{ localOffer.trial }}</span><span>{{ localOffer.trialFor }}</span></h2>
+        <h2 class="band">
+          <span>{{ localOffer.trial }}</span
+          >{{ ' ' }}<span>{{ localOffer.trialFor }}</span>
+        </h2>
         <div class="trial-body">
           <div class="me">
-            <span class="frame"><PortraitImage :size="104" alt="Pierre Bastiani" class="portrait" /></span>
+            <span class="frame"
+              ><PortraitImage :size="104" alt="Pierre Bastiani" class="portrait"
+            /></span>
             <div>
               <p class="name" translate="no">{{ contact.name }}</p>
               <p class="line">{{ localOffer.me.line }}</p>
@@ -67,23 +75,30 @@ const { phone, phoneHref } = useContactPhone()
           <blockquote>
             <p>{{ t.quote }}</p>
           </blockquote>
-          <p class="who">{{ t.author }}<template v-if="t.shop">, {{ t.shop }}</template></p>
+          <p class="who">
+            {{ t.author }}<template v-if="t.shop">, {{ t.shop }}</template>
+          </p>
         </li>
       </ul>
 
       <!-- questions a shop owner asks: a printed notice, one native disclosure per question -->
       <div class="sheet faq">
-        <h2 class="band"><span>{{ localOffer.faq.title }}</span></h2>
+        <h2 class="band">
+          <span>{{ localOffer.faq.title }}</span>
+        </h2>
         <details v-for="f in localOffer.faq.items" :key="f.q">
           <summary>{{ f.q }}</summary>
           <p>{{ f.a }}</p>
         </details>
       </div>
 
-      <!-- call: the poster's lettering band -->
-      <div class="call print">
+      <!-- call: the poster's lettering band. #contact, like the main page's contact section, so
+           the hero's figure at the desk leads here on this page -->
+      <div id="contact" class="call print">
         <p class="call-band">
-          <template v-for="(place, i) in localOffer.call.band.split(' · ')" :key="place">{{ i ? ' · ' : '' }}<span class="nw">{{ place }}</span></template>
+          <template v-for="(place, i) in localOffer.call.band.split(' · ')" :key="place"
+            >{{ i ? ' · ' : '' }}<span class="nw">{{ place }}</span></template
+          >
         </p>
         <p class="call-title">{{ localOffer.call.title }}</p>
         <a class="phone" :href="phoneHref">{{ phone }}</a>
@@ -99,9 +114,13 @@ const { phone, phoneHref } = useContactPhone()
     <div class="call-bar" :class="{ tucked: heroCallVisible }" role="region" aria-label="Appeler">
       <a class="btn btn-primary" :href="phoneHref">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z" />
+          <path
+            d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"
+          />
         </svg>
-        <span>{{ localOffer.call.bar }} <span class="nw">{{ phone }}</span></span>
+        <span
+          >{{ localOffer.call.bar }} <span class="nw">{{ phone }}</span></span
+        >
       </a>
     </div>
   </section>
@@ -191,7 +210,7 @@ const { phone, phoneHref } = useContactPhone()
   padding-top: 0.1rem;
   border-right: 1px solid var(--ink);
   font: 600 var(--step-2) / 1 var(--f-mono);
-  color: var(--accent-text);
+  color: var(--ink);
 }
 .timetable strong {
   font: 600 var(--step-1) / 1.2 var(--f-display);
@@ -319,8 +338,10 @@ blockquote {
   padding: clamp(1.75rem, 5vw, 3rem) clamp(1.25rem, 5vw, 3rem);
   background: var(--ground);
   color: var(--on-ground);
-  /* an inner printed rule in the paper ink, so the band reads as an object on a dark page too */
-  box-shadow: inset 0 0 0 5px var(--ground), inset 0 0 0 6px color-mix(in srgb, var(--on-ground) 70%, transparent);
+  /* an inner printed rule in --on-ground-rule, so the band reads as an object on a dark page too */
+  box-shadow:
+    inset 0 0 0 5px var(--ground),
+    inset 0 0 0 6px var(--on-ground-rule);
 }
 .call > * {
   position: relative;
@@ -332,7 +353,7 @@ blockquote {
   font: 500 0.8rem / 1.3 var(--f-mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  opacity: 0.85;
+  color: var(--on-ground-muted);
 }
 .call-title {
   font: 600 var(--step-2) / 1.15 var(--f-display);
@@ -377,6 +398,11 @@ blockquote {
     transition:
       transform var(--dur-fade) var(--ease),
       visibility 0s;
+  }
+  /* while the bar shows, a link reached with Tab scrolls clear of it instead of under it (its
+     height: 3rem button, 0.6rem padding twice, the rule, the safe area) */
+  :global(html:has(.call-bar:not(.tucked))) {
+    scroll-padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px) + 1rem);
   }
   .call-bar.tucked {
     transform: translateY(110%);

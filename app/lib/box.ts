@@ -23,6 +23,8 @@ export function box(x: number, y: number, w: number, h: number, dx = 10, dy = -7
     top: `M${n(x)} ${n(y)}L${n(x + dx)} ${n(y + dy)}H${n(r + dx)}L${n(r)} ${n(y)}Z`,
     side: `M${n(r)} ${n(y)}L${n(r + dx)} ${n(y + dy)}V${n(b + dy)}L${n(r)} ${n(b)}Z`,
     outline: `M${n(x)} ${n(y)}L${n(x + dx)} ${n(y + dy)}H${n(r + dx)}V${n(b + dy)}L${n(r)} ${n(b)}H${n(x)}Z`,
-    cast: cast ? `M${n(x + w * 0.4)} ${n(b)}L${n(x + dx)} ${n(b + dy)}H${n(r + dx + cast)}L${n(r + cast * 0.8)} ${n(b)}Z` : '',
+    cast: cast
+      ? `M${n(x + w * 0.4)} ${n(b)}L${n(x + dx)} ${n(b + dy)}H${n(r + dx + cast)}L${n(r + cast * 0.8)} ${n(b)}Z`
+      : '',
   }
 }

@@ -14,7 +14,17 @@ const mode = ref<ThemeMode>('auto')
 const systemDark = ref(false)
 let users = 0
 let media: MediaQueryList | null = null
-let metaDefaults: [HTMLMetaElement, string][] = []
+
+// The page background of each palette (--bg in styles/main.css), for the browser's theme-color.
+const PAGE_BG = { light: '#f4e8dc', dark: '#141e32' } as const
+
+// What the theme-color meta for one colour scheme says: in auto, that scheme's own background;
+// after an explicit Light or Dark choice, the chosen palette's background for both schemes.
+// useSiteHead puts it in the head, so the head manager keeps it through hydration and page
+// changes (written straight into the DOM, it was reset to the defaults).
+export function themeColorFor(scheme: 'light' | 'dark') {
+  return computed(() => PAGE_BG[mode.value === 'auto' ? scheme : mode.value])
+}
 
 function readStored(): ThemeMode {
   try {
@@ -29,10 +39,6 @@ function apply() {
   const root = document.documentElement
   if (mode.value === 'auto') delete root.dataset.theme
   else root.dataset.theme = mode.value
-  // theme-color: in auto the media-specific defaults are right; an explicit choice
-  // points them all at the page background.
-  const bg = mode.value === 'auto' ? null : getComputedStyle(document.body).backgroundColor
-  for (const [m, original] of metaDefaults) m.setAttribute('content', bg ?? original)
 }
 
 const onSystemChange = (e: MediaQueryListEvent) => {
@@ -45,10 +51,6 @@ export function useTheme() {
       media = window.matchMedia('(prefers-color-scheme: dark)')
       systemDark.value = media.matches
       media.addEventListener('change', onSystemChange)
-      metaDefaults = [...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')].map((m) => [
-        m,
-        m.getAttribute('content') ?? '',
-      ])
       mode.value = readStored()
       apply()
     }

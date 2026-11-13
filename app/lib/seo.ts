@@ -67,6 +67,11 @@ export function serviceJsonLd(email: string, telephone: string) {
       { '@type': 'City', name: 'La Colle-sur-Loup' },
       { '@type': 'City', name: 'Saint-Paul-de-Vence' },
     ],
-    founder: { '@type': 'Person', '@id': `${SITE}/#pierre`, name: 'Pierre Bastiani', url: `${SITE}/` },
+    founder: {
+      '@type': 'Person',
+      '@id': `${SITE}/#pierre`,
+      name: 'Pierre Bastiani',
+      url: `${SITE}/`,
+    },
   }
 }

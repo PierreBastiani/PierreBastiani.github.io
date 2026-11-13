@@ -23,13 +23,19 @@ const call = props.variant === 'geek' ? useContactPhone() : null
       <template v-if="variant === 'main'">
         <p class="role">
           {{ profile.role }},
-          <template v-for="(part, i) in profile.place.split(', ')" :key="part">{{ i ? ', ' : '' }}<span class="nw">{{ part }}</span></template>
+          <template v-for="(part, i) in profile.place.split(', ')" :key="part"
+            >{{ i ? ', ' : '' }}<span class="nw">{{ part }}</span></template
+          >
         </p>
         <p class="lead">{{ profile.lead }}</p>
         <div class="btns">
           <a class="btn btn-primary" :href="links.malt"><MaltIcon />Me contacter sur Malt</a>
-          <a class="btn compact" :href="links.github"><GithubIcon /><span class="label" translate="no">GitHub</span></a>
-          <a class="btn compact" :href="links.linkedin"><LinkedinIcon /><span class="label" translate="no">LinkedIn</span></a>
+          <a class="btn compact" :href="links.github"
+            ><GithubIcon /><span class="label" translate="no">GitHub</span></a
+          >
+          <a class="btn compact" :href="links.linkedin"
+            ><LinkedinIcon /><span class="label" translate="no">LinkedIn</span></a
+          >
         </div>
       </template>
       <template v-else>
@@ -37,8 +43,12 @@ const call = props.variant === 'geek' ? useContactPhone() : null
         <div class="btns">
           <a v-if="call" class="btn btn-primary" :href="call.phoneHref.value">
             <svg class="icon line" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z" />
-            </svg><span>Appeler le <span class="nw">{{ call?.phone.value }}</span></span>
+              <path
+                d="M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.1 6.1l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"
+              /></svg
+            ><span
+              >Appeler le <span class="nw">{{ call?.phone.value }}</span></span
+            >
           </a>
           <a class="btn" :href="`mailto:${contact.email}`">Écrire un mail</a>
         </div>
@@ -49,7 +59,11 @@ const call = props.variant === 'geek' ? useContactPhone() : null
       <ul class="facts">
         <li v-for="f in facts" :key="f.text">
           <!-- hyphenated place names stay whole in the narrow cartouche -->
-          <template v-for="(word, i) in f.text.split(' ')" :key="i">{{ i ? ' ' : '' }}<span class="nw">{{ word }}</span></template><template v-if="f.en"> · <span lang="en">{{ f.en }}</span></template>
+          <template v-for="(word, i) in f.text.split(' ')" :key="i"
+            >{{ i ? ' ' : '' }}<span class="nw">{{ word }}</span></template
+          ><template v-if="f.en">
+            · <span lang="en">{{ f.en }}</span></template
+          >
         </li>
       </ul>
       <ul v-if="variant === 'main'" class="stack" aria-label="Outils principaux">
@@ -76,7 +90,7 @@ const call = props.variant === 'geek' ? useContactPhone() : null
   gap: 0.9rem;
   justify-items: start;
 }
-/* Availability: a small printed tag, mono caps in an ink frame, a square porphyry mark. */
+/* Availability: a small printed tag, mono caps in an ink frame, a square mark in the same ink. */
 .status {
   display: inline-flex;
   align-items: center;
@@ -91,11 +105,11 @@ const call = props.variant === 'geek' ? useContactPhone() : null
   flex: none;
   width: 0.5rem;
   height: 0.5rem;
-  background: var(--accent);
+  background: var(--on-ground);
 }
 .role {
   font-weight: 500;
-  color: color-mix(in srgb, var(--on-ground) 72%, transparent);
+  color: var(--on-ground-muted);
 }
 .nw {
   white-space: nowrap;
@@ -113,28 +127,28 @@ const call = props.variant === 'geek' ? useContactPhone() : null
 }
 
 /* The facts and the tools: a cartouche on the band. Ink frame with an inner rule, facts in
-   Geist Mono caps between hairlines, the tool marks printed in the paper ink on the last rule. */
+   Geist Mono caps between hairlines, the tool marks printed in --on-ground on the last rule. */
 .aside {
   width: min(100%, 22rem);
   padding: 0.35rem 1rem;
   border: 1.5px solid var(--on-ground);
   box-shadow:
     inset 0 0 0 3px var(--ground),
-    inset 0 0 0 4px color-mix(in srgb, var(--on-ground) 55%, transparent);
+    inset 0 0 0 4px var(--on-ground-rule);
 }
 .facts {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  font: 400 0.75rem / 1.5 var(--f-mono);
-  letter-spacing: 0.06em;
+  font: 500 0.75rem / 1.5 var(--f-mono);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--on-ground) 82%, transparent);
+  color: var(--on-ground-muted);
 }
 .facts li {
   padding-block: 0.55rem;
-  border-top: 1px solid color-mix(in srgb, var(--on-ground) 22%, transparent);
+  border-top: 1px solid var(--on-ground-line);
 }
 .facts li:first-child {
   border-top: 0;
@@ -147,7 +161,7 @@ const call = props.variant === 'geek' ? useContactPhone() : null
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.75rem;
-  border-top: 1px solid color-mix(in srgb, var(--on-ground) 55%, transparent);
+  border-top: 1px solid var(--on-ground-rule);
   color: var(--on-ground);
 }
 .stack svg {

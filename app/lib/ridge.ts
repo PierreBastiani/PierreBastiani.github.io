@@ -132,7 +132,9 @@ export function ridgeFacets(o: RidgeOptions, f: FacetOptions = {}): string {
     const sy = py + d
     const fx = vx + (sx - vx) * 0.35
     const fy = vy + (sy - vy) * 0.6
-    parts.push(`M${top.join(' L')} L${sx.toFixed(1)} ${sy.toFixed(1)} L${fx.toFixed(1)} ${fy.toFixed(1)} Z`)
+    parts.push(
+      `M${top.join(' L')} L${sx.toFixed(1)} ${sy.toFixed(1)} L${fx.toFixed(1)} ${fy.toFixed(1)} Z`,
+    )
   }
   return parts.join(' ')
 }

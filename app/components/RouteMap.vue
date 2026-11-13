@@ -24,7 +24,10 @@ import {
 const lines = Object.fromEntries(
   Object.entries(ROUTE_LINES).map(([id, pts]) => {
     const line = smooth(pts)
-    return [id, { d: pathOf(line), ticks: bolts(line), start: line[0]!, end: line[line.length - 1]! }]
+    return [
+      id,
+      { d: pathOf(line), ticks: bolts(line), start: line[0]!, end: line[line.length - 1]! },
+    ]
   }),
 )
 
@@ -58,7 +61,12 @@ function render(c: Camera) {
     far: plane(c, DEPTH.far),
     wall: plane(c, DEPTH.wall),
     near: plane(c, DEPTH.near),
-    ends: Object.fromEntries(Object.entries(lines).map(([id, l]) => [id, { start: onWall(c, l.start), end: onWall(c, l.end) }])),
+    ends: Object.fromEntries(
+      Object.entries(lines).map(([id, l]) => [
+        id,
+        { start: onWall(c, l.start), end: onWall(c, l.end) },
+      ]),
+    ),
   }
 }
 
@@ -66,7 +74,11 @@ function render(c: Camera) {
 function inFrame(c: Camera): Camera {
   const hw = C.x / c.zoom
   const hh = C.y / c.zoom
-  return { ...c, x: Math.min(SCENE.w - hw, Math.max(hw, c.x)), y: Math.min(SCENE.h - hh, Math.max(hh, c.y)) }
+  return {
+    ...c,
+    x: Math.min(SCENE.w - hw, Math.max(hw, c.x)),
+    y: Math.min(SCENE.h - hh, Math.max(hh, c.y)),
+  }
 }
 
 // Close-up on one route: centre it, zoom in, and keep its top anchor low enough that its
@@ -109,16 +121,17 @@ const active = computed(() => fromList.value ?? fromMap.value ?? fromScroll.valu
 const map = ref<HTMLElement | null>(null)
 const list = ref<HTMLElement | null>(null)
 // Phones: the map is stuck under the header with the list below (or past that, leaving with
-// the end of the section). While the section is under the header, a cover fixed to the top of
-// the screen keeps anything from showing through the translucent header.
+// the end of the section).
 const pinned = ref(false)
-const coverOn = ref(false)
 const section = ref<HTMLElement | null>(null)
 const drawn = ref(true)
 
 // Grades sit in HTML tags over the figure, so they keep a readable size on a phone: the
 // grade at the top anchor (with the skill's name when active), the route number at the foot.
-const pct = ([x, y]: Pt) => ({ left: `${((x - box.value.x) / box.value.w) * 100}%`, top: `${((y - box.value.y) / box.value.h) * 100}%` })
+const pct = ([x, y]: Pt) => ({
+  left: `${((x - box.value.x) / box.value.w) * 100}%`,
+  top: `${((y - box.value.y) / box.value.h) * 100}%`,
+})
 // --f: where the anchor sits across the plate (0 left, 1 right); the open tag slides by as
 // much of its own width, so near an edge it opens inward instead of being cut by the frame.
 const pills = computed(() =>
@@ -128,7 +141,37 @@ const pills = computed(() =>
     return { id: r.id, name: r.name, grade: r.grade, f: f.toFixed(3), ...pct(end) }
   }),
 )
-const feet = computed(() => routes.map((r, i) => ({ id: r.id, n: i + 1, ...pct(frame.value.ends[r.id]!.start) })))
+// A tag opens to the right of its anchor. Where another route's anchor sits within its reach
+// at about the same height (routes 1 and 2 on a phone), it opens to the left instead, when
+// there's room, so two tags never read as one block or cover the next route's ring. Decided
+// on the overview, the one frame where every tag shows at rest.
+const plate = ref<HTMLElement | null>(null)
+const openLeft = ref(new Set<string>())
+function placeTags() {
+  const el = plate.value
+  if (!el) return
+  const k = el.clientWidth / box.value.w // px per scene unit
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+  const ring = 8 * k
+  const left = new Set<string>()
+  routes.forEach((r, i) => {
+    const tag = el.querySelectorAll<HTMLElement>('.pill')[i]
+    if (!tag) return
+    const reach = 0.75 * rem + tag.offsetWidth + ring // offset, tag, the next ring
+    const half = tag.offsetHeight / 2 + ring
+    const [x, y] = lines[r.id]!.end
+    const crowded = routes.some((o) => {
+      const [ox, oy] = lines[o.id]!.end
+      const dx = (ox - x) * k
+      return o.id !== r.id && dx > 0 && dx < reach && Math.abs(oy - y) * k < half
+    })
+    if (crowded && (x - box.value.x) * k > reach) left.add(r.id)
+  })
+  openLeft.value = left
+}
+const feet = computed(() =>
+  routes.map((r, i) => ({ id: r.id, n: i + 1, ...pct(frame.value.ends[r.id]!.start) })),
+)
 
 // The camera eases toward its aim and stops once it gets there: nothing runs while idle.
 let raf = 0
@@ -139,13 +182,17 @@ function step() {
   const k = 0.085 // about 700 ms to settle at 60 fps
   for (const key of ['x', 'y', 'zoom', 'sx', 'sy'] as const) cam[key] = lerp(cam[key], aim[key], k)
   frame.value = render(cam)
-  const far = (['x', 'y', 'sx', 'sy'] as const).some((key) => Math.abs(aim[key] - cam[key]) > 0.05) || Math.abs(aim.zoom - cam.zoom) > 1e-4
+  const far =
+    (['x', 'y', 'sx', 'sy'] as const).some((key) => Math.abs(aim[key] - cam[key]) > 0.05) ||
+    Math.abs(aim.zoom - cam.zoom) > 1e-4
   if (far) raf = requestAnimationFrame(step)
 }
 
 // The camera is re-framing (a highlight changed), as opposed to only swaying with the pointer.
 const reframing = () =>
-  Math.abs(aim.zoom - cam.zoom) > 0.002 || Math.abs(aim.x - cam.x) > 1.5 || Math.abs(aim.y - cam.y) > 1.5
+  Math.abs(aim.zoom - cam.zoom) > 0.002 ||
+  Math.abs(aim.x - cam.x) > 1.5 ||
+  Math.abs(aim.y - cam.y) > 1.5
 
 let pointer = { x: 0, y: 0 }
 let scrollShift = 0
@@ -169,13 +216,19 @@ watch(active, retarget)
 let candidate: string | null = null
 let dwell = 0
 function routeUnder(e: PointerEvent) {
-  return (e.target as Element | null)?.closest<HTMLElement | SVGElement>('[data-route]')?.dataset.route ?? null
+  return (
+    (e.target as Element | null)?.closest<HTMLElement | SVGElement>('[data-route]')?.dataset
+      .route ?? null
+  )
 }
 function onPointer(e: PointerEvent) {
   if (e.pointerType !== 'mouse') return
   if (!reduce) {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    pointer = { x: ((e.clientX - r.left) / r.width - 0.5) * 2, y: ((e.clientY - r.top) / r.height - 0.5) * 2 }
+    pointer = {
+      x: ((e.clientX - r.left) / r.width - 0.5) * 2,
+      y: ((e.clientY - r.top) / r.height - 0.5) * 2,
+    }
     retarget()
   }
   if (!e.movementX && !e.movementY) return
@@ -203,15 +256,19 @@ function onLeave() {
 }
 
 // Scrolling draws the routes on once the map is in view, and turns the crag a few degrees
-// while it is on screen.
+// while it is on screen. Read once per frame, as useParallax does: scroll events can come
+// faster than frames, and each read of the layout after a write forces a new one.
+let scrollFrame = 0
+let stickyTop = 0 // the map's sticky `top` in px, read in layout()
 function onScroll() {
+  if (!scrollFrame) scrollFrame = requestAnimationFrame(readScroll)
+}
+function readScroll() {
+  scrollFrame = 0
   if (!map.value) return
   const r = map.value.getBoundingClientRect()
   const h = window.innerHeight
-  const stickyTop = parseFloat(getComputedStyle(map.value).top) || 0
   pinned.value = narrow && r.top <= stickyTop + 0.5
-  const sr = section.value?.getBoundingClientRect()
-  coverOn.value = narrow && !!sr && sr.top < stickyTop && sr.bottom > 0
   if (reduce || r.bottom < 0 || r.top > h) return
   if (!drawn.value && r.top < h * 0.85) drawn.value = true
   scrollShift = -((r.top + r.height / 2) / h - 0.5) * 40
@@ -247,10 +304,11 @@ function watchReading() {
   reading?.disconnect()
   reading = null
   readable.clear()
-  readingOn.value = window.matchMedia('(max-width: 52rem), (hover: none), (pointer: coarse)').matches
+  readingOn.value = window.matchMedia(
+    '(max-width: 52rem), (hover: none), (pointer: coarse)',
+  ).matches
   if (!readingOn.value || !map.value || !list.value) return
-  const pinnedTop = parseFloat(getComputedStyle(map.value).top) || 0
-  const line = Math.round(pinnedTop + map.value.offsetHeight + FADE)
+  const line = Math.round(stickyTop + map.value.offsetHeight + FADE)
   const heads = [...list.value.querySelectorAll('h3')]
   reading = new IntersectionObserver(
     (entries) => {
@@ -276,9 +334,15 @@ async function layout() {
   // pinned on a phone the plate is cropped to the wall, so the list keeps most of the screen
   box.value = narrow ? { x: 40, y: 60, w: 920, h: 560 } : { x: 0, y: 0, w: SCENE.w, h: SCENE.h }
   await nextTick()
+  if (map.value) {
+    placeTags()
+    stickyTop = parseFloat(getComputedStyle(map.value).top) || 0
+    // the pinned map and its band, for the route sheet's links: Tab scrolls them clear of it
+    section.value?.style.setProperty('--map-h', `${map.value.offsetHeight + FADE}px`)
+  }
   watchReading()
   retarget()
-  onScroll()
+  readScroll()
 }
 function onResize() {
   clearTimeout(resizeTimer)
@@ -288,16 +352,22 @@ function onResize() {
 onMounted(() => {
   reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches
-  if (!reduce && map.value) drawn.value = map.value.getBoundingClientRect().top < window.innerHeight * 0.85
+  if (!reduce && map.value)
+    drawn.value = map.value.getBoundingClientRect().top < window.innerHeight * 0.85
   window.addEventListener('resize', onResize, { passive: true })
   window.addEventListener('scroll', onScroll, { passive: true })
   layout()
+  // the tags' widths and the map's height change once the web fonts arrive: measure again
+  document.fonts?.ready.then(() => {
+    if (map.value) layout()
+  })
 })
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('resize', onResize)
   reading?.disconnect()
   cancelAnimationFrame(raf)
+  cancelAnimationFrame(scrollFrame)
   clearTimeout(dwell)
   clearTimeout(resizeTimer)
 })
@@ -305,7 +375,6 @@ onBeforeUnmount(() => {
 
 <template>
   <section id="competences" ref="section" class="routes" aria-labelledby="routes-title">
-    <div class="header-cover" :class="{ on: coverOn }" aria-hidden="true"></div>
     <div class="wrap grid">
       <header class="head section-head">
         <p class="eyebrow">{{ sections.skills.label }}</p>
@@ -316,90 +385,114 @@ onBeforeUnmount(() => {
         <p class="sub">{{ sections.skills.sub }}</p>
       </header>
 
-      <figure ref="map" class="map" :class="{ drawn, pinned, focused: !!active }" @pointermove="onPointer" @pointerleave="onLeave">
+      <figure
+        ref="map"
+        class="map"
+        :class="{ drawn, pinned, focused: !!active }"
+        @pointermove="onPointer"
+        @pointerleave="onLeave"
+      >
         <!-- the topo, printed: ink frame with an inner rule, a lettering band, the plate with
              the grain of the hero, and a legend line under it -->
         <div class="stage">
           <p class="band" aria-hidden="true">
-            <span>{{ logbook.place }}</span><span>Face sud · {{ routes.length }} voies</span>
+            <span>{{ logbook.place }}</span
+            ><span>Face sud · {{ routes.length }} voies</span>
           </p>
-          <div class="plate print">
-          <svg :viewBox="viewBox" role="img" aria-labelledby="map-title">
-            <title id="map-title">La face sud du Baou, avec cinq voies, une par compétence</title>
-            <!-- sky and far hills -->
-            <g :transform="frame.far">
-              <rect x="-400" y="-400" width="1800" height="1400" class="sky" />
-              <path :d="FAR_HILLS" class="far-hills" />
-            </g>
-            <!-- the wall: plateau, the face and its flats, the scree -->
-            <g :transform="frame.wall">
-              <path :d="PLATEAU" class="plateau" />
-              <path :d="WALL" class="wall" />
-              <path v-for="([d, role], i) in WALL_FLATS" :key="i" :d="d" :class="role" />
-              <path :d="SCREE" class="scree" />
-              <path v-for="(d, i) in SCREE_SHADE" :key="'s' + i" :d="d" class="shade" />
-            </g>
-            <!-- the foreground: garrigue and two pines -->
-            <g :transform="frame.near">
-              <path :d="GROUND" class="ground" />
-              <template v-for="(t, i) in PINES" :key="'p' + i">
-                <path :d="t.trunk" class="trunk" />
-                <path :d="t.crown" class="crown" />
-                <path :d="t.lit" class="crown-lit" />
-              </template>
-            </g>
-            <!-- the routes, on the wall's plane -->
-            <g :transform="frame.wall">
-              <g
-                v-for="r in routes"
-                :key="r.id"
-                class="route"
-                :class="{ on: active === r.id, dim: active && active !== r.id }"
-                :data-route="r.id"
-              >
-                <path class="hit" :d="lines[r.id]!.d" />
-                <path class="casing" :d="lines[r.id]!.d" pathLength="1" />
-                <path class="line" :d="lines[r.id]!.d" pathLength="1" />
-                <path class="bolts" :d="lines[r.id]!.ticks" />
-                <circle class="end" :cx="lines[r.id]!.end[0]" :cy="lines[r.id]!.end[1]" r="8" />
-                <circle class="end-dot" :cx="lines[r.id]!.end[0]" :cy="lines[r.id]!.end[1]" r="3.2" />
+          <div ref="plate" class="plate print">
+            <svg :viewBox="viewBox" role="img" aria-labelledby="map-title">
+              <title id="map-title">La face sud du Baou, avec cinq voies, une par compétence</title>
+              <!-- sky and far hills -->
+              <g :transform="frame.far">
+                <rect x="-400" y="-400" width="1800" height="1400" class="sky" />
+                <path :d="FAR_HILLS" class="far-hills" />
               </g>
-            </g>
-          </svg>
-          <span
-            v-for="f in feet"
-            :key="'n' + f.id"
-            class="num"
-            :class="{ on: active === f.id, dim: active && active !== f.id }"
-            :style="{ left: f.left, top: f.top }"
-            aria-hidden="true"
-            >{{ f.n }}</span
-          >
-          <span
-            v-for="p in pills"
-            :key="p.id"
-            class="pill"
-            :class="{ on: active === p.id, dim: active && active !== p.id }"
-            :style="{ left: p.left, top: p.top, '--f': p.f }"
-            :data-route="p.id"
-            aria-hidden="true"
-            ><span v-if="active === p.id" class="name">{{ p.name }} · </span><span class="grade">{{ p.grade }}</span></span
-          >
+              <!-- the wall: plateau, the face and its flats, the scree -->
+              <g :transform="frame.wall">
+                <path :d="PLATEAU" class="plateau" />
+                <path :d="WALL" class="wall" />
+                <path v-for="([d, role], i) in WALL_FLATS" :key="i" :d="d" :class="role" />
+                <path :d="SCREE" class="scree" />
+                <path v-for="(d, i) in SCREE_SHADE" :key="'s' + i" :d="d" class="shade" />
+              </g>
+              <!-- the foreground: garrigue and two pines -->
+              <g :transform="frame.near">
+                <path :d="GROUND" class="ground" />
+                <template v-for="(t, i) in PINES" :key="'p' + i">
+                  <path :d="t.trunk" class="trunk" />
+                  <path :d="t.crown" class="crown" />
+                  <path :d="t.lit" class="crown-lit" />
+                </template>
+              </g>
+              <!-- the routes, on the wall's plane -->
+              <g :transform="frame.wall">
+                <g
+                  v-for="r in routes"
+                  :key="r.id"
+                  class="route"
+                  :class="{ on: active === r.id, dim: active && active !== r.id }"
+                  :data-route="r.id"
+                >
+                  <path class="hit" :d="lines[r.id]!.d" />
+                  <path class="casing" :d="lines[r.id]!.d" pathLength="1" />
+                  <path class="line" :d="lines[r.id]!.d" pathLength="1" />
+                  <path class="bolts" :d="lines[r.id]!.ticks" />
+                  <circle class="end" :cx="lines[r.id]!.end[0]" :cy="lines[r.id]!.end[1]" r="8" />
+                  <circle
+                    class="end-dot"
+                    :cx="lines[r.id]!.end[0]"
+                    :cy="lines[r.id]!.end[1]"
+                    r="3.2"
+                  />
+                </g>
+              </g>
+            </svg>
+            <span
+              v-for="f in feet"
+              :key="'n' + f.id"
+              class="num"
+              :class="{ on: active === f.id, dim: active && active !== f.id }"
+              :style="{ left: f.left, top: f.top }"
+              aria-hidden="true"
+              >{{ f.n }}</span
+            >
+            <span
+              v-for="p in pills"
+              :key="p.id"
+              class="pill"
+              :class="{
+                on: active === p.id,
+                dim: active && active !== p.id,
+                left: openLeft.has(p.id),
+              }"
+              :style="{ left: p.left, top: p.top, '--f': p.f }"
+              :data-route="p.id"
+              aria-hidden="true"
+              ><span v-if="active === p.id" class="name">{{ p.name }} · </span
+              ><span class="grade">{{ p.grade }}</span></span
+            >
           </div>
           <p class="legend" aria-hidden="true">
             <span><i class="key-num">1</i>Départ</span>
             <span
-              ><svg class="key-ring" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" /><circle cx="8" cy="8" r="2.6" class="dot" /></svg
+              ><svg class="key-ring" viewBox="0 0 16 16">
+                <circle cx="8" cy="8" r="6.4" />
+                <circle cx="8" cy="8" r="2.6" class="dot" /></svg
               >Relais</span
             >
-            <span><i class="key-grade">{{ span }}</i>Cotations</span>
+            <span
+              ><i class="key-grade">{{ span }}</i
+              >Cotations</span
+            >
           </p>
         </div>
       </figure>
 
       <!-- the route sheet: the guidebook's table under the topo, one ruled row per route -->
       <div class="sheet">
-        <p class="band cols" aria-hidden="true"><span>N°</span><span>Voie</span><span>Cot.</span></p>
+        <p class="band cols" aria-hidden="true">
+          <span>N°</span><span>Voie</span><span>Cot.</span>
+        </p>
         <ol ref="list" class="list">
           <li
             v-for="(r, i) in routes"
@@ -417,11 +510,15 @@ onBeforeUnmount(() => {
               <h3>{{ r.name }}</h3>
               <p class="stack">{{ r.stack }}</p>
               <p class="proj">
-                <a v-if="r.project.href" :href="r.project.href">{{ r.project.label }}<span aria-hidden="true">&nbsp;↗</span></a>
+                <a v-if="r.project.href" :href="r.project.href"
+                  >{{ r.project.label }}<span aria-hidden="true">&nbsp;↗</span></a
+                >
                 <template v-else>{{ r.project.label }}</template>
               </p>
             </div>
-            <span class="g" translate="no"><span class="visually-hidden">Cotation </span>{{ r.grade }}</span>
+            <span class="g" translate="no"
+              ><span class="visually-hidden">Cotation </span>{{ r.grade }}</span
+            >
           </li>
         </ol>
       </div>
@@ -490,7 +587,7 @@ onBeforeUnmount(() => {
   margin: 0;
   padding: 0.55rem 0.5rem 0.3rem;
   font: 500 0.7rem / 1.3 var(--f-mono);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -531,17 +628,6 @@ onBeforeUnmount(() => {
   font-weight: 600;
   letter-spacing: 0;
 }
-.header-cover {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--header-h);
-  z-index: 19;
-  background: var(--bg);
-  pointer-events: none;
-}
 .plate > svg {
   display: block;
   width: 100%;
@@ -573,8 +659,7 @@ onBeforeUnmount(() => {
   fill: var(--rock-crack);
 }
 .streak {
-  fill: var(--rock-shade);
-  opacity: 0.35;
+  fill: color-mix(in srgb, var(--rock-shade) 35%, var(--rock));
 }
 .scree {
   fill: color-mix(in srgb, var(--rock) 70%, var(--rock-shade));
@@ -702,6 +787,9 @@ onBeforeUnmount(() => {
     background-color var(--dur-hover),
     color var(--dur-hover);
 }
+.pill.left {
+  transform: translate(calc(-100% - 0.75rem), -50%);
+}
 .pill.on {
   z-index: 3;
   transform: translate(calc(-100% * var(--f, 0.5)), calc(-100% - 0.6rem));
@@ -819,11 +907,15 @@ onBeforeUnmount(() => {
   .map.pinned {
     pointer-events: none; /* taps reach the list links behind; the map needs none on a phone */
   }
+  /* A link reached with Tab lands below the pinned map and its band (--map-h, set in layout()),
+     not behind them; the page's scroll-padding already clears the header. */
+  .list a {
+    scroll-margin-top: var(--map-h, 0px);
+  }
   /* on a phone the legend gives its height back to the list */
   .band {
     padding-inline: 0.7rem;
     font-size: 0.66rem;
-    letter-spacing: 0.08em;
   }
   .legend {
     display: none;
@@ -843,11 +935,6 @@ onBeforeUnmount(() => {
     pointer-events: none;
     background: var(--bg);
     border-bottom: 1px solid var(--ink);
-  }
-  /* fixed to the screen under the header (z-index 20): opaque page colour while the skills
-     section is under the header, so nothing scrolls through the header's translucency */
-  .header-cover.on {
-    display: block;
   }
 }
 @media (prefers-reduced-motion: reduce) {

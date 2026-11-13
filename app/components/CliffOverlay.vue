@@ -20,7 +20,6 @@ const props = withDefaults(
     desk?: boolean // the hero's desk and figure on the summit
     fixed?: boolean // pinned to the viewport instead of drawn along the host
     climb?: [string, string] // selectors: a climber goes from the first to the second as the page scrolls
-    fadeTop?: boolean // the wall fades out upward instead of ending on a summit
     from?: string // selector: the strip starts at this element's top instead of its host's
     to?: string // selector: the strip ends at this element's bottom instead of its host's
     over?: boolean // painted over pictures too (z-index 1), for a strip that crosses the hero
@@ -42,12 +41,18 @@ function measure() {
   if (props.from) {
     const start = document.querySelector(props.from)
     const host = box.offsetParent as HTMLElement | null
-    if (start && host) offset.value = Math.round(start.getBoundingClientRect().top - host.getBoundingClientRect().top)
+    if (start && host)
+      offset.value = Math.round(
+        start.getBoundingClientRect().top - host.getBoundingClientRect().top,
+      )
   }
   if (props.to) {
     const end = document.querySelector(props.to)
     const host = box.offsetParent as HTMLElement | null
-    if (end && host) length.value = Math.round(end.getBoundingClientRect().bottom - host.getBoundingClientRect().top - (offset.value ?? 0))
+    if (end && host)
+      length.value = Math.round(
+        end.getBoundingClientRect().bottom - host.getBoundingClientRect().top - (offset.value ?? 0),
+      )
   }
   const r = box.getBoundingClientRect()
   let summit = 0
@@ -90,7 +95,8 @@ onMounted(() => {
   if (el.value?.offsetParent) ro.observe(el.value.offsetParent)
   document.fonts?.ready.then(measure)
   if (props.climb) {
-    if (reduce) progress.value = 1 // still: he waits on the summit
+    if (reduce)
+      progress.value = 1 // still: he waits on the summit
     else {
       window.addEventListener('scroll', onScroll, { passive: true })
       readScroll()
@@ -104,7 +110,8 @@ onBeforeUnmount(() => {
 })
 
 type P = [number, number]
-const path = (pts: P[], close = false) => `M${pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L')}${close ? ' Z' : ''}`
+const path = (pts: P[], close = false) =>
+  `M${pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L')}${close ? ' Z' : ''}`
 
 // The wall, drawn for the right edge (the left one is its mirror): a blocky limestone edge
 // facing the content, stepping in and out, with roofs; cracks running down; ledges with
@@ -130,7 +137,10 @@ const geo = computed(() => {
     if (r() < 0.22 && !thin) {
       // a roof: the edge juts toward the content, then drops
       const out = 10 + r() * 16
-      roofs.push([[x, y], [x - out, y + 2]])
+      roofs.push([
+        [x, y],
+        [x - out, y + 2],
+      ])
       x = Math.max(4, x - out)
       edge.push([x, y + 2])
     } else {
@@ -142,7 +152,10 @@ const geo = computed(() => {
   const outline = [[W + 2, top - 2] as P, ...edge, [W + 2, H + 20] as P]
   const wall = path(outline, true)
   // the side turned away from the low sun: a band just inside the edge
-  const band = path([...edge, ...edge.map(([ex, ey]) => [ex + (thin ? 3 : 14), ey] as P).reverse()], true)
+  const band = path(
+    [...edge, ...edge.map(([ex, ey]) => [ex + (thin ? 3 : 14), ey] as P).reverse()],
+    true,
+  )
   // cracks: wandering lines down the wall, broken into lengths
   const cracks: string[] = []
   if (!thin) {
@@ -164,27 +177,85 @@ const geo = computed(() => {
       cracks.push(d)
     }
   }
-  const ledgeLines = ledges.map(({ x: lx, y: ly }) => path([[lx, ly], [lx + 30 + r() * 50, ly - 1]])).join(' ')
-  const ledgeShade = ledges.map(({ x: lx, y: ly }) => path([[lx, ly], [lx + 40, ly - 1], [lx + 36, ly + 6], [lx + 2, ly + 7]], true)).join(' ')
+  const ledgeLines = ledges
+    .map(({ x: lx, y: ly }) =>
+      path([
+        [lx, ly],
+        [lx + 30 + r() * 50, ly - 1],
+      ]),
+    )
+    .join(' ')
+  const ledgeShade = ledges
+    .map(({ x: lx, y: ly }) =>
+      path(
+        [
+          [lx, ly],
+          [lx + 40, ly - 1],
+          [lx + 36, ly + 6],
+          [lx + 2, ly + 7],
+        ],
+        true,
+      ),
+    )
+    .join(' ')
   const roofLines = roofs.map((p) => path(p)).join(' ')
   const bedding = thin
     ? ''
     : Array.from({ length: Math.floor((H - top) / 90) }, (_, i) => {
         const by = top + 60 + i * 90 + r() * 40
         const bx = base + (W - base) * (0.2 + r() * 0.4)
-        return path([[bx, by], [bx + (W - base) * (0.15 + r() * 0.25), by + (r() - 0.5) * 3]])
+        return path([
+          [bx, by],
+          [bx + (W - base) * (0.15 + r() * 0.25), by + (r() - 0.5) * 3],
+        ])
       }).join(' ')
   // the summit: a flat top with the plateau's edge
-  const topEdge = top > 0 && !props.fadeTop ? path([[edge[0]![0] - 6, top + 4], [W * 0.62, top - 2], [W + 2, top]]) : ''
+  const topEdge =
+    top > 0
+      ? path([
+          [edge[0]![0] - 6, top + 4],
+          [W * 0.62, top - 2],
+          [W + 2, top],
+        ])
+      : ''
   // the foot: the wall stands on a line of scree at the bottom of its host
   const footY = H - 2
-  const foot = path([[edge[edge.length - 1]![0] - 18, footY], [W + 2, footY]])
-  const scree = thin ? '' : path([[edge[edge.length - 1]![0] - 18, footY], [edge[edge.length - 1]![0] + 30, H - 16], [W + 2, H - 22], [W + 2, footY]], true)
+  const foot = path([
+    [edge[edge.length - 1]![0] - 18, footY],
+    [W + 2, footY],
+  ])
+  const scree = thin
+    ? ''
+    : path(
+        [
+          [edge[edge.length - 1]![0] - 18, footY],
+          [edge[edge.length - 1]![0] + 30, H - 16],
+          [W + 2, H - 22],
+          [W + 2, footY],
+        ],
+        true,
+      )
   // a climbing line up the wall, for the climber
   const routeX = base + (W - base) * 0.5
   const route: P[] = []
   for (let ry = H - 30; ry > top + 30; ry -= 50) route.push([routeX + (r() - 0.5) * 18, ry])
-  return { W, H, top, wall, band, cracks, ledgeLines, ledgeShade, roofLines, bedding, topEdge, route, foot, scree, topX: edge[0]![0] }
+  return {
+    W,
+    H,
+    top,
+    wall,
+    band,
+    cracks,
+    ledgeLines,
+    ledgeShade,
+    roofLines,
+    bedding,
+    topEdge,
+    route,
+    foot,
+    scree,
+    topX: edge[0]![0],
+  }
 })
 
 const climberAt = computed(() => {
@@ -216,30 +287,46 @@ const deskBox = computed(() => {
   const x = Math.min(g.W - w - 8, Math.max(0, (g.topX + g.W) / 2 - w / 2))
   return { x, y: g.top - h * 0.48, w, h }
 })
-const flip = computed(() => (props.side === 'left' && geo.value ? `translate(${geo.value.W} 0) scale(-1 1)` : undefined))
-const maskId = `cliff-fade-${props.seed}-${props.side}`
+const flip = computed(() =>
+  props.side === 'left' && geo.value ? `translate(${geo.value.W} 0) scale(-1 1)` : undefined,
+)
+const uid = `cliff-${props.seed}-${props.side}`
 </script>
 
 <template>
-  <div ref="el" class="cliff" :class="[side, { fixed, over, fade: fadeTop }]"
-    :style="{ '--cliff-w': width, top: offset === null ? undefined : `${offset}px`, height: length === null ? undefined : `${length}px`, bottom: length === null ? undefined : 'auto' }" aria-hidden="true">
-    <svg v-if="geo" :viewBox="`0 0 ${geo.W} ${geo.H}`" :width="geo.W" :height="geo.H" focusable="false">
+  <div
+    ref="el"
+    class="cliff"
+    :class="[side, { fixed, over }]"
+    :style="{
+      '--cliff-w': width,
+      top: offset === null ? undefined : `${offset}px`,
+      height: length === null ? undefined : `${length}px`,
+      bottom: length === null ? undefined : 'auto',
+    }"
+    aria-hidden="true"
+  >
+    <svg
+      v-if="geo"
+      :viewBox="`0 0 ${geo.W} ${geo.H}`"
+      :width="geo.W"
+      :height="geo.H"
+      focusable="false"
+    >
       <defs>
-        <pattern v-if="grainHref" :id="`${maskId}-grain`" width="220" height="220" patternUnits="userSpaceOnUse">
+        <pattern
+          v-if="grainHref"
+          :id="`${uid}-grain`"
+          width="220"
+          height="220"
+          patternUnits="userSpaceOnUse"
+        >
           <image :href="grainHref" width="220" height="220" />
         </pattern>
-        <linearGradient :id="`${maskId}-g`" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#fff" />
-          <stop offset="0.55" stop-color="#fff" />
-          <stop offset="1" stop-color="#000" />
-        </linearGradient>
-        <mask v-if="deskBox" :id="maskId" maskUnits="userSpaceOnUse" :x="deskBox.x" :y="deskBox.y" :width="deskBox.w" :height="deskBox.h">
-          <rect :x="deskBox.x" :y="deskBox.y" :width="deskBox.w" :height="deskBox.h" :fill="`url(#${maskId}-g)`" />
-        </mask>
       </defs>
       <g :transform="flip">
         <path :d="geo.wall" class="wall" />
-        <path v-if="grainHref" :d="geo.wall" :fill="`url(#${maskId}-grain)`" class="grain" />
+        <path v-if="grainHref" :d="geo.wall" :fill="`url(#${uid}-grain)`" class="grain" />
         <path :d="geo.band" class="shade" />
         <path :d="geo.ledgeShade" class="shade" />
         <path :d="geo.bedding" class="ink-hair line faint" />
@@ -252,7 +339,11 @@ const maskId = `cliff-fade-${props.seed}-${props.side}`
         <g v-if="climb">
           <path :d="routeD" class="ink-hair route" />
           <path :d="climbed" class="ink-line route-done" />
-          <g v-if="climberAt" :transform="`translate(${climberAt[0].toFixed(1)} ${climberAt[1].toFixed(1)})`" class="climber">
+          <g
+            v-if="climberAt"
+            :transform="`translate(${climberAt[0].toFixed(1)} ${climberAt[1].toFixed(1)})`"
+            class="climber"
+          >
             <path d="M-3 -2 L-6 6 M1 -2 L3 6" class="ink-line limb" />
             <path d="M-5 -14 L-8 -22 M0 -14 L3 -22" class="ink-line limb" />
             <path d="M-6 -15 H1 V-2 H-6 Z" class="body" />
@@ -261,10 +352,21 @@ const maskId = `cliff-fade-${props.seed}-${props.side}`
           </g>
         </g>
       </g>
-      <g v-if="deskBox" :mask="`url(#${maskId})`">
-        <svg :x="deskBox.x" :y="deskBox.y" :width="deskBox.w" :height="deskBox.h" viewBox="760 620 420 240">
+      <!-- the desk on the summit, cut square under the figure's feet and set on a ledge line -->
+      <g v-if="deskBox">
+        <svg
+          :x="deskBox.x"
+          :y="deskBox.y"
+          :width="deskBox.w"
+          :height="deskBox.h"
+          viewBox="760 620 420 240"
+        >
           <SummitSetup />
         </svg>
+        <path
+          :d="`M${deskBox.x} ${deskBox.y + deskBox.h}H${deskBox.x + deskBox.w}`"
+          class="ink-line desk-ledge"
+        />
       </g>
     </svg>
   </div>
@@ -292,9 +394,6 @@ const maskId = `cliff-fade-${props.seed}-${props.side}`
 .cliff.fixed {
   position: fixed;
   top: var(--header-h);
-}
-.cliff.fade {
-  mask-image: linear-gradient(to bottom, transparent, #000 18%);
 }
 .cliff svg {
   display: block;
@@ -324,6 +423,9 @@ const maskId = `cliff-fade-${props.seed}-${props.side}`
 .route-done {
   stroke: color-mix(in srgb, var(--route) 55%, transparent);
 }
+.desk-ledge {
+  stroke: var(--rock-crack);
+}
 .climber .body {
   fill: var(--figure);
 }
@@ -339,9 +441,9 @@ const maskId = `cliff-fade-${props.seed}-${props.side}`
     width: 14px;
   }
   .cliff.over {
-  z-index: 1;
-}
-.cliff.fixed {
+    z-index: 1;
+  }
+  .cliff.fixed {
     display: none;
   }
 }

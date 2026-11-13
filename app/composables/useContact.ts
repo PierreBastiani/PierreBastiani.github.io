@@ -14,11 +14,21 @@ export function useContact() {
 // _payload.json at generate time, so it also arrives when the client navigates there from /.
 // The shop page awaits loadContactPhone() once; its components read it with useContactPhone().
 export function loadContactPhone() {
-  return useAsyncData('contact-phone', () => Promise.resolve(useRuntimeConfig().contactPhone || '00 00 00 00 00'))
+  return useAsyncData('contact-phone', () =>
+    Promise.resolve(useRuntimeConfig().contactPhone || '00 00 00 00 00'),
+  )
 }
 
 export function useContactPhone() {
   const { data } = useNuxtData<string>('contact-phone')
   const phone = computed(() => data.value ?? '')
   return { phone, phoneHref: computed(() => telHref(phone.value)) }
+}
+
+// The postal address the legal notice shows, kept out of the repository like the phone: private
+// runtime config, written at generate time into /mentions-legales/ and its _payload.json only.
+export function loadLegalAddress() {
+  return useAsyncData('legal-address', () =>
+    Promise.resolve(useRuntimeConfig().legalAddress || 'NUXT_LEGAL_ADDRESS manquante'),
+  )
 }

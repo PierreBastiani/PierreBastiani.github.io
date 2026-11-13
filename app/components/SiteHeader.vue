@@ -26,9 +26,13 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
         </ul>
       </nav>
 
-      <NuxtLink v-if="props.variant !== 'geek'" class="switch" :to="links.geek">Geek du quartier</NuxtLink>
+      <NuxtLink v-if="props.variant !== 'geek'" class="switch" :to="links.geek"
+        >Geek du quartier</NuxtLink
+      >
+      <!-- on a phone the long label doesn't fit; "Développeur" alone didn't say where it leads -->
       <NuxtLink v-else class="switch" :to="links.home">
-        Développeur<span class="long"> full-stack &amp; DevOps</span>
+        <span class="long">Développeur full-stack &amp; DevOps</span>{{ ' '
+        }}<span class="short">Profil développeur</span>
       </NuxtLink>
 
       <button
@@ -44,7 +48,9 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
         </svg>
         <svg v-else-if="mode === 'light'" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="4.5" />
-          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" />
+          <path
+            d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"
+          />
         </svg>
         <svg v-else viewBox="0 0 24 24" aria-hidden="true">
           <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
@@ -63,7 +69,7 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
   /* Opaque, from the very top (safe area included): nothing that scrolls under the header
      shows through it, as a translucent blur let section labels do. */
   background: var(--bg);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 12%, transparent);
+  box-shadow: inset 0 -1px 0 var(--line); /* the hairline under the header */
 }
 .bar {
   display: flex;
@@ -124,6 +130,9 @@ nav a:focus-visible {
 .switch:hover {
   color: var(--ink);
 }
+.switch .short {
+  display: none;
+}
 /* the theme toggle: a square key in the same ink frame */
 .theme {
   flex: none;
@@ -167,6 +176,9 @@ nav a:focus-visible {
   }
   .long {
     display: none;
+  }
+  .switch .short {
+    display: inline;
   }
 }
 </style>

@@ -9,7 +9,11 @@ import CliffOverlay from './CliffOverlay.vue'
 // was built on another day.
 const today = ref('')
 onMounted(() => {
-  today.value = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date())
+  today.value = new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date())
 })
 
 const contact = useContact()
@@ -29,7 +33,13 @@ const icons: Record<string, string> = {
 <template>
   <section id="contact" class="contact" aria-labelledby="contact-title">
     <!-- the face rises along the right edge to the summit: the logbook at its top anchor -->
-    <CliffOverlay side="right" width="clamp(180px, 26vw, 360px)" summit-at="#contact .logbook" :summit-gap="96" desk />
+    <CliffOverlay
+      side="right"
+      width="clamp(180px, 26vw, 360px)"
+      summit-at="#contact .logbook"
+      :summit-gap="96"
+      desk
+    />
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow">{{ sections.contact.label }}</p>
@@ -40,7 +50,9 @@ const icons: Record<string, string> = {
       <div class="grid">
         <div class="who">
           <div class="id">
-            <span class="frame"><PortraitImage :size="104" alt="Pierre Bastiani" class="portrait" /></span>
+            <span class="frame"
+              ><PortraitImage :size="104" alt="Pierre Bastiani" class="portrait"
+            /></span>
             <div class="id-text">
               <p class="name" translate="no">{{ contact.name }}</p>
               <p class="role">{{ profile.role }}</p>
@@ -50,15 +62,22 @@ const icons: Record<string, string> = {
 
           <!-- a guidebook route box: lettering band, mono labels, hairline rules -->
           <div class="box">
-            <h3 class="band"><span>{{ routeCard.title }}</span><span>{{ routeCard.place }}</span></h3>
+            <h3 class="band">
+              <span>{{ routeCard.title }}</span
+              >{{ ' ' }}<span>{{ routeCard.place }}</span>
+            </h3>
             <dl>
               <div v-for="r in routeCard.rows" :key="r.label" class="row">
                 <dt>
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path :d="icons[r.icon]" /></svg>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path :d="icons[r.icon]" />
+                  </svg>
                   {{ r.label }}
                 </dt>
                 <dd>
-                  <a v-if="r.href" :href="hrefs[r.href]" :class="{ mail: r.href === 'email' }">{{ r.href === 'email' ? contact.email : r.value }}</a>
+                  <a v-if="r.href" :href="hrefs[r.href]" :class="{ mail: r.href === 'email' }">{{
+                    r.href === 'email' ? contact.email : r.value
+                  }}</a>
                   <template v-else>{{ r.value }}</template>
                 </dd>
               </div>
@@ -69,12 +88,15 @@ const icons: Record<string, string> = {
         <!-- the summit register, printed: double ink rule, grain, lettering band, ruled page -->
         <div class="logbook print">
           <h3 class="band">
-            <span>{{ logbook.title }}</span>
-            <span>{{ logbook.place }} · {{ logbook.altitude }}</span>
+            <span>{{ logbook.title }}</span
+            >{{ ' ' }}<span>{{ logbook.place }} · {{ logbook.altitude }}</span>
           </h3>
           <p class="intro">{{ logbook.intro }}</p>
           <div class="ruled" aria-hidden="true">
-            <p><span class="date">{{ today }}</span><span class="you">{{ logbook.you }}</span></p>
+            <p>
+              <span class="date">{{ today }}</span
+              ><span class="you">{{ logbook.you }}</span>
+            </p>
             <p></p>
             <p></p>
           </div>
@@ -182,8 +204,8 @@ dt {
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  font: 400 0.78rem / 1.5 var(--f-mono);
-  letter-spacing: 0.04em;
+  font: 500 0.78rem / 1.5 var(--f-mono);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -235,7 +257,7 @@ dd {
   gap: 1.5rem;
   height: 2.4rem;
   padding-bottom: 0.35rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 35%, var(--surface));
 }
 .date {
   font: 400 var(--step--1) / 1.4 var(--f-mono);
@@ -243,7 +265,7 @@ dd {
   white-space: nowrap;
 }
 .you {
-  color: var(--accent-text);
+  color: var(--ink);
   font-weight: 600;
 }
 .note {

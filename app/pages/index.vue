@@ -32,7 +32,9 @@ useSeoMeta({
 })
 useHead({
   link: [{ rel: 'canonical', href: `${SITE}/` }],
-  script: [{ type: 'application/ld+json', innerHTML: JSON.stringify(profileJsonLd(email, buildDate)) }],
+  script: [
+    { type: 'application/ld+json', innerHTML: JSON.stringify(profileJsonLd(email, buildDate)) },
+  ],
 })
 </script>
 

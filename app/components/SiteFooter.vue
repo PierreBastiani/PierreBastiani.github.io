@@ -7,20 +7,43 @@ import GeekIcon from '@/assets/icons/GeekIcon.vue'
 import LaptopIcon from '@/assets/icons/LaptopIcon.vue'
 
 const props = defineProps<{ variant?: 'main' | 'geek' }>()
-const year = new Date().getFullYear()
+// the year the pages were generated: the same in the prerendered HTML and after hydration,
+// even when a visitor's clock is already in the next year
+const year = useRuntimeConfig().public.buildDate.slice(0, 4)
 </script>
 
 <template>
   <footer class="site-footer on-ground print">
     <div class="wrap row">
-      <p class="copy">© {{ year }} <span translate="no">{{ contact.name }}</span></p>
+      <p class="copy">
+        <!-- spaces between the parts, so the line's text doesn't read "BastianiMentions" -->
+        <span
+          >© {{ year }} <span translate="no">{{ contact.name }}</span></span
+        >{{ ' '
+        }}<span class="legal"
+          ><NuxtLink :to="links.legal">Mentions légales</NuxtLink>{{ ' '
+          }}<NuxtLink :to="links.privacy">Confidentialité</NuxtLink></span
+        >
+      </p>
       <ul>
-        <li><a :href="links.github"><GithubIcon /><span translate="no">GitHub</span></a></li>
-        <li><a :href="links.linkedin"><LinkedinIcon /><span translate="no">LinkedIn</span></a></li>
-        <li><a :href="links.malt"><MaltIcon /><span translate="no">Malt</span></a></li>
-        <li v-if="props.variant !== 'geek'"><NuxtLink :to="links.geek"><GeekIcon />Geek du quartier</NuxtLink></li>
-        <li v-else><NuxtLink :to="links.home"><LaptopIcon />Développeur full-stack &amp; DevOps</NuxtLink></li>
-        <li><a :href="links.source"><GithubIcon />Code source</a></li>
+        <li>
+          <a :href="links.github"><GithubIcon /><span translate="no">GitHub</span></a>
+        </li>
+        <li>
+          <a :href="links.linkedin"><LinkedinIcon /><span translate="no">LinkedIn</span></a>
+        </li>
+        <li>
+          <a :href="links.malt"><MaltIcon /><span translate="no">Malt</span></a>
+        </li>
+        <li v-if="props.variant !== 'geek'">
+          <NuxtLink :to="links.geek"><GeekIcon />Geek du quartier</NuxtLink>
+        </li>
+        <li v-else>
+          <NuxtLink :to="links.home"><LaptopIcon />Développeur full-stack &amp; DevOps</NuxtLink>
+        </li>
+        <li>
+          <a :href="links.source"><GithubIcon />Code source</a>
+        </li>
       </ul>
     </div>
   </footer>
@@ -28,15 +51,15 @@ const year = new Date().getFullYear()
 
 <style scoped>
 /* The page ends on the poster's bottom band: the ground ink with grain, an ink key line on
-   top and an inner rule in the paper ink just under it. */
+   top and an inner rule in --on-ground-rule just under it. */
 .site-footer {
   padding-block: 2.25rem calc(2.25rem + env(safe-area-inset-bottom, 0px));
   border-top: 1.5px solid var(--ink);
   background: var(--ground);
-  color: color-mix(in srgb, var(--on-ground) 85%, transparent);
+  color: var(--on-ground-muted);
   box-shadow:
     inset 0 4px 0 var(--ground),
-    inset 0 5px 0 color-mix(in srgb, var(--on-ground) 55%, transparent);
+    inset 0 5px 0 var(--on-ground-rule);
   font-size: var(--step--1);
 }
 .row {
@@ -49,9 +72,23 @@ const year = new Date().getFullYear()
   gap: 1rem 2rem;
 }
 .copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.25rem;
   font: 500 0.72rem / 1.3 var(--f-mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+.legal {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.25rem;
+}
+/* a 44 px tall tap target around the small caps, without moving the line */
+.legal a {
+  padding-block: 0.9rem;
+  margin-block: -0.9rem;
 }
 ul {
   display: flex;

@@ -21,10 +21,16 @@ const receipt = `M72 34 H182 V212 ${tooth.replace(/l5/g, 'l-5')} Z`
 const shelf = box(206, 150, 210, 12, 0, -14)
 
 // gree-smartir: the split unit on the wall, its shadow, the remote, the IR frame
-const pulses = 'M138 166 h10 v-12 h5 v12 h14 v-12 h5 v12 h5 v-12 h5 v12 h14 v-12 h5 v12 h5 v-12 h14 v12 h5 v-12 h5 v12 h14 v-12 h5 v12 h10'
+const pulses =
+  'M138 166 h10 v-12 h5 v12 h14 v-12 h5 v12 h5 v-12 h5 v12 h14 v-12 h5 v12 h5 v-12 h14 v12 h5 v-12 h5 v12 h14 v-12 h5 v12 h10'
 
 // the site itself: the hero as a small PLM poster
-const card = (seed: number, base: number, amp: number, bumps: { x: number; height: number; width: number }[]): RidgeOptions => ({
+const card = (
+  seed: number,
+  base: number,
+  amp: number,
+  bumps: { x: number; height: number; width: number }[],
+): RidgeOptions => ({
   seed,
   base,
   amp,
@@ -35,9 +41,18 @@ const card = (seed: number, base: number, amp: number, bumps: { x: number; heigh
   x1: 420,
   step: 6,
 })
-const siteFar = card(5, 150, 4, [{ x: 70, height: 18, width: 60 }, { x: 330, height: 10, width: 70 }])
-const siteMid = card(13, 176, 6, [{ x: 150, height: 30, width: 40 }, { x: 250, height: 22, width: 36 }])
-const siteNear = card(29, 212, 6, [{ x: 40, height: 34, width: 60 }, { x: 360, height: 26, width: 50 }])
+const siteFar = card(5, 150, 4, [
+  { x: 70, height: 18, width: 60 },
+  { x: 330, height: 10, width: 70 },
+])
+const siteMid = card(13, 176, 6, [
+  { x: 150, height: 30, width: 40 },
+  { x: 250, height: 22, width: 36 },
+])
+const siteNear = card(29, 212, 6, [
+  { x: 40, height: 34, width: 60 },
+  { x: 360, height: 26, width: 50 },
+])
 const close = (o: RidgeOptions) => `${ridgeLine(o)} L420 260 L-20 260 Z`
 const site = {
   far: close(siteFar),
@@ -77,7 +92,7 @@ const site = {
           <template v-else>
             <rect x="0" y="0" width="400" height="250" class="sky" />
             <rect x="0" y="112" width="400" height="22" class="sky-low" />
-            <circle cx="306" cy="118" r="22" class="sun halo" />
+            <circle cx="306" cy="118" r="22" class="halo" />
             <circle cx="306" cy="118" r="13" class="sun" />
             <rect x="0" y="130" width="400" height="30" class="sea" />
             <path d="M318 130 L340 125 L372 127 L400 123 L400 130 Z" class="far" />
@@ -95,7 +110,10 @@ const site = {
             <path :d="router.front" class="face" />
             <path :d="router.top" class="lit" />
             <path :d="router.side" class="shade" />
-            <path d="M80 185 h5 v5 h-5 Z M92 185 h5 v5 h-5 Z M104 185 h5 v5 h-5 Z M150 180 H200 M150 186 H200 M150 192 H200" class="ink-hair" />
+            <path
+              d="M80 185 h5 v5 h-5 Z M92 185 h5 v5 h-5 Z M104 185 h5 v5 h-5 Z M150 180 H200 M150 186 H200 M150 192 H200"
+              class="ink-hair"
+            />
             <path :d="router.outline" class="ink-line" />
             <path :d="mini.front" class="face" />
             <path :d="mini.top" class="lit" />
@@ -109,9 +127,18 @@ const site = {
             <path :d="shelf.front" class="face" />
             <path :d="shelf.top" class="lit" />
             <path d="M206 136 H416 V162 H206 Z" class="ink-line" />
-            <path d="M226 162 H262 V184 H226 Z M292 162 H328 V184 H292 Z M358 162 H394 V184 H358 Z" class="lit" />
-            <path d="M226 162 H262 V184 H226 Z M292 162 H328 V184 H292 Z M358 162 H394 V184 H358 Z" class="ink-line" />
-            <path d="M232 170 H250 M232 177 H256 M298 170 H316 M298 177 H322 M364 170 H382" class="ink-hair" />
+            <path
+              d="M226 162 H262 V184 H226 Z M292 162 H328 V184 H292 Z M358 162 H394 V184 H358 Z"
+              class="lit"
+            />
+            <path
+              d="M226 162 H262 V184 H226 Z M292 162 H328 V184 H292 Z M358 162 H394 V184 H358 Z"
+              class="ink-line"
+            />
+            <path
+              d="M232 170 H250 M232 177 H256 M298 170 H316 M298 177 H322 M364 170 H382"
+              class="ink-hair"
+            />
           </template>
           <template v-else-if="kind === 'gree'">
             <!-- the split unit: its shadow on the wall, the underside in shade, the display -->
@@ -136,7 +163,10 @@ const site = {
         <svg class="layer l2" viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice">
           <template v-if="kind === 'homelab'">
             <!-- the cable, then the Raspberry Pi in its porphyry case, the one spot -->
-            <path d="M236 182 C246 196 244 204 258 204 M338 192 C360 196 372 222 404 230" class="ink-line" />
+            <path
+              d="M236 182 C246 196 244 204 258 204 M338 192 C360 196 372 222 404 230"
+              class="ink-line"
+            />
             <path :d="pi.cast" class="cast" />
             <path :d="pi.front" class="spot" />
             <path :d="pi.top" class="spot-lit" />
@@ -151,15 +181,28 @@ const site = {
               <path d="M182 34 L190 40 V208 L182 212 Z" class="shade" />
               <path :d="receipt" class="ink-line" />
               <path d="M100 52 H154" class="ink-line" />
-              <path v-for="i in 7" :key="i" :d="`M86 ${62 + i * 15} H${118 + ((i * 17) % 30)}`" class="ink-hair" />
-              <path v-for="i in 7" :key="'p' + i" :d="`M152 ${62 + i * 15} H170`" class="ink-hair" />
+              <path
+                v-for="i in 7"
+                :key="i"
+                :d="`M86 ${62 + i * 15} H${118 + ((i * 17) % 30)}`"
+                class="ink-hair"
+              />
+              <path
+                v-for="i in 7"
+                :key="'p' + i"
+                :d="`M152 ${62 + i * 15} H170`"
+                class="ink-hair"
+              />
               <path d="M86 186 H170" class="ink-heavy" />
             </g>
             <!-- the price that went down: the porphyry tag, hung from the shelf -->
             <path d="M296 0 V26" class="ink-line" />
             <path d="M262 38 L274 26 H334 V82 H274 L262 70 Z" class="spot" />
             <path d="M334 26 L342 32 V86 L334 82 Z" class="spot-shade" />
-            <path d="M262 38 L274 26 H334 L342 32 V86 L334 82 H274 L262 70 Z M334 26 V82" class="ink-line" />
+            <path
+              d="M262 38 L274 26 H334 L342 32 V86 L334 82 H274 L262 70 Z M334 26 V82"
+              class="ink-line"
+            />
             <path d="M286 42 H322" class="ink-hair" />
             <path d="M286 44 L324 36" class="ink-line" />
             <path d="M288 66 H318" class="ink-heavy" />
@@ -169,7 +212,10 @@ const site = {
             <g transform="rotate(-14 111 204)">
               <path d="M96 178 H126 V236 H96 Z" class="dark" />
               <path d="M126 178 L132 174 V232 L126 236 Z" class="shade" />
-              <path d="M102 192 h8 v6 h-8 Z M114 192 h8 v6 h-8 Z M102 202 h8 v6 h-8 Z M114 202 h8 v6 h-8 Z" class="lit" />
+              <path
+                d="M102 192 h8 v6 h-8 Z M114 192 h8 v6 h-8 Z M102 202 h8 v6 h-8 Z M114 202 h8 v6 h-8 Z"
+                class="lit"
+              />
               <path d="M96 178 L102 174 H132 V232 L126 236 H96 Z" class="ink-line" />
             </g>
             <path :d="pulses" class="ink-heavy" />
@@ -177,13 +223,19 @@ const site = {
           <template v-else>
             <path :d="site.near" class="near" />
             <path :d="site.nearShade" class="near-shade" />
-            <path d="M214 252 L232 196 L246 186 L300 182 L318 190 L352 202 L384 252 Z" class="rock" />
+            <path
+              d="M214 252 L232 196 L246 186 L300 182 L318 190 L352 202 L384 252 Z"
+              class="rock"
+            />
             <path d="M214 252 L232 196 L246 186 L250 214 L242 252 Z" class="rock-shade" />
             <path d="M246 186 L300 182 L302 185 L248 189 Z" class="rock-lit" />
             <!-- the desk, the screen and the figure in its beanie -->
             <rect x="272" y="174" width="16" height="10" class="figure" />
             <rect x="273.5" y="175.5" width="13" height="7" class="screen" />
-            <path d="M254 184 C253 176 255 170 259 169 C263 168 265 172 265 178 L264 184 Z" class="figure" />
+            <path
+              d="M254 184 C253 176 255 170 259 169 C263 168 265 172 265 178 L264 184 Z"
+              class="figure"
+            />
             <circle cx="259.5" cy="166.5" r="3.6" class="figure" />
             <path d="M256.2 164.6 C256 159.6 263 159 262.8 164 Z" class="beanie" />
           </template>
@@ -250,31 +302,59 @@ const site = {
   background: var(--ground);
   color: var(--on-ground);
   font: 500 0.75rem / 1.3 var(--f-mono);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .band .name {
-  font-weight: 650;
+  font-weight: 500;
 }
 .band .sub {
-  opacity: 0.8;
+  color: var(--on-ground-muted);
 }
 
 /* flats, all from the scene tokens so the dusk palette repaints them */
-.sky { fill: var(--sky-top); }
-.sea { fill: var(--sea-fill); }
-.shore { fill: var(--sea-shore); }
-.ground { fill: var(--plain); }
-.far { fill: var(--esterel); }
-.wall { fill: var(--sky-low); }
-.lit { fill: var(--rock-lit); }
-.face { fill: var(--rock); }
-.shade { fill: var(--rock-shade); }
-.cast { fill: var(--rock-shade); }
-.dark { fill: var(--figure); }
-.spot { fill: var(--ink-porphyry); }
-.spot-lit { fill: color-mix(in srgb, var(--ink-porphyry) 55%, var(--ink-ochre)); }
-.spot-shade { fill: color-mix(in srgb, var(--ink-porphyry) 55%, var(--ink-oxblood)); }
+.sky {
+  fill: var(--sky-top);
+}
+.sea {
+  fill: var(--sea-fill);
+}
+.shore {
+  fill: var(--sea-shore);
+}
+.ground {
+  fill: var(--plain);
+}
+.far {
+  fill: var(--esterel);
+}
+.wall {
+  fill: var(--sky-low);
+}
+.lit {
+  fill: var(--rock-lit);
+}
+.face {
+  fill: var(--rock);
+}
+.shade {
+  fill: var(--rock-shade);
+}
+.cast {
+  fill: var(--rock-shade);
+}
+.dark {
+  fill: var(--figure);
+}
+.spot {
+  fill: var(--ink-porphyry);
+}
+.spot-lit {
+  fill: color-mix(in srgb, var(--ink-porphyry) 55%, var(--ink-ochre));
+}
+.spot-shade {
+  fill: color-mix(in srgb, var(--ink-porphyry) 55%, var(--ink-oxblood));
+}
 .lit,
 .face,
 .shade,
@@ -287,19 +367,49 @@ const site = {
 }
 
 /* the site card: the hero's scene tokens, so it follows the theme like the hero */
-.site .sky-low { fill: var(--sky-low); }
-.site .sun { fill: var(--sun); }
-.site .halo { opacity: 0.35; }
-.site .far { fill: var(--hill-far); }
-.site .far-shade { fill: var(--hill-far-shade); }
-.site .mid { fill: var(--hill-mid); }
-.site .mid-shade { fill: var(--hill-mid-shade); }
-.site .near { fill: var(--hill-near); }
-.site .near-shade { fill: var(--hill-near-shade); }
-.site .rock { fill: var(--rock); }
-.site .rock-shade { fill: var(--rock-shade); }
-.site .rock-lit { fill: var(--rock-lit); }
-.site .figure { fill: var(--figure); }
-.site .screen { fill: var(--screen); }
-.site .beanie { fill: var(--accent); }
+.site .sky-low {
+  fill: var(--sky-low);
+}
+.site .sun {
+  fill: var(--sun);
+}
+.site .halo {
+  fill: var(--sun-halo);
+}
+.site .far {
+  fill: var(--hill-far);
+}
+.site .far-shade {
+  fill: var(--hill-far-shade);
+}
+.site .mid {
+  fill: var(--hill-mid);
+}
+.site .mid-shade {
+  fill: var(--hill-mid-shade);
+}
+.site .near {
+  fill: var(--hill-near);
+}
+.site .near-shade {
+  fill: var(--hill-near-shade);
+}
+.site .rock {
+  fill: var(--rock);
+}
+.site .rock-shade {
+  fill: var(--rock-shade);
+}
+.site .rock-lit {
+  fill: var(--rock-lit);
+}
+.site .figure {
+  fill: var(--figure);
+}
+.site .screen {
+  fill: var(--screen);
+}
+.site .beanie {
+  fill: var(--accent);
+}
 </style>

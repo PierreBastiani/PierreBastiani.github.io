@@ -1,9 +1,10 @@
 # pierre.kensae.com
 
-Source of my site: [pierre.kensae.com](https://pierre.kensae.com). Two pages, in French:
+Source of my site: [pierre.kensae.com](https://pierre.kensae.com). Two pages, in French, plus the legal notice:
 
 - `/` for clients who find me on Malt, GitHub or LinkedIn: what I build, where I've worked, side projects, how to reach me.
 - `/geek-du-quartier/` for shops in La Colle-sur-Loup and Saint-Paul-de-Vence, the page my flyers point to.
+- `/mentions-legales/`: publisher, host, privacy and credits, linked from every footer.
 
 ## Stack
 
@@ -16,7 +17,7 @@ npm run build      # type-check, then nuxt generate into .output/public
 npm run preview    # serve the generated site
 ```
 
-All the copy lives in `app/content.ts`; components only lay it out. The contact email and phone aren't in the repository: copy `.env.example` to `.env` locally, and the deploy workflow reads them from the `CONTACT_EMAIL` and `CONTACT_PHONE` repository secrets. Generation fails without them.
+All the copy lives in `app/content.ts`; components only lay it out. The contact email, the phone and the business address aren't in the repository: copy `.env.example` to `.env` locally, and the deploy workflow reads them from the `CONTACT_EMAIL`, `CONTACT_PHONE` and `LEGAL_ADDRESS` repository secrets. Generation fails without them. The phone reaches only the shop page and the legal notice, the address only the legal notice.
 
 ## Design notes
 

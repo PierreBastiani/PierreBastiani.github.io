@@ -17,7 +17,15 @@ const style = computed(() => ({
 </script>
 
 <template>
-  <svg class="plane" :class="{ still }" :viewBox="viewBox" :style="style" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+  <svg
+    class="plane"
+    :class="{ still }"
+    :viewBox="viewBox"
+    :style="style"
+    preserveAspectRatio="xMidYMax slice"
+    aria-hidden="true"
+    focusable="false"
+  >
     <slot />
   </svg>
 </template>

@@ -5,7 +5,12 @@ import { recommendations } from '@/content'
 </script>
 
 <template>
-  <section v-if="recommendations.length" id="recommandations" class="section" aria-labelledby="reco-title">
+  <section
+    v-if="recommendations.length"
+    id="recommandations"
+    class="section"
+    aria-labelledby="reco-title"
+  >
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow">Recommandations</p>

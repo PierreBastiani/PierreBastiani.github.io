@@ -10,16 +10,24 @@ export const SCENE = { w: 1000, h: 680 }
 export const DEPTH = { far: 0.45, wall: 1, near: 1.3 }
 
 // The plateau's garrigue, then the wall's outline: a flat top, broken ends.
-export const PLATEAU = 'M100 300 L130 210 L165 160 L230 128 L330 116 L460 106 L560 110 L660 102 L760 114 L850 136 L905 182 L932 268 L945 300 Z'
-export const WALL = 'M70 560 L96 300 L128 220 L160 176 L230 144 L330 132 L460 122 L560 126 L660 118 L760 130 L850 154 L905 200 L930 284 L950 560 Z'
+export const PLATEAU =
+  'M100 300 L130 210 L165 160 L230 128 L330 116 L460 106 L560 110 L660 102 L760 114 L850 136 L905 182 L932 268 L945 300 Z'
+export const WALL =
+  'M70 560 L96 300 L128 220 L160 176 L230 144 L330 132 L460 122 L560 126 L660 118 L760 130 L850 154 L905 200 L930 284 L950 560 Z'
 
 // Flats laid over the wall, by ink: [path, role]. Roles map to scene tokens in RouteMap.
 export const WALL_FLATS: [string, 'shade' | 'lit' | 'glow' | 'deep' | 'streak'][] = [
   // the ends of the wall: the east flank turned away from the sun, the west one in the light
-  ['M70 560 L96 300 L128 220 L160 176 L178 192 L160 246 L150 300 L138 390 L132 470 L126 560 Z', 'shade'],
+  [
+    'M70 560 L96 300 L128 220 L160 176 L178 192 L160 246 L150 300 L138 390 L132 470 L126 560 Z',
+    'shade',
+  ],
   ['M905 200 L930 284 L950 560 L906 560 L902 450 L898 340 L888 250 Z', 'glow'],
   // the rim: the top of the wall overhangs a little and throws a thin band of shade
-  ['M160 176 L230 144 L330 132 L460 122 L560 126 L660 118 L760 130 L850 154 L905 200 L900 208 L848 162 L760 139 L660 127 L560 135 L460 131 L330 141 L232 153 L166 186 Z', 'shade'],
+  [
+    'M160 176 L230 144 L330 132 L460 122 L560 126 L660 118 L760 130 L850 154 L905 200 L900 208 L848 162 L760 139 L660 127 L560 135 L460 131 L330 141 L232 153 L166 186 Z',
+    'shade',
+  ],
   // a big slab high on the right, turned to the sun
   ['M618 140 L700 136 L758 150 L780 214 L770 262 L700 258 L648 250 L632 196 Z', 'glow'],
   // the great dihedral (route 2 climbs its crack): its shaded left wall, wide at the foot
@@ -58,20 +66,67 @@ export const SCREE_SHADE = [
 ]
 
 // Far hills either side of the Baou, and the foreground garrigue with two Aleppo pines.
-export const FAR_HILLS = 'M-140 470 C80 430 160 440 260 455 L760 455 C860 430 960 420 1140 450 V720 H-140 Z'
-export const GROUND = 'M-140 720 L-140 612 C60 590 140 600 230 622 C320 642 420 630 520 638 C640 648 760 620 880 612 C960 606 1040 618 1140 628 V720 Z'
+export const FAR_HILLS =
+  'M-140 470 C80 430 160 440 260 455 L760 455 C860 430 960 420 1140 450 V720 H-140 Z'
+export const GROUND =
+  'M-140 720 L-140 612 C60 590 140 600 230 622 C320 642 420 630 520 638 C640 648 760 620 880 612 C960 606 1040 618 1140 628 V720 Z'
 export const PINES = [
-  { trunk: 'M62 700 C66 650 60 604 76 560 L84 562 C70 604 76 650 72 700 Z', crown: 'M14 570 C24 552 56 546 82 550 C102 540 132 544 148 558 C152 568 138 574 120 572 C96 580 58 580 36 576 C22 576 12 574 14 570 Z', lit: 'M54 552 C70 545 96 543 112 548 C126 544 140 550 146 557 C128 552 108 552 92 554 C78 550 64 551 54 552 Z' },
-  { trunk: 'M944 700 C946 664 952 628 940 596 L947 594 C958 628 954 664 952 700 Z', crown: 'M900 600 C910 586 936 582 954 586 C972 578 994 582 1004 594 C1006 602 994 606 980 604 C962 610 932 610 914 606 C902 606 896 604 900 600 Z', lit: 'M928 586 C944 580 962 580 974 584 C986 582 998 588 1002 594 C988 590 972 590 960 592 C950 588 938 588 928 586 Z' },
+  {
+    trunk: 'M62 700 C66 650 60 604 76 560 L84 562 C70 604 76 650 72 700 Z',
+    crown:
+      'M14 570 C24 552 56 546 82 550 C102 540 132 544 148 558 C152 568 138 574 120 572 C96 580 58 580 36 576 C22 576 12 574 14 570 Z',
+    lit: 'M54 552 C70 545 96 543 112 548 C126 544 140 550 146 557 C128 552 108 552 92 554 C78 550 64 551 54 552 Z',
+  },
+  {
+    trunk: 'M944 700 C946 664 952 628 940 596 L947 594 C958 628 954 664 952 700 Z',
+    crown:
+      'M900 600 C910 586 936 582 954 586 C972 578 994 582 1004 594 C1006 602 994 606 980 604 C962 610 932 610 914 606 C902 606 896 604 900 600 Z',
+    lit: 'M928 586 C944 580 962 580 974 584 C986 582 998 588 1002 594 C988 590 972 590 960 592 C950 588 938 588 928 586 Z',
+  },
 ]
 
 // The routes, foot to top anchor, along the wall's features. Ids match content.routes.
 export const ROUTE_LINES: Record<string, Pt[]> = {
-  ship: [[206, 548], [198, 470], [214, 392], [230, 330], [222, 262], [238, 200], [248, 150]], // up the left buttress
-  build: [[352, 548], [350, 450], [346, 350], [342, 250], [338, 150]], // the dihedral's crack
-  ai: [[520, 548], [514, 470], [524, 390], [512, 310], [496, 242]], // right of the cave, to the ledge
-  home: [[668, 548], [660, 470], [668, 390], [680, 334], [702, 320], [732, 292], [722, 232], [710, 176], [702, 140]], // through the roof
-  data: [[846, 548], [838, 470], [828, 420], [834, 378]], // beside the arête, to the ledge
+  ship: [
+    [206, 548],
+    [198, 470],
+    [214, 392],
+    [230, 330],
+    [222, 262],
+    [238, 200],
+    [248, 150],
+  ], // up the left buttress
+  build: [
+    [352, 548],
+    [350, 450],
+    [346, 350],
+    [342, 250],
+    [338, 150],
+  ], // the dihedral's crack
+  ai: [
+    [520, 548],
+    [514, 470],
+    [524, 390],
+    [512, 310],
+    [496, 242],
+  ], // right of the cave, to the ledge
+  home: [
+    [668, 548],
+    [660, 470],
+    [668, 390],
+    [680, 334],
+    [702, 320],
+    [732, 292],
+    [722, 232],
+    [710, 176],
+    [702, 140],
+  ], // through the roof
+  data: [
+    [846, 548],
+    [838, 470],
+    [828, 420],
+    [834, 378],
+  ], // beside the arête, to the ledge
 }
 
 // A smooth line through the points (Catmull-Rom), sampled.
@@ -87,7 +142,8 @@ export function smooth(pts: Pt[], per = 10): Pt[] {
       const t2 = t * t
       const t3 = t2 * t
       const c = (a: number, b: number, c: number, d: number) =>
-        0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3)
+        0.5 *
+        (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3)
       out.push([c(p0[0], p1[0], p2[0], p3[0]), c(p0[1], p1[1], p2[1], p3[1])])
     }
   }
@@ -110,7 +166,9 @@ export function bolts(line: Pt[], gap = 40): string {
       const y = ay + (by - ay) * t
       const nx = -(by - ay) / seg
       const ny = (bx - ax) / seg
-      ticks.push(`M${(x - nx * 6).toFixed(1)} ${(y - ny * 6).toFixed(1)} L${(x + nx * 6).toFixed(1)} ${(y + ny * 6).toFixed(1)}`)
+      ticks.push(
+        `M${(x - nx * 6).toFixed(1)} ${(y - ny * 6).toFixed(1)} L${(x + nx * 6).toFixed(1)} ${(y + ny * 6).toFixed(1)}`,
+      )
       next += gap
     }
     run += seg
