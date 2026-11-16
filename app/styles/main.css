@@ -7,6 +7,70 @@
   - Motion: layers drift slowly with scroll, routes draw on once; nothing loops; all off with reduced motion.
 */
 
+/* Hanken Grotesk's stand-in until its file arrives: the local Arial, resized to Hanken's widths
+   and given Hanken's vertical metrics (ascent 1000, descent 303, no line gap, per 1000 units),
+   so nothing moves when the real font swaps in. Without it a slow first visit shifted the hero
+   (CLS 0.047): the name jumped 4 px up and the GitHub button changed rows. Arial has
+   two weights, so each weight the site uses gets its own width match (Hanken ÷ Arial over the
+   pages' text set in it, Chrome, 2026-11-13). The overrides are divided by size-adjust, which
+   scales them. No Arial (Android): the face is skipped and the stack goes on as before. */
+@font-face {
+  font-family: 'Hanken Grotesk Fallback';
+  src: local('Arial'), local('ArialMT');
+  font-weight: 100 449;
+  size-adjust: 99.64%;
+  ascent-override: 100.36%;
+  descent-override: 30.41%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Hanken Grotesk Fallback';
+  src: local('Arial'), local('ArialMT');
+  font-weight: 450 524;
+  size-adjust: 100.52%;
+  ascent-override: 99.48%;
+  descent-override: 30.14%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Hanken Grotesk Fallback';
+  src: local('Arial'), local('ArialMT');
+  font-weight: 525 599;
+  size-adjust: 101.55%;
+  ascent-override: 98.47%;
+  descent-override: 29.84%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Hanken Grotesk Fallback';
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  font-weight: 600 674;
+  size-adjust: 94.16%;
+  ascent-override: 106.2%;
+  descent-override: 32.18%;
+  line-gap-override: 0%;
+}
+/* 700 sets only the shop's phone number: tabular digits, where Hanken is 0.7% wider than Arial
+   Bold, and four spaces, 6.4% narrower. Matched over a 10-digit number in pairs (2026-11-16). */
+@font-face {
+  font-family: 'Hanken Grotesk Fallback';
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  font-weight: 675 724;
+  size-adjust: 99.51%;
+  ascent-override: 100.49%;
+  descent-override: 30.45%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Hanken Grotesk Fallback';
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  font-weight: 725 900;
+  size-adjust: 95.37%;
+  ascent-override: 104.85%;
+  descent-override: 31.77%;
+  line-gap-override: 0%;
+}
+
 :root {
   /* Esterel, day */
   --bg: #f4e8dc;
@@ -109,9 +173,11 @@
   --grain-opacity: 0.4;
 
   --f-display:
-    'Hanken Grotesk Variable', 'Helvetica Neue', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    'Hanken Grotesk Variable', 'Hanken Grotesk Fallback', 'Helvetica Neue', system-ui,
+    -apple-system, 'Segoe UI', sans-serif;
   --f-body:
-    'Hanken Grotesk Variable', 'Helvetica Neue', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    'Hanken Grotesk Variable', 'Hanken Grotesk Fallback', 'Helvetica Neue', system-ui,
+    -apple-system, 'Segoe UI', sans-serif;
   --f-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   --step--1: clamp(0.83rem, 0.8rem + 0.15vw, 0.9rem);
