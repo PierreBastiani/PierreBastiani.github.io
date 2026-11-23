@@ -13,9 +13,11 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
   <header class="site-header vt-header">
     <div class="wrap bar">
       <NuxtLink v-if="props.variant === 'geek'" class="name" :to="links.home" translate="no">
-        <BrandMark />{{ contact.name }}
+        <BrandMark /><span class="who">{{ contact.name }}</span>
       </NuxtLink>
-      <a v-else class="name" href="#top" translate="no"><BrandMark />{{ contact.name }}</a>
+      <a v-else class="name" href="#top" translate="no"
+        ><BrandMark /><span class="who">{{ contact.name }}</span></a
+      >
 
       <nav v-if="props.variant !== 'geek'" aria-label="Sections">
         <ul>
@@ -87,6 +89,17 @@ const names = { auto: 'automatique (suit l’appareil)', light: 'clair', dark: '
   margin-right: auto;
   white-space: nowrap;
 }
+/* The wordmark stands alone: the hero under it spells the name out. The link keeps the name
+   for screen readers. */
+.who {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* The section links: a framed strip of tabs, ink rule round it and between them, mono caps
    like the lettering on the printed cards. Hover lays the ground band under a tab. */
 nav ul {

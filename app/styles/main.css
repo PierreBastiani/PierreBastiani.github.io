@@ -84,6 +84,16 @@
   line-gap-override: 0%;
 }
 
+/* Kensae Sans: the brand's own face, capitals only, drawn on the logo's grid (caps 24 units,
+   strokes 4, rounds of radius 6). It sets the wordmark's letters, the hero title and the section
+   titles. Its vertical metrics are Hanken Grotesk's (ascent 1000, descent 303, caps 714), so a
+   title keeps its line when the file lands. */
+@font-face {
+  font-family: 'Kensae Sans';
+  src: url('/fonts/kensae-sans.woff2') format('woff2');
+  font-display: swap;
+}
+
 :root {
   /* Esterel, day */
   --bg: #f4e8dc;
@@ -217,6 +227,7 @@
     'Hanken Grotesk Variable', 'Hanken Grotesk Fallback', 'Helvetica Neue', system-ui,
     -apple-system, 'Segoe UI', sans-serif;
   --f-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --f-title: 'Kensae Sans', 'Hanken Grotesk Caps Fallback', var(--f-display);
 
   --step--1: clamp(0.83rem, 0.8rem + 0.15vw, 0.9rem);
   --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.1rem);
@@ -475,10 +486,12 @@ h3 {
   margin: 0;
 }
 h2 {
+  font-family: var(--f-title);
   font-size: var(--step-h2);
-  font-weight: 650;
+  font-weight: 400;
   line-height: 1.04;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 h3 {
   font-size: var(--step-1);

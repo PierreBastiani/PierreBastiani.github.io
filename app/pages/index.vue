@@ -60,7 +60,7 @@ useTextReveal()
       <HeroStrata
         class="vt-hero"
         :title="['Pierre', 'Bastiani']"
-        :fit="[7.329, 3.005, 4.099]"
+        :fit="[5.9165, 2.378, 3.3005]"
         no-translate
       >
         <HeroIntro variant="main" />

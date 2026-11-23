@@ -761,9 +761,21 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
   --cut-l: 0.065;
   --cut-r: 0.03;
   --cut-phone: 0.07;
-  --fs: min(100cqi / (var(--fit) - 0.083 - var(--cut-l) - var(--cut-r)), 50cqh);
-  --fs-0: calc((100cqi - var(--gutter-r)) / (var(--fit-0) - 0.083 - var(--cut-phone)));
-  --fs-1: calc((100cqi - var(--gutter-r)) / (var(--fit-1) - 0.083 - var(--cut-phone)));
+  --fs: min(100cqi / (var(--fit) - 0.09 - var(--cut-l) - var(--cut-r)), 50cqh);
+  /* Phones, two lines. Each line would fill the width, but Kensae Sans is narrow, so two full
+     lines can stand taller than the sky they have: the scene is 68svh tall, the caps' feet sit
+     43.5% up it, and the sticky header covers its top (10svh, at most 5.25rem). --room is what
+     is left, less half a rem of air; --ratio keeps the second line as wide as the first. When
+     the height binds, both lines shrink together and stop short of the right gutter. */
+  --ink-0: calc(var(--fit-0) - 0.09 - var(--cut-phone));
+  --ink-1: calc(var(--fit-1) - 0.09 - var(--cut-phone));
+  --ratio: calc(var(--ink-0) / var(--ink-1));
+  --room: calc(0.565 * 68svh - min(10svh, 5.25rem) - 0.5rem);
+  --fs-0: min(
+    calc((100cqi - var(--gutter-r)) / var(--ink-0)),
+    calc(var(--room) / (0.764 + 0.8 * var(--ratio)))
+  );
+  --fs-1: calc(var(--fs-0) * var(--ratio));
 }
 .wordmark {
   position: absolute;
@@ -833,12 +845,17 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
   position: relative;
   left: 50%;
   width: max-content;
-  translate: calc(-50% - (0.0215 + (var(--cut-l) - var(--cut-r)) / 2) * 1em) 0;
-  font-family: 'Hanken Grotesk Variable', 'Hanken Grotesk Caps Fallback', var(--f-display);
+  translate: calc(-50% - ((var(--cut-l) - var(--cut-r)) / 2) * 1em) 0;
+  /* Kensae Sans: its ink starts 0.045em in and ends 0.045em short, the same on both sides,
+     so the 0.09 in the sizes above and no centring shift here */
+  font-family: var(--f-title);
+  /* the Signature level: ledges on the Es, pulleys on the N, the Baou's cliff for the As, a git
+     node on the K. The fit numbers are measured with it on (the Baou A is 3 units wider). */
+  font-feature-settings: 'ss01';
   font-size: var(--fs);
-  font-weight: 800;
+  font-weight: 400;
   line-height: 0.8;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--ink);
@@ -868,7 +885,7 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
   }
   .wordmark h1 span {
     display: block;
-    margin-left: calc(-1em * (0.063 + var(--cut-phone)));
+    margin-left: calc(-1em * (0.045 + var(--cut-phone)));
   }
   .wordmark .l0 {
     font-size: var(--fs-0);

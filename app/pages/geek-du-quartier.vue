@@ -52,7 +52,11 @@ useHead({
     <main id="main">
       <!-- the wordmark (see HeroStrata's fit): "Le geek du quartier" on one line, 9.832em wide;
            on phones "Le geek" (3.657em) over "du quartier" (5.950em) -->
-      <HeroStrata class="vt-hero" :title="['Le geek', 'du quartier']" :fit="[9.832, 3.657, 5.95]">
+      <HeroStrata
+        class="vt-hero"
+        :title="['Le geek', 'du quartier']"
+        :fit="[7.5991, 2.8419, 4.5193]"
+      >
         <HeroIntro variant="geek" />
       </HeroStrata>
       <LocalOffer />

@@ -29,7 +29,7 @@ All the copy lives in `app/content.ts`; components only lay it out. The legal pa
 
 ## Credits
 
-- Fonts: [Hanken Grotesk](https://github.com/marcologous/hanken-grotesk) and [Geist Mono](https://github.com/vercel/geist-font), both under the SIL Open Font License 1.1, through Fontsource.
+- Fonts: [Hanken Grotesk](https://github.com/marcologous/hanken-grotesk) and [Geist Mono](https://github.com/vercel/geist-font), both under the SIL Open Font License 1.1, through Fontsource. Kensae Sans (the wordmark and the titles) is my own drawing.
 - Tool and brand marks: [Simple Icons](https://simpleicons.org) 13.21.0 (CC0). The Rust logo is © the Rust Foundation, CC BY-SA 4.0. Company and school logos belong to their owners and only name where I worked or studied.
 
 ## Licence
