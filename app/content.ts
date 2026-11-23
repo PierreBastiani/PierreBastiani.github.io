@@ -21,7 +21,7 @@ export const links = {
   source: 'https://github.com/PierreBastiani/PierreBastiani.github.io',
   home: '/',
   legal: '/mentions-legales/',
-  privacy: '/mentions-legales/#confidentialite',
+  privacy: '/mentions-legales/#donnees-personnelles',
 }
 
 export const profile = {
@@ -102,16 +102,37 @@ export interface Project {
   text: string
   tags: string[]
   /** which small illustration ProjectArt.vue draws for it */
-  art: 'homelab' | 'smarket' | 'gree' | 'site'
+  art: 'homelab' | 'smarket' | 'gree' | 'site' | 'talk'
+  /** four-letter catalogue code printed on the card's band */
+  code: string
+  /** extra links under the text, when the repo isn't the only thing to open */
+  links?: { label: string; href: string }[]
 }
 
 export const projects: Project[] = [
+  {
+    name: 'from-chat-to-agent',
+    href: 'https://pierre.kensae.com/from-chat-to-agent/deck/',
+    text: 'Un talk qui reconstruit un agent de code IA en pseudo-code, une couche à la fois\u00a0: le chat, le premier outil, la boucle agentique, les permissions, MCP, les skills, les sous-agents. Donné en français à Sophia Antipolis en novembre 2026, publié en anglais avec une vidéo narrée.',
+    tags: ['LLM', 'reveal.js', 'Playwright'],
+    art: 'talk',
+    code: 'TALK',
+    links: [
+      { label: 'Diaporama', href: 'https://pierre.kensae.com/from-chat-to-agent/deck/' },
+      {
+        label: 'Vidéo, 23 min',
+        href: 'https://github.com/PierreBastiani/from-chat-to-agent/releases/latest/download/from-chat-to-agent.mp4',
+      },
+      { label: 'Code', href: 'https://github.com/PierreBastiani/from-chat-to-agent' },
+    ],
+  },
   {
     name: 'homelab',
     href: 'https://github.com/PierreBastiani/homelab',
     text: 'Maison auto-hébergée\u00a0: Home Assistant et Node-RED, appareils sortis du cloud (purificateur reflashé sous ESPHome, clim pilotée en infrarouge), Jellyfin, LLM local.',
     tags: ['Home Assistant', 'ESPHome', 'Docker'],
     art: 'homelab',
+    code: 'HMLB',
   },
   {
     name: 'smarket',
@@ -119,6 +140,7 @@ export const projects: Project[] = [
     text: 'Suivi des prix en supermarché\u00a0: scrapers Node, puis un pipeline Rust qui rapproche les produits d’Open Food Facts et garde l’historique des prix.',
     tags: ['Rust', 'Node', 'Scraping'],
     art: 'smarket',
+    code: 'SMKT',
   },
   {
     name: 'gree-smartir',
@@ -126,6 +148,7 @@ export const projects: Project[] = [
     text: 'Générateur de codes infrarouges pour les clims Gree dans Home Assistant, à partir du protocole décodé.',
     tags: ['Python', 'Home Assistant', 'IR'],
     art: 'gree',
+    code: 'GREE',
   },
   {
     name: 'pierre.kensae.com',
@@ -133,6 +156,7 @@ export const projects: Project[] = [
     text: 'Ce site, en Nuxt 4, généré en pages statiques. Le paysage en calques et la carte topo en 3D sont du SVG dessiné à la main, sans librairie 3D\u00a0; deux thèmes, Esterel en clair et crépuscule nordique en sombre.',
     tags: ['Nuxt', 'Vue', 'SVG'],
     art: 'site',
+    code: 'PBKC',
   },
 ]
 
@@ -189,12 +213,14 @@ export const localOffer = {
   title: 'Ce que je règle pour vous',
   intro:
     'Je passe dans votre commerce, je regarde ce qui vous fait perdre du temps sur l’ordi ou le téléphone, et je le règle.',
-  // `visual` picks the before/after drawing in OfferVisual.vue; `before`/`after` caption it.
+  // `visual` picks the before/after drawing in OfferVisual.vue; `before`/`after` caption it;
+  // `code` names the plate in its catalogue band.
   items: [
     {
       title: 'Votre fiche Google à jour',
       text: 'Horaires, photos, réponses aux avis\u00a0: les clients du coin vous trouvent.',
       visual: 'google',
+      code: 'Fiche',
       before: 'Une fiche vide',
       after: 'Une fiche complète',
     },
@@ -202,6 +228,7 @@ export const localOffer = {
       title: 'Un site qui s’affiche',
       text: 'Simple, rapide, et vous le modifiez vous-même.',
       visual: 'site',
+      code: 'Site',
       before: 'Illisible sur un téléphone',
       after: 'Clair, avec un bouton pour appeler',
     },
@@ -209,6 +236,7 @@ export const localOffer = {
       title: 'Fini les ressaisies',
       text: 'Devis, commandes et plannings qui se remplissent tout seuls.',
       visual: 'orders',
+      code: 'Saisies',
       before: 'Le cahier, puis l’ordi',
       after: 'Une seule liste, à jour',
     },
@@ -216,6 +244,7 @@ export const localOffer = {
       title: 'Les petits pépins informatiques',
       text: 'Wi-Fi, imprimante, sauvegardes, mots de passe\u00a0: je règle, et je vous explique.',
       visual: 'fix',
+      code: 'Dépannage',
       before: 'Les câbles en vrac',
       after: 'Rangé, étiqueté, ça marche',
     },
@@ -223,6 +252,7 @@ export const localOffer = {
     title: string
     text: string
     visual: 'google' | 'site' | 'orders' | 'fix'
+    code: string // the plate's catalogue code, in its band
     before: string
     after: string
   }[],
@@ -369,121 +399,3 @@ export const introFacts = {
     { text: 'Prestations réservées aux professionnels' },
   ],
 } as Record<'main' | 'geek', { text: string; en?: string }[]>
-
-// The legal notice and privacy section (/mentions-legales/). Every value is checked against a
-// primary source in the S8 report (sites-factory, outside this repository). The address, phone
-// and email aren't here: the page reads them from the generate-time env (useContact.ts), and
-// rows with `from` show that value.
-export interface LegalRow {
-  label: string
-  value?: string
-  href?: string
-  from?: 'address' | 'email' | 'phone'
-}
-
-export const legal = {
-  title: 'Mentions légales',
-  quiet: 'Qui publie ce site, et ce qu’il fait de vos données',
-  updated: 'Mise à jour le 12\u00a0novembre 2026',
-  publisher: {
-    title: 'Éditeur',
-    rows: [
-      { label: 'Nom', value: 'Pierre Bastiani, entrepreneur individuel (EI)' },
-      { label: 'Nom commercial', value: 'KENSAE' },
-      { label: 'Adresse', from: 'address' },
-      { label: 'Courriel', from: 'email' },
-      { label: 'Téléphone', from: 'phone' },
-      {
-        label: 'SIREN',
-        value: '893\u00a0999\u00a0672, inscrit au Registre national des entreprises (RNE)',
-      },
-      { label: 'SIRET du siège', value: '893\u00a0999\u00a0672\u00a000023' },
-      { label: 'Activité', value: 'Programmation informatique (code APE 62.01Z)' },
-      { label: 'Clientèle', value: 'Prestations réservées aux professionnels' },
-      { label: 'TVA intracommunautaire', value: 'FR\u00a050\u00a0893\u00a0999\u00a0672' },
-      { label: 'Directeur de la publication', value: 'Pierre Bastiani' },
-    ] as LegalRow[],
-  },
-  host: {
-    title: 'Hébergeur',
-    rows: [
-      { label: 'Nom', value: 'GitHub, Inc. (service GitHub Pages)' },
-      {
-        label: 'Adresse',
-        value: '88 Colin P. Kelly Jr. Street, San Francisco, CA\u00a094107, États-Unis',
-      },
-      {
-        label: 'Contact',
-        value: 'Formulaire de contact de GitHub',
-        href: 'https://support.github.com/',
-      },
-      { label: 'Site', value: 'github.com', href: 'https://github.com' },
-    ] as LegalRow[],
-  },
-  privacy: {
-    title: 'Confidentialité',
-    intro: 'Le responsable des traitements décrits ici est l’éditeur ci-dessus.',
-    blocks: [
-      {
-        title: 'Sur le site',
-        text: [
-          'Le site ne pose aucun cookie, ne mesure pas l’audience et ne charge rien depuis un autre site\u00a0: les polices et les images viennent de pierre.kensae.com.',
-          'Seule exception\u00a0: si vous choisissez le thème clair ou sombre avec le bouton en haut de page, votre navigateur garde ce choix dans son stockage local (clé «\u00a0theme\u00a0»). Il ne quitte pas votre appareil, et revenir au thème automatique l’efface.',
-        ],
-      },
-      {
-        title: 'Chez l’hébergeur',
-        text: [
-          'GitHub, qui héberge le site, enregistre l’adresse IP de chaque visiteur pour la sécurité de son service. Ces journaux relèvent de la déclaration de confidentialité de GitHub, qui prévoit des transferts hors de l’Union européenne, notamment vers les États-Unis, encadrés par les clauses contractuelles types de la Commission européenne et le Data Privacy Framework.',
-        ],
-        link: {
-          label: 'Déclaration de confidentialité de GitHub',
-          href: 'https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement',
-        },
-      },
-      {
-        title: 'Si vous m’écrivez ou m’appelez',
-        text: [
-          'Je reçois votre adresse mail ou votre numéro, et ce que vous me dites. Je m’en sers pour vous répondre et, si nous travaillons ensemble, pour la mission et sa facturation. Ma messagerie est hébergée par Proton AG, en Suisse. Je ne transmets ces informations à personne d’autre et je ne vous inscris à aucune liste d’envoi.',
-          'Je garde les échanges le temps d’y donner suite, et les factures aussi longtemps que la loi l’impose.',
-          'Base légale\u00a0: votre demande quand elle prépare une mission, sinon mon intérêt légitime à répondre à qui m’écrit.',
-        ],
-      },
-      {
-        title: 'Vos droits',
-        text: [
-          'Vous pouvez me demander d’accéder à vos données, de les corriger, de les effacer ou d’en limiter l’usage, et vous opposer à leur traitement.',
-        ],
-        mailTo: 'Pour cela, écrivez-moi à',
-        after:
-          'Si ma réponse ne vous convient pas, vous pouvez adresser une réclamation à la CNIL.',
-        link: {
-          label: 'Adresser une réclamation à la CNIL',
-          href: 'https://www.cnil.fr/fr/plaintes',
-        },
-      },
-    ] as {
-      title: string
-      text: string[]
-      mailTo?: string
-      after?: string
-      link?: { label: string; href: string }
-    }[],
-  },
-  credits: {
-    title: 'Crédits',
-    rows: [
-      { label: 'Textes et illustrations', value: '© Pierre Bastiani' },
-      { label: 'Portrait', value: '© FAIRSHOT' },
-      {
-        label: 'Polices',
-        value: 'Hanken Grotesk et Geist Mono, licence SIL Open Font License 1.1',
-      },
-      {
-        label: 'Logos d’outils',
-        value: 'Simple Icons (CC0)\u00a0; logo Rust © Rust Foundation, CC BY-SA 4.0',
-      },
-      { label: 'Code du site', value: 'Licence MIT, sur GitHub', href: links.source },
-    ] as LegalRow[],
-  },
-}

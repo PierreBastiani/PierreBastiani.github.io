@@ -5,6 +5,10 @@
   browsers without the API just navigate.
   Shared elements: the header (.vt-header) and the hero section (.vt-hero, a class
   passed onto HeroStrata's root from each page).
+  Under prefers-reduced-motion (experimental.viewTransition: 'always') nothing moves:
+  the shared elements jump to their place and the page cross-fades.
+  The theme toggle (useTheme) uses a transition too, html.vt-theme: one cross-fade of
+  the whole page, nothing shared, nothing moving.
 */
 
 .vt-header {
@@ -34,5 +38,31 @@
   from {
     opacity: 0;
     transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation: none;
+  }
+  ::view-transition-new(root) {
+    animation-name: vt-fade-in;
+  }
+}
+
+/* The theme switch: brief, a plain cross-fade. */
+html.vt-theme .vt-header,
+html.vt-theme .vt-hero {
+  view-transition-name: none;
+}
+html.vt-theme::view-transition-old(root) {
+  animation: var(--dur-hover) var(--ease) both vt-out;
+}
+html.vt-theme::view-transition-new(root) {
+  animation: var(--dur-hover) var(--ease) both vt-fade-in;
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
   }
 }

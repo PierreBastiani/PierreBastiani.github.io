@@ -2,8 +2,22 @@
 import { box } from '@/lib/box'
 // Before / after for each thing the shop page offers: one printed plate, two vignettes, the
 // captions in the lettering band under them. No brands, no real business names. Captions are
-// HTML (they translate); the drawings are decorative.
-defineProps<{ kind: 'google' | 'site' | 'orders' | 'fix'; before: string; after: string }>()
+// HTML (they translate); the drawings are decorative. code and no print the catalogue band over
+// the plate, as on the main page's project plates.
+//
+// While the desk figure travels down the page (components/journey, lib/shop-course.ts), the
+// "after" vignette waits in its "before" inks until he has crouched on the plate to fix it: a
+// second copy of it, printed through the shadow plate, covers it from --fix down, and a roller
+// (the portrait plate's on the main page) runs down as it lifts. Tied to the scroll, so it plays
+// back when the page scrolls up; with reduced motion there is no journey and "after" is simply
+// printed.
+defineProps<{
+  kind: 'google' | 'site' | 'orders' | 'fix'
+  before: string
+  after: string
+  code?: string
+  no?: string
+}>()
 
 const star = (cx: number, cy: number, r: number) => {
   const pts: string[] = []
@@ -26,7 +40,12 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
 </script>
 
 <template>
-  <figure class="ba print">
+  <figure class="ba print" :class="{ coded: code }">
+    <!-- the catalogue band: the plate's code and number -->
+    <p v-if="code" class="band head" aria-hidden="true">
+      <span>{{ code }}</span
+      ><span>{{ no }}</span>
+    </p>
     <div class="pair">
       <!-- before: the same scene printed through the lilac shadow plate, no spot -->
       <div class="panel before">
@@ -114,7 +133,14 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
 
       <!-- after: the same object put right, in sunlight, with the one spot of porphyry -->
       <div class="panel after">
-        <svg viewBox="0 0 160 120" aria-hidden="true" focusable="false">
+        <svg
+          v-for="pass in ['lit', 'dim']"
+          :key="pass"
+          :class="pass"
+          viewBox="0 0 160 120"
+          aria-hidden="true"
+          focusable="false"
+        >
           <rect width="160" height="78" class="sky" />
           <rect y="78" width="160" height="42" class="ground" />
           <template v-if="kind === 'google'">
@@ -199,6 +225,7 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
             <path d="M55 104 H61 M67 104 H73 M83 104 H89 M95 104 H101" class="ink-hair" />
           </template>
         </svg>
+        <span class="roll" aria-hidden="true"><span class="roller"></span></span>
         <!-- the seam: an ink marker pointing from before to after -->
         <span class="seam" aria-hidden="true"></span>
       </div>
@@ -254,6 +281,47 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
 .after {
   border-left: 1px solid var(--ink);
 }
+/* the unfixed copy of "after": the before inks, the spot and the sun put out too. Shown only
+   while the figure travels; --fix is how far down the fixed print has come */
+.dim {
+  --v-sky: color-mix(in srgb, var(--rock-shade) 55%, var(--sky-top));
+  --v-sea: color-mix(in srgb, var(--rock-shade) 45%, var(--sea-fill));
+  --v-ground: color-mix(in srgb, var(--rock-shade) 60%, var(--plain));
+  --v-lit: color-mix(in srgb, var(--rock-shade) 30%, var(--rock-lit));
+  --v-face: color-mix(in srgb, var(--rock-shade) 45%, var(--rock));
+  --v-shade: color-mix(in srgb, var(--rock-shade) 60%, var(--ink-sea));
+  --v-dark: color-mix(in srgb, var(--rock-shade) 35%, var(--figure));
+  --v-sun: var(--v-face);
+  --v-spot: var(--v-face);
+}
+.panel svg.dim,
+.roll {
+  display: none;
+}
+:global(html.journey .ba .panel svg.dim) {
+  display: block;
+  position: absolute;
+  inset: 0;
+  clip-path: inset(var(--fix, 0%) 0 0 0);
+}
+/* the roller: a heavy rule across the panel, a little wider than it, on the line being printed.
+   It moves by transform only: a panel-tall box with the rule on its top edge, shifted down by
+   --fix of its own height, in a clipping box a little larger than the panel */
+:global(html.journey .ba.rolling .roll) {
+  display: block;
+  position: absolute;
+  z-index: 2;
+  inset: -2px -4px;
+  overflow: hidden;
+  pointer-events: none;
+}
+:global(html.journey .ba .roll .roller) {
+  display: block;
+  height: calc(100% - 4px);
+  margin-top: calc(2px - var(--w-heavy) / 2);
+  border-top: var(--w-heavy) solid var(--pen);
+  translate: 0 var(--fix, 0%);
+}
 .panel svg {
   display: block;
   width: 100%;
@@ -304,6 +372,19 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
   transform: translate(-50%, -50%);
   background: var(--ink);
   clip-path: polygon(0 0, 55% 0, 100% 50%, 55% 100%, 0 100%);
+}
+
+/* the catalogue band over the plate: code left, number right, as on the project plates */
+.band.head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.72rem;
+}
+.coded .pair {
+  border-top: 0;
 }
 
 /* the band: both captions in mono caps, each with its stamp */

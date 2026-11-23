@@ -5,6 +5,7 @@ import LinkedinIcon from '@/assets/icons/LinkedinIcon.vue'
 import MaltIcon from '@/assets/icons/MaltIcon.vue'
 import GeekIcon from '@/assets/icons/GeekIcon.vue'
 import LaptopIcon from '@/assets/icons/LaptopIcon.vue'
+import PressPlate from '@/components/PressPlate.vue'
 
 const props = defineProps<{ variant?: 'main' | 'geek' }>()
 // the year the pages were generated: the same in the prerendered HTML and after hydration,
@@ -14,6 +15,13 @@ const year = useRuntimeConfig().public.buildDate.slice(0, 4)
 
 <template>
   <footer class="site-footer on-ground print">
+    <!-- the press: the page's screen in the on-ground ink, 10% in, so the band's text keeps
+         5:1 on a dot (the muted line is the floor) -->
+    <PressPlate
+      class="press"
+      :windowed="false"
+      ink="color-mix(in srgb, var(--on-ground) 10%, var(--ground))"
+    />
     <div class="wrap row">
       <p class="copy">
         <!-- spaces between the parts, so the line's text doesn't read "BastianiMentions" -->
@@ -61,6 +69,9 @@ const year = useRuntimeConfig().public.buildDate.slice(0, 4)
     inset 0 4px 0 var(--ground),
     inset 0 5px 0 var(--on-ground-rule);
   font-size: var(--step--1);
+}
+.press {
+  z-index: -1;
 }
 .row {
   position: relative;

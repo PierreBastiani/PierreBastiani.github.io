@@ -4,6 +4,7 @@ import { links, logbook, profile, routeCard, sections } from '@/content'
 import { useContact } from '@/composables/useContact'
 import PortraitImage from './PortraitImage.vue'
 import CliffOverlay from './CliffOverlay.vue'
+import ContactSea from './ContactSea.vue'
 
 // The register's first line is dated today, in French. Set on mount: the prerendered page
 // was built on another day.
@@ -40,6 +41,8 @@ const icons: Record<string, string> = {
       :summit-gap="96"
       desk
     />
+    <!-- the sea in the section's bottom padding: the cliff's foot stands in it -->
+    <ContactSea />
     <div class="wrap">
       <header class="section-head">
         <p class="eyebrow">{{ sections.contact.label }}</p>

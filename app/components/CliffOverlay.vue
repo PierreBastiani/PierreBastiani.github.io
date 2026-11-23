@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { rng } from '@/lib/scene'
 import SummitSetup from './hero/SummitSetup.vue'
+import { journey } from '@/lib/journey'
 
 // A ghost of the Baou's wall along one edge of the page: a faint print behind the content,
 // in the crag topo's vocabulary (the wall's edge, cracks, ledges, a lilac shade flat, the
@@ -65,6 +66,8 @@ function measure() {
     }
   }
   size.value = { w: Math.round(r.width), h: Math.round(r.height), summit }
+  // the travelling figure ends at this desk: it measures it once it is drawn
+  if (props.desk) nextTick(journey.remeasure)
 }
 
 // Climber: progress 0 at the first element's top, 1 at the second's, read on scroll.
@@ -355,6 +358,7 @@ const uid = `cliff-${props.seed}-${props.side}`
       <!-- the desk on the summit, cut square under the figure's feet and set on a ledge line -->
       <g v-if="deskBox">
         <svg
+          class="desk-svg"
           :x="deskBox.x"
           :y="deskBox.y"
           :width="deskBox.w"
@@ -399,7 +403,8 @@ const uid = `cliff-${props.seed}-${props.side}`
   display: block;
 }
 /* Ghost inks: a few percent of the ghost ink, see-through, so the wall reads the same over
-   the page colour or over a picture. */
+   the page colour or over a picture. The page's press (PressPaper) prints under it, in the same
+   ink, and shows through. */
 .wall {
   fill: color-mix(in srgb, var(--ghost-ink) 5%, transparent);
 }

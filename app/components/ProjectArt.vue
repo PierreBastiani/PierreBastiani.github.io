@@ -1,14 +1,27 @@
 <script setup lang="ts">
+import { useId } from 'vue'
 import { box } from '@/lib/box'
+import { screenOpen } from '@/lib/halftone'
 import { ridgeFacets, ridgeLine, type RidgeOptions } from '@/lib/ridge'
 // Small illustrations for the project cards, drawn in three layers like the hero.
 // On hover or keyboard focus of the card, the layers lift apart a little (see ProjectGrid).
-export type ArtKind = 'homelab' | 'smarket' | 'gree' | 'site'
+export type ArtKind = 'homelab' | 'smarket' | 'gree' | 'site' | 'talk'
 defineProps<{ kind: ArtKind; label: string; sub?: string }>()
+
+// The vignettes' one screened plate is the cast shadow of the three object cards: lilac dots
+// overprinted on the ground they fall on, as a printer would lay a tint instead of a second
+// flat. Tiles of 9 units: 7 px at 1280, 5 px on a phone, coarse enough to stay dots on a 2x
+// screen. The site card has no cast
+// shadow and no screen: at its size the hero's sky ramp read as a fade, so the hero keeps the
+// site's only other screen.
+const uid = useId()
+const CAST_P = 9
+const castDots = screenOpen(CAST_P, 0.2 * CAST_P)
+const castFill = `url(#${uid}-cast)`
 
 // All four are printed vignettes from the hero's inks: a sky flat, the sea strip, a ground flat,
 // objects as lit / face / lilac-shadow planes with one contour, porphyry as the one spot, grain
-// on top, and the poster's lettering band under the picture.
+// on top, and the catalogue band across the top of the picture.
 
 // homelab: the router, the Mac mini on it, the Raspberry Pi beside them (the porphyry box)
 const router = box(64, 170, 150, 30, 22, -15, 40)
@@ -23,6 +36,11 @@ const shelf = box(206, 150, 210, 12, 0, -14)
 // gree-smartir: the split unit on the wall, its shadow, the remote, the IR frame
 const pulses =
   'M138 166 h10 v-12 h5 v12 h14 v-12 h5 v12 h5 v-12 h5 v12 h14 v-12 h5 v12 h5 v-12 h14 v12 h5 v-12 h5 v12 h14 v-12 h5 v12 h10'
+
+// from-chat-to-agent: the projection screen with the harness on it (the added line in the spot,
+// as the deck prints it in orange), the chat bubble in front, the agent's terminal beside it
+const screen = box(118, 34, 180, 104, 10, -7)
+const term = box(296, 178, 74, 40, 10, -7, 30)
 
 // the site itself: the hero as a small PLM poster
 const card = (
@@ -66,10 +84,32 @@ const site = {
 
 <template>
   <div class="art print" :class="kind" aria-hidden="true">
+    <!-- the catalogue band across the top: the plate's code, its number -->
+    <p class="band" translate="no">
+      <span class="name">{{ label }}</span>
+      <span v-if="sub" class="sub">{{ sub }}</span>
+    </p>
     <div class="win">
       <div class="stage">
         <!-- back layer: the sky, the sea strip and the ground every vignette stands on -->
         <svg class="layer l0" viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice">
+          <defs v-if="kind !== 'site'">
+            <pattern
+              :id="`${uid}-cast`"
+              patternUnits="userSpaceOnUse"
+              :width="CAST_P"
+              :height="CAST_P"
+            >
+              <circle
+                v-for="(d, j) in castDots"
+                :key="j"
+                :cx="d.cx"
+                :cy="d.cy"
+                :r="d.r"
+                class="cast-dot"
+              />
+            </pattern>
+          </defs>
           <template v-if="kind === 'gree'">
             <rect x="0" y="0" width="400" height="250" class="wall" />
             <!-- the window: the same sky and sea as the other cards -->
@@ -151,6 +191,18 @@ const site = {
             <path d="M242 64 h28 v10 h-28 Z" class="spot" />
             <path d="M76 66 H110" class="ink-hair" />
           </template>
+          <template v-else-if="kind === 'talk'">
+            <!-- the stand's shadow, its tripod, then the screen and the code on it -->
+            <path d="M210 226 L236 218 H300 L276 226 Z" class="cast" />
+            <path d="M208 138 V226 M208 196 L180 228 M208 196 L236 228" class="ink-heavy" />
+            <path :d="screen.front" class="lit" />
+            <path :d="screen.top" class="face" />
+            <path :d="screen.side" class="shade" />
+            <path d="M132 50 H188 M132 64 H222 M144 76 H250 M144 88 H206" class="ink-hair" />
+            <path d="M144 98 H262 V108 H144 Z" class="spot" />
+            <path d="M144 120 H232 M132 130 H160" class="ink-hair" />
+            <path :d="screen.outline" class="ink-line" />
+          </template>
           <template v-else>
             <path :d="site.far" class="far" />
             <path :d="site.farShade" class="far-shade" />
@@ -220,6 +272,19 @@ const site = {
             </g>
             <path :d="pulses" class="ink-heavy" />
           </template>
+          <template v-else-if="kind === 'talk'">
+            <!-- the chat: a paper bubble, its tail down to the left -->
+            <path d="M34 150 H134 V196 H72 L56 212 V196 H34 Z" class="lit" />
+            <path d="M48 164 H118 M48 176 H100" class="ink-hair" />
+            <path d="M34 150 H134 V196 H72 L56 212 V196 H34 Z" class="ink-line" />
+            <!-- the agent: a terminal on the ground, prompt and cursor in the paper ink -->
+            <path :d="term.cast" class="cast" />
+            <path :d="term.front" class="dark" />
+            <path :d="term.top" class="face" />
+            <path :d="term.side" class="shade" />
+            <path d="M306 188 L314 193 L306 198 Z M320 196 h12 v3 h-12 Z" class="lit" />
+            <path :d="term.outline" class="ink-line" />
+          </template>
           <template v-else>
             <path :d="site.near" class="near" />
             <path :d="site.nearShade" class="near-shade" />
@@ -242,11 +307,6 @@ const site = {
         </svg>
       </div>
     </div>
-    <!-- the poster's lettering band: the project's name, its main tool -->
-    <p class="band" translate="no">
-      <span class="name">{{ label }}</span>
-      <span v-if="sub" class="sub">{{ sub }}</span>
-    </p>
   </div>
 </template>
 
@@ -266,7 +326,7 @@ const site = {
   overflow: hidden;
   perspective: 900px;
   border: 1px solid var(--ink);
-  border-bottom: 0;
+  border-top: 0;
   background: var(--sky-top);
 }
 .art.gree .win {
@@ -340,20 +400,37 @@ const site = {
 .shade {
   fill: var(--rock-shade);
 }
+/* the cast shadow is the vignette's screened plate: lilac dots, the ground between them */
 .cast {
-  fill: var(--rock-shade);
+  fill: v-bind(castFill);
+}
+.cast-dot {
+  /* the shadow ink overprinted on the paper it falls on (the ground, or the wall behind the AC),
+     so the screen reads as a shade of that paper, not as blue specks */
+  fill: var(--vig-cast, color-mix(in srgb, var(--rock-shade) 72%, var(--cast-paper)));
+}
+.art {
+  --cast-paper: var(--plain);
+}
+.art.gree {
+  --cast-paper: var(--sky-low);
 }
 .dark {
   fill: var(--figure);
 }
+/* the one spot per drawing: porphyry, unless the page around it is already porphyry (the
+   projects flood sets --vig-spot) */
+.art {
+  --spot: var(--vig-spot, var(--ink-porphyry));
+}
 .spot {
-  fill: var(--ink-porphyry);
+  fill: var(--spot);
 }
 .spot-lit {
-  fill: color-mix(in srgb, var(--ink-porphyry) 55%, var(--ink-ochre));
+  fill: color-mix(in srgb, var(--spot) 60%, var(--ink-shell));
 }
 .spot-shade {
-  fill: color-mix(in srgb, var(--ink-porphyry) 55%, var(--ink-oxblood));
+  fill: color-mix(in srgb, var(--spot) 60%, var(--ink-oxblood));
 }
 .lit,
 .face,
@@ -410,6 +487,6 @@ const site = {
   fill: var(--screen);
 }
 .site .beanie {
-  fill: var(--accent);
+  fill: var(--vig-beanie, var(--accent));
 }
 </style>

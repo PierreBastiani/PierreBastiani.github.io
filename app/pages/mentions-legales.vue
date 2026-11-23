@@ -1,4 +1,19 @@
 <script setup lang="ts">
+// The legal page (mentions légales + données personnelles). All its text is in
+// app/content/legal.json, written by the legal-page generator (`legal.py render`) from
+// templates/legal/: never edit the wording here or in the JSON, change templates/legal/.
+// This file only renders it, with the site's header, footer, share tags and styles.
+//
+// A row with `from` is filled here from runtime config, so no .env value is in the repo:
+//   address  NUXT_LEGAL_ADDRESS, private runtime config (loadLegalAddress, composables/useContact.ts)
+//   phone    NUXT_CONTACT_PHONE, private runtime config (loadContactPhone)
+//   email    NUXT_PUBLIC_CONTACT_EMAIL (useContact)
+// The address and the phone are generated into this page and its payload, never into the other
+// pages. noindex: the page carries the business address, which is a home address for now.
+// `notranslate` rows (names, addresses, phone, email) get translate="no", so a browser's
+// translation leaves them as they are; legal.py writes the flag only for a page that reads
+// `row.notranslate`. The email link after `b.mailTo` carries it here.
+// A `from` row the config leaves empty prints page.unknown, which is French to translate.
 import SiteHeader from '@/components/SiteHeader.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import {
@@ -7,19 +22,48 @@ import {
   useContact,
   useContactPhone,
 } from '@/composables/useContact'
-import { legal, type LegalRow } from '@/content'
+import page from '~/content/legal.json'
 import { SITE, ogImageAlt } from '@/lib/seo'
 
-// Legal notice (LCEN) and privacy section. The address and the phone are private runtime config
-// (see nuxt.config.ts): generated into this page and its payload, never into the other pages.
-// noindex: the page carries the business address, which is a home address for now.
+type Row = {
+  label: string
+  value?: string
+  from?: string
+  href?: string
+  list?: string[]
+  notranslate?: boolean
+}
+type Block = {
+  title: string
+  text: string[]
+  mailTo?: string
+  after?: string
+  link?: { label: string; href: string }
+}
+type Section = { id: string; title: string; rows?: Row[]; intro?: string; blocks?: Block[] }
+
 const { email } = useContact()
+const mailto = `mailto:${email}`
 await loadContactPhone()
 const { data: address } = await loadLegalAddress()
 const { phone, phoneHref } = useContactPhone()
 
+function fromConfig(from: string): { value: string; href?: string } {
+  if (from === 'address') return { value: address.value ?? '' }
+  if (from === 'phone') return { value: phone.value, href: phoneHref.value }
+  if (from === 'email') return { value: email, href: mailto }
+  return { value: '' }
+}
+function shown(row: Row) {
+  const r = row.from ? fromConfig(row.from) : { value: row.value ?? '', href: row.href }
+  return r.value ? r : { value: page.unknown }
+}
+function translateAttr(row: Row) {
+  return row.notranslate && shown(row).value !== page.unknown ? 'no' : undefined
+}
+
 const title = 'Mentions légales et confidentialité · Pierre Bastiani'
-const description = 'Éditeur, hébergeur et données personnelles du site pierre.kensae.com.'
+const description = page.description
 // a shared link still gets a card: the main page's image, nothing from the page's private rows
 useSeoMeta({
   title,
@@ -41,13 +85,6 @@ useSeoMeta({
   twitterImage: `${SITE}/og/og-main.jpg`,
 })
 useHead({ link: [{ rel: 'canonical', href: `${SITE}/mentions-legales/` }] })
-
-function shown(row: LegalRow) {
-  if (row.from === 'address') return { value: address.value ?? '' }
-  if (row.from === 'email') return { value: email, href: `mailto:${email}` }
-  if (row.from === 'phone') return { value: phone.value, href: phoneHref.value }
-  return { value: row.value ?? '', href: row.href }
-}
 </script>
 
 <template>
@@ -60,69 +97,49 @@ function shown(row: LegalRow) {
           <header class="section-head">
             <p class="eyebrow">Mentions légales</p>
             <h1 id="legal-title">
-              {{ legal.title }}
-              <span class="quiet">{{ legal.quiet }}</span>
+              {{ page.title }}
+              <span class="quiet">{{ page.quiet }}</span>
             </h1>
           </header>
 
           <div class="blocks">
-            <section aria-labelledby="editeur">
-              <h2 id="editeur">{{ legal.publisher.title }}</h2>
-              <dl>
-                <div v-for="row in legal.publisher.rows" :key="row.label">
+            <section
+              v-for="s in page.sections as Section[]"
+              :id="s.id"
+              :key="s.id"
+              :aria-labelledby="`${s.id}-title`"
+            >
+              <h2 :id="`${s.id}-title`">{{ s.title }}</h2>
+              <dl v-if="s.rows">
+                <div v-for="row in s.rows" :key="row.label">
                   <dt>{{ row.label }}</dt>
-                  <dd>
-                    <a v-if="shown(row).href" :href="shown(row).href">{{ shown(row).value }}</a>
+                  <dd :translate="translateAttr(row)">
+                    <ul v-if="row.list">
+                      <li v-for="x in row.list" :key="x">{{ x }}</li>
+                    </ul>
+                    <a v-else-if="shown(row).href" :href="shown(row).href">{{
+                      shown(row).value
+                    }}</a>
                     <template v-else>{{ shown(row).value }}</template>
                   </dd>
                 </div>
               </dl>
-            </section>
-
-            <section aria-labelledby="hebergeur">
-              <h2 id="hebergeur">{{ legal.host.title }}</h2>
-              <dl>
-                <div v-for="row in legal.host.rows" :key="row.label">
-                  <dt>{{ row.label }}</dt>
-                  <dd>
-                    <a v-if="row.href" :href="row.href">{{ row.value }}</a>
-                    <template v-else>{{ row.value }}</template>
-                  </dd>
-                </div>
-              </dl>
-            </section>
-
-            <section id="confidentialite" aria-labelledby="confidentialite-title">
-              <h2 id="confidentialite-title">{{ legal.privacy.title }}</h2>
-              <p class="note">{{ legal.privacy.intro }}</p>
-              <div v-for="block in legal.privacy.blocks" :key="block.title" class="prose">
-                <h3>{{ block.title }}</h3>
-                <p v-for="(line, i) in block.text" :key="i">{{ line }}</p>
-                <p v-if="block.mailTo">
-                  {{ block.mailTo }} <a :href="`mailto:${email}`">{{ email }}</a
+              <p v-if="s.intro" class="note">{{ s.intro }}</p>
+              <div v-for="b in s.blocks ?? []" :key="b.title" class="prose">
+                <h3>{{ b.title }}</h3>
+                <p v-for="t in b.text" :key="t">{{ t }}</p>
+                <p v-if="b.mailTo">
+                  {{ b.mailTo }} <a :href="mailto" translate="no">{{ email }}</a
                   >.
                 </p>
-                <p v-if="block.after">{{ block.after }}</p>
-                <p v-if="block.link">
-                  <a :href="block.link.href">{{ block.link.label }}</a>
+                <p v-if="b.after">{{ b.after }}</p>
+                <p v-if="b.link">
+                  <a :href="b.link.href">{{ b.link.label }}</a>
                 </p>
               </div>
             </section>
 
-            <section aria-labelledby="credits">
-              <h2 id="credits">{{ legal.credits.title }}</h2>
-              <dl>
-                <div v-for="row in legal.credits.rows" :key="row.label">
-                  <dt>{{ row.label }}</dt>
-                  <dd>
-                    <a v-if="row.href" :href="row.href">{{ row.value }}</a>
-                    <template v-else>{{ row.value }}</template>
-                  </dd>
-                </div>
-              </dl>
-            </section>
-
-            <p class="note">{{ legal.updated }}</p>
+            <p class="note">{{ page.updated }}</p>
           </div>
         </div>
       </section>
@@ -177,6 +194,10 @@ dt {
 dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+dd ul {
+  margin: 0;
+  padding-left: 1.1em;
 }
 .prose {
   display: grid;

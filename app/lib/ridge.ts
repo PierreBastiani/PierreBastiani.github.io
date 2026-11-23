@@ -138,3 +138,20 @@ export function ridgeFacets(o: RidgeOptions, f: FacetOptions = {}): string {
   }
   return parts.join(' ')
 }
+
+// The hero's foreground: a low edge of rock and scrub in the band's colour, so the scene runs
+// into the intro band below instead of stopping on a straight line. Shared with the travelling
+// figure, which changes ink where it crosses this edge.
+export const FRONT_RIDGE: RidgeOptions = {
+  seed: 37,
+  base: 966, // stays well above any lift the pointer gives the layers behind it
+  amp: 4,
+  scale: 0.008,
+  bumps: [
+    { x: -300, height: 52, width: 260 },
+    { x: 300, height: 40, width: 120 },
+    { x: 640, height: 20, width: 60 },
+    { x: 1190, height: 34, width: 90 },
+    { x: 1720, height: 48, width: 210 },
+  ],
+}

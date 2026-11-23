@@ -110,33 +110,43 @@ const tones = ['var(--code-a)', 'var(--code-b)', 'var(--code-c)']
     <path d="M772 776 L774 752 L794 752 L796 776 Z" fill="var(--figure)" />
     <path d="M772 754 L784 748 L796 754 L796 757 L772 757 Z" fill="var(--rock-lit)" />
 
-    <!-- the figure at the desk: legs, back, arm, head in a beanie with headphones -->
-    <g fill="var(--figure)">
+    <!-- the figure at the desk: legs, back, arm, head in a beanie with headphones. While the
+         figure travels down the page (components/journey), this one stays hidden: the
+         travelling one sits here in its place -->
+    <g class="sitter">
+      <g fill="var(--figure)">
+        <path
+          d="M806 768 C806 754 818 752 832 752 L882 756 C892 758 894 768 888 774 L886 818 L904 818 C908 822 906 826 900 826 L872 826 L872 776 L826 776 C812 776 806 774 806 768 Z"
+        />
+        <path
+          d="M806 770 C800 744 801 714 810 696 C818 682 838 679 850 688 C860 700 861 740 857 770 Z"
+        />
+        <path
+          d="M836 694 C848 708 858 726 862 730 L896 712 L901 718 L868 742 C862 746 854 742 851 736 L830 704 Z"
+        />
+        <path d="M832 690 L846 690 L848 676 L834 676 Z" />
+        <ellipse cx="841" cy="662" rx="15" ry="17" />
+      </g>
       <path
-        d="M806 768 C806 754 818 752 832 752 L882 756 C892 758 894 768 888 774 L886 818 L904 818 C908 822 906 826 900 826 L872 826 L872 776 L826 776 C812 776 806 774 806 768 Z"
+        d="M824 668 C821 650 828 636 840 633 C847 631 852 633 855 637 C860 645 861 656 858 666 Z"
+        fill="var(--accent)"
       />
       <path
-        d="M806 770 C800 744 801 714 810 696 C818 682 838 679 850 688 C860 700 861 740 857 770 Z"
+        d="M823 669 L859 666 L859 659 L823 662 Z"
+        fill="color-mix(in srgb, var(--figure) 25%, var(--accent))"
       />
       <path
-        d="M836 694 C848 708 858 726 862 730 L896 712 L901 718 L868 742 C862 746 854 742 851 736 L830 704 Z"
+        class="ink-heavy"
+        d="M829 676 C826 654 834 642 845 642 C855 643 859 655 857 670"
+        stroke="var(--gear)"
       />
-      <path d="M832 690 L846 690 L848 676 L834 676 Z" />
-      <ellipse cx="841" cy="662" rx="15" ry="17" />
+      <ellipse cx="837" cy="674" rx="5.5" ry="7.5" fill="var(--gear)" />
     </g>
-    <path
-      d="M824 668 C821 650 828 636 840 633 C847 631 852 633 855 637 C860 645 861 656 858 666 Z"
-      fill="var(--accent)"
-    />
-    <path
-      d="M823 669 L859 666 L859 659 L823 662 Z"
-      fill="color-mix(in srgb, var(--figure) 25%, var(--accent))"
-    />
-    <path
-      class="ink-heavy"
-      d="M829 676 C826 654 834 642 845 642 C855 643 859 655 857 670"
-      stroke="var(--gear)"
-    />
-    <ellipse cx="837" cy="674" rx="5.5" ry="7.5" fill="var(--gear)" />
   </g>
 </template>
+
+<style scoped>
+:global(html.journey .sitter) {
+  visibility: hidden;
+}
+</style>

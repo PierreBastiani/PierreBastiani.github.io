@@ -1,4 +1,5 @@
 import { onBeforeUnmount, onMounted, type Ref } from 'vue'
+import { journey } from '@/lib/journey'
 
 // Writes --scroll (0 → 1 while the element scrolls out) and --px / --py (pointer, -1 → 1)
 // on the element. Layers read them with their own --depth. Does nothing with reduced motion.
@@ -26,6 +27,10 @@ export function useParallax(el: Ref<HTMLElement | null>, hold?: Ref<boolean>) {
     if (e.pointerType !== 'mouse' || hold?.value) return
     px = (e.clientX / window.innerWidth - 0.5) * 2
     py = (e.clientY / window.innerHeight - 0.5) * 2
+    // the travelling figure sits on the hero's desk at first: it follows the same drift
+    journey.px = px
+    journey.py = py
+    journey.request()
     request()
   }
 

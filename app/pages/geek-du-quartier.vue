@@ -4,6 +4,8 @@ import HeroStrata from '@/components/HeroStrata.vue'
 import HeroIntro from '@/components/HeroIntro.vue'
 import LocalOffer from '@/components/LocalOffer.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
+import TravelFigure from '@/components/journey/TravelFigure.vue'
+import { shopCourse } from '@/lib/shop-course'
 import { loadContactPhone, useContact, useContactPhone } from '@/composables/useContact'
 import { SITE, ogImageAlt, serviceJsonLd } from '@/lib/seo'
 
@@ -48,12 +50,16 @@ useHead({
     <a class="skip" href="#main">Aller au contenu</a>
     <SiteHeader variant="geek" />
     <main id="main">
-      <HeroStrata class="vt-hero" :title="['Le geek', 'du quartier']">
+      <!-- the wordmark (see HeroStrata's fit): "Le geek du quartier" on one line, 9.832em wide;
+           on phones "Le geek" (3.657em) over "du quartier" (5.950em) -->
+      <HeroStrata class="vt-hero" :title="['Le geek', 'du quartier']" :fit="[9.832, 3.657, 5.95]">
         <HeroIntro variant="geek" />
       </HeroStrata>
       <LocalOffer />
     </main>
     <SiteFooter variant="geek" />
+    <!-- the desk figure's round of the page: the call button, the plates, the steps, the call -->
+    <TravelFigure :course="shopCourse" />
   </div>
 </template>
 
@@ -64,6 +70,19 @@ useHead({
 @media (max-width: 40rem) {
   .geek-page {
     padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+</style>
+<style scoped>
+/* Wide screens: the shop's wordmark stands a little higher than the main page's. Its last
+   word ends on "IER", and at the 41.5% foot the right-hand hills cover the E's foot bar, so
+   it read "QUARTIFR"; at 45.5% every foot clears the hills and the summits stay under it. */
+@media (min-width: 40.0625rem) {
+  .geek-page :deep(.wordmark) {
+    bottom: 45.5%;
+  }
+  .geek-page :deep(.skyplate) {
+    --foot: 45.5%;
   }
 }
 </style>

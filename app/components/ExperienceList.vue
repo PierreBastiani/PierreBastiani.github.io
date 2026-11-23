@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { education, experiences, sections, type OrgLogo } from '@/content'
+import { journey } from '@/lib/journey'
 import LivePepperLogo from '@/assets/logos/LivePepperLogo.vue'
 import SquadLogo from '@/assets/logos/SquadLogo.vue'
 import EpitechLogo from '@/assets/logos/EpitechLogo.vue'
@@ -129,6 +130,10 @@ function sample() {
     const pt = p.getPointAtLength(len)
     samples.push({ len, x: pt.x, y: pt.y })
   }
+  // the travelling figure climbs this rope in place of the climber below
+  if (route.value && geo.value)
+    journey.rope = { el: route.value, left: geo.value.left, samples, anchors: geo.value.anchors }
+  journey.remeasure()
   place()
 }
 watch(
@@ -526,6 +531,10 @@ h3 .word {
 }
 .route.pending .climber {
   opacity: 0;
+}
+/* while the desk figure travels down the page, he is the one on the rope */
+:global(html.journey .climber) {
+  display: none;
 }
 .fig {
   transform: translate(0, 7px) scale(1.4);

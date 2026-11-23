@@ -71,6 +71,19 @@
   line-gap-override: 0%;
 }
 
+/* The wordmark's stand-in: caps run 6% wider in Arial Bold than in Hanken at 800, so the
+   one-line title would overflow its column until Hanken arrives. Matched on PIERRE BASTIANI
+   at -0.035em tracking (Chrome, 2026-11-23). */
+@font-face {
+  font-family: 'Hanken Grotesk Caps Fallback';
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  font-weight: 725 900;
+  size-adjust: 89.68%;
+  ascent-override: 111.5%;
+  descent-override: 33.79%;
+  line-gap-override: 0%;
+}
+
 :root {
   /* Esterel, day */
   --bg: #f4e8dc;
@@ -86,10 +99,13 @@
   --sky-top: var(--ink-sky);
   --sky-band: color-mix(in srgb, var(--ink-sky) 80%, var(--ink-lilac));
   --sky-mid: var(--ink-shell);
+  /* the paper the sky's halftone ramp breaks onto: the warm band by day, so blue dots on peach
+     still read; at dusk the lilac band (redefined below) */
+  --sky-screen: var(--sky-low);
   --sky-low: color-mix(in srgb, var(--ink-ochre) 38%, var(--ink-shell));
   --sun: var(--ink-ochre);
   /* the sun's two halo rings: flat overprints of the sun ink on the paper, never opacity */
-  --sun-halo: color-mix(in srgb, var(--ink-ochre) 35%, var(--ink-shell));
+  --sun-halo: color-mix(in srgb, var(--ink-ochre) 52%, var(--ink-shell));
   --sun-halo-2: color-mix(in srgb, var(--ink-ochre) 65%, var(--ink-shell));
   --sun-drop: 0px;
   --cloud: var(--ink-shell);
@@ -145,6 +161,28 @@
   --topo-rock: color-mix(in srgb, var(--ink-oxblood) 80%, var(--ink-sea));
   --route: var(--ink-sea);
   --route-casing: var(--ink-shell);
+
+  /* the press (PressPlate): the ink pressed dots print in. By day the sky ink and its paper are
+     close in value, so a pressed dot overprints one step toward the sea; at dusk they keep
+     their own inks, which already part */
+  --press-on-paper: color-mix(in srgb, var(--ink-sky) 78%, var(--ink-sea));
+  --press-on-sky: var(--press-on-paper);
+  /* the page's ground pressed (PressPaper): the ghost wall's ink, 10% into the page colour,
+     1.18:1 on the paper by day and 1.24:1 at dusk (8% read as no feedback by day); every text
+     on the page keeps 4.5:1 on a dot (the quiet notes are the floor: 4.58:1 by day, 4.6:1 at
+     dusk) */
+  --press-paper: color-mix(in srgb, var(--ghost-ink) 10%, var(--bg));
+
+  /* The flood: a section printed edge to edge on the accent (#projets, the shop's three
+     steps), the screen's one orange, so nothing in it is orange. --on-flood prints its words,
+     --flood-plate its photo plate and the travelling figure, --flood-press the pointer's dots:
+     the band ink 18% in, so a pressed dot darkens and the light words on it gain at dusk. By
+     day porphyry and the ink that prints on it; at dusk the same porphyry under the dusk,
+     overprinted toward the sea, with light words (the dusk blocks). */
+  --flood: var(--ink-porphyry);
+  --on-flood: var(--on-accent);
+  --flood-plate: var(--on-accent);
+  --flood-press: color-mix(in srgb, var(--ground) 18%, var(--flood));
 
   /* Inks: the print palette every drawing is made of (2026-11-03 illustration pass, after
      Roger Broders' PLM posters and Swiss maps). A drawing picks from these eight, as flats;
@@ -202,11 +240,12 @@
     --ink: #ebe6dc;
     --muted: #aab4be;
     --line: #2c3850;
-    --accent: #d27850;
+    --accent: #c67555;
     --accent-text: #e08a62;
     --on-accent: #141e32;
     --sky-band: color-mix(in srgb, var(--ink-sky) 70%, var(--ink-sea));
     --sky-mid: color-mix(in srgb, var(--ink-sky) 50%, var(--ink-lilac));
+    --sky-screen: var(--sky-mid);
     --sky-low: color-mix(in srgb, var(--ink-lilac) 72%, var(--ink-ochre));
     --sun-halo: color-mix(in srgb, var(--ink-ochre) 22%, var(--ink-sky));
     --sun-halo-2: color-mix(in srgb, var(--ink-ochre) 40%, var(--ink-sky));
@@ -242,13 +281,18 @@
     --topo-rock: color-mix(in srgb, var(--ink-lilac) 70%, var(--ink-shell));
     --route: color-mix(in srgb, var(--ink-shell) 75%, var(--ink-sky));
     --route-casing: var(--ink-sea);
+    --press-on-paper: var(--sky-top);
+    --press-on-sky: var(--sky-screen);
     --ink-shell: #d9c3b0;
     --ink-sky: #29344f;
     --ink-lilac: #5c5b7f;
     --ink-sea: #111a2d;
     --ink-sage: #3d4964;
     --ink-ochre: #f2c595;
-    --ink-porphyry: #d27850;
+    --ink-porphyry: #c67555;
+    --flood: color-mix(in srgb, var(--ink-porphyry) 64%, var(--ink-sea));
+    --on-flood: var(--ink);
+    --flood-plate: var(--ink-oxblood);
     --ink-oxblood: #0e1524;
     --ghost-ink: var(--ink-ochre); /* lit by the last light */
     --grain-opacity: 0.32;
@@ -261,11 +305,12 @@
   --ink: #ebe6dc;
   --muted: #aab4be;
   --line: #2c3850;
-  --accent: #d27850;
+  --accent: #c67555;
   --accent-text: #e08a62;
   --on-accent: #141e32;
   --sky-band: color-mix(in srgb, var(--ink-sky) 70%, var(--ink-sea));
   --sky-mid: color-mix(in srgb, var(--ink-sky) 50%, var(--ink-lilac));
+  --sky-screen: var(--sky-mid);
   --sky-low: color-mix(in srgb, var(--ink-lilac) 72%, var(--ink-ochre));
   --sun-halo: color-mix(in srgb, var(--ink-ochre) 22%, var(--ink-sky));
   --sun-halo-2: color-mix(in srgb, var(--ink-ochre) 40%, var(--ink-sky));
@@ -301,13 +346,18 @@
   --topo-rock: color-mix(in srgb, var(--ink-lilac) 70%, var(--ink-shell));
   --route: color-mix(in srgb, var(--ink-shell) 75%, var(--ink-sky));
   --route-casing: var(--ink-sea);
+  --press-on-paper: var(--sky-top);
+  --press-on-sky: var(--sky-screen);
   --ink-shell: #d9c3b0;
   --ink-sky: #29344f;
   --ink-lilac: #5c5b7f;
   --ink-sea: #111a2d;
   --ink-sage: #3d4964;
   --ink-ochre: #f2c595;
-  --ink-porphyry: #d27850;
+  --ink-porphyry: #c67555;
+  --flood: color-mix(in srgb, var(--ink-porphyry) 64%, var(--ink-sea));
+  --on-flood: var(--ink);
+  --flood-plate: var(--ink-oxblood);
   --ink-oxblood: #0e1524;
   --ghost-ink: var(--ink-ochre); /* lit by the last light */
   --grain-opacity: 0.32;
@@ -327,7 +377,8 @@
   --gutter-r: max(clamp(1.25rem, 4vw, 2.5rem), env(safe-area-inset-right, 0px));
   --space-head: clamp(2.5rem, 1.5rem + 2.5vw, 4rem);
   --step-h2: clamp(2.2rem, 1.5rem + 3vw, 4rem);
-  --quiet: color-mix(in srgb, var(--ink) 60%, var(--bg)); /* 4.7:1 light, 5.6:1 dark on --bg */
+  /* 5.4:1 light, 6.2:1 dark on --bg; 4.7:1 and 5.3:1 on a pressed dot of the paper */
+  --quiet: color-mix(in srgb, var(--ink) 64%, var(--bg));
   --wash: color-mix(in srgb, var(--ink) 5%, var(--bg));
   --header-h: 4rem;
 
@@ -349,7 +400,7 @@ html {
 }
 /* Anchors land on the section's label, not on the empty padding above it: every section
    starts with --space-section of padding, so pull the scroll target down by that much.
-   Top-level sections only: a nested one (the legal page's #confidentialite) has no such
+   Top-level sections only: a nested one (the legal page's #donnees-personnelles) has no such
    padding and would land under the header. */
 main > section[id]:not(#top) {
   scroll-margin-top: calc(-1 * var(--space-section));
@@ -358,6 +409,44 @@ main > section[id]:not(#top) {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+}
+
+/* Text appears once (main page, composables/useTextReveal.ts): a fade and a rise of 0.5em,
+   1.5rem at most (0.5em of the wordmark would be a 100 px jump), in --dur-move with --ease.
+   The hidden start state needs a script's class on <html>, and never applies under reduced
+   motion, so without either the text is simply there. */
+@media (prefers-reduced-motion: no-preference) {
+  html.js-reveal [data-reveal='wait'] {
+    opacity: 0;
+    translate: 0 min(0.5em, 1.5rem);
+  }
+  html.js-reveal [data-reveal='in'] {
+    transition:
+      opacity var(--dur-move) var(--ease) var(--reveal-delay, 0ms),
+      translate var(--dur-move) var(--ease) var(--reveal-delay, 0ms);
+  }
+  /* the hero on first load: the wordmark a word at a time, 35 ms apart, then the lead */
+  html.js-reveal-load :is(#top .wordmark h1 > span, #top .intro .lead) {
+    animation: reveal-in var(--dur-move) var(--ease) both;
+  }
+  html.js-reveal-load #top .wordmark h1 > .l1 {
+    animation-delay: 35ms;
+  }
+  html.js-reveal-load #top .intro .lead {
+    animation-delay: 115ms;
+  }
+}
+/* the wordmark's words are inline on one line on wide screens: a box, so they can rise */
+@media (prefers-reduced-motion: no-preference) and (min-width: 40.0625rem) {
+  html.js-reveal-load #top .wordmark h1 > span {
+    display: inline-block;
+  }
+}
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    translate: 0 min(0.5em, 1.5rem);
   }
 }
 
@@ -532,6 +621,44 @@ a:hover {
    The last section of a page pads its bottom too, before the footer. */
 .section {
   padding-top: var(--space-section);
+}
+/* The flood (tokens in :root): every ink in the section turns to the one that prints on it,
+   and its paper is the flood itself, so cards, plates, tags and rules stand on one ground. One
+   grain over the whole sheet; a press plate inside sits under the content. */
+.section.flood {
+  --ink: var(--on-flood);
+  --muted: var(--on-flood);
+  --bg: var(--flood);
+  --surface: var(--flood);
+  --accent-text: var(--on-flood);
+  /* the second line of a title, large text */
+  --quiet: color-mix(in srgb, var(--on-flood) 75%, var(--flood));
+  --line: color-mix(in srgb, var(--on-flood) 30%, var(--flood));
+  position: relative;
+  isolation: isolate;
+  background: var(--flood);
+  color: var(--ink);
+}
+.section.flood::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: var(--grain);
+  mix-blend-mode: soft-light;
+  opacity: var(--grain-opacity);
+  pointer-events: none;
+}
+.section.flood > .press {
+  z-index: -1;
+}
+.section.flood :focus-visible {
+  outline-color: var(--on-flood);
+}
+@media (forced-colors: active) {
+  .section.flood::after {
+    display: none;
+  }
 }
 main > .section:last-child {
   padding-bottom: var(--space-section);

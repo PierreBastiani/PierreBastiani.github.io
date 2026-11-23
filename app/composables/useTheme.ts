@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 // Three modes: 'auto' follows the device (and switches live when the OS does), 'light' and
 // 'dark' are explicit choices. Only an explicit choice is stored; going back to auto clears it.
@@ -63,6 +63,9 @@ export function useTheme() {
     mode.value === 'auto' ? (systemDark.value ? 'dark' : 'light') : mode.value,
   )
 
+  // The switch is one short cross-fade of the whole page (a cut flashes the screen), the same
+  // under reduced motion: nothing moves in it. Browsers without view transitions just switch.
+  // A second click during the fade skips to its end and starts the next one.
   function cycle() {
     mode.value = NEXT[mode.value]
     try {
@@ -71,7 +74,14 @@ export function useTheme() {
     } catch {
       /* private mode: the choice lasts for this page only */
     }
-    apply()
+    const root = document.documentElement
+    if (!document.startViewTransition) return apply()
+    root.classList.add('vt-theme')
+    const t = document.startViewTransition(() => {
+      apply()
+      return nextTick() // the toggle's own icon, so the new snapshot has it
+    })
+    t.finished.finally(() => root.classList.remove('vt-theme'))
   }
 
   return { mode, theme, cycle, next: computed(() => NEXT[mode.value]) }

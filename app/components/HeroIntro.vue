@@ -17,16 +17,28 @@ const call = props.variant === 'geek' ? useContactPhone() : null
 
 <template>
   <div class="intro-grid" :class="variant">
-    <div class="pitch">
-      <p class="status"><span class="dot" aria-hidden="true"></span>{{ profile.status }}</p>
-
-      <template v-if="variant === 'main'">
-        <p class="role">
-          {{ profile.role }},
+    <!-- main page: the title's caption, a Swiss index row of what, where and when -->
+    <dl v-if="variant === 'main'" class="meta">
+      <div>
+        <dt>Métier</dt>
+        <dd>{{ profile.role }}</dd>
+      </div>
+      <div>
+        <dt>Base</dt>
+        <dd>
           <template v-for="(part, i) in profile.place.split(', ')" :key="part"
             >{{ i ? ', ' : '' }}<span class="nw">{{ part }}</span></template
           >
-        </p>
+        </dd>
+      </div>
+      <div>
+        <dt>Statut</dt>
+        <dd class="status"><span class="dot" aria-hidden="true"></span>{{ profile.status }}</dd>
+      </div>
+    </dl>
+
+    <div class="pitch">
+      <template v-if="variant === 'main'">
         <p class="lead">{{ profile.lead }}</p>
         <div class="btns">
           <a class="btn btn-primary" :href="links.malt"><MaltIcon />Me contacter sur Malt</a>
@@ -39,6 +51,7 @@ const call = props.variant === 'geek' ? useContactPhone() : null
         </div>
       </template>
       <template v-else>
+        <p class="status"><span class="dot" aria-hidden="true"></span>{{ profile.status }}</p>
         <p class="lead">{{ localOffer.intro }}</p>
         <div class="btns">
           <a v-if="call" class="btn btn-primary" :href="call.phoneHref.value">
@@ -107,9 +120,63 @@ const call = props.variant === 'geek' ? useContactPhone() : null
   height: 0.5rem;
   background: var(--on-ground);
 }
-.role {
-  font-weight: 500;
+/* The main page's grid: twelve columns. The index row runs the full width on a hairline,
+   the pitch takes seven columns, the facts cartouche the last four, under the status. */
+.intro-grid.main {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 2.25rem clamp(1rem, 2vw, 1.5rem);
+  align-items: start;
+}
+.meta {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  margin: 0;
+  padding-top: 0.9rem;
+  border-top: 1.5px solid var(--on-ground);
+}
+.meta > div {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+.meta > div:nth-child(1) {
+  grid-column: 1 / 5;
+}
+.meta > div:nth-child(2) {
+  grid-column: 5 / 9;
+}
+.meta > div:nth-child(3) {
+  grid-column: 9 / -1;
+}
+.meta dt {
+  font: 500 0.7rem / 1.3 var(--f-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--on-ground-muted);
+}
+.meta dd {
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.meta .status {
+  justify-self: start;
+}
+.main .pitch {
+  grid-column: 1 / 8;
+  gap: 1.4rem;
+}
+.main .lead {
+  font-size: var(--step-2);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  max-width: 26ch;
+}
+.main .aside {
+  grid-column: 9 / -1;
+  width: 100%;
 }
 .nw {
   white-space: nowrap;
@@ -171,8 +238,23 @@ const call = props.variant === 'geek' ? useContactPhone() : null
   fill: currentColor;
 }
 @media (max-width: 52rem) {
-  .intro-grid {
+  .intro-grid,
+  .intro-grid.main {
     grid-template-columns: 1fr;
+  }
+  .meta {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 1.25rem;
+  }
+  .meta > div:nth-child(n) {
+    grid-column: auto;
+  }
+  .meta > div:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+  .main .pitch,
+  .main .aside {
+    grid-column: auto;
   }
   .aside {
     width: 100%;

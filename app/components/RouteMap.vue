@@ -18,6 +18,8 @@ import {
   smooth,
   type Pt,
 } from '@/lib/crag'
+import PressPlate from './PressPlate.vue'
+import { journey } from '@/lib/journey'
 
 // The five routes on the Baou's south face, drawn once in wall coordinates: the line, its
 // bolts, its foot and its top anchor. Only the camera's transforms change afterwards.
@@ -112,7 +114,13 @@ const fromMap = ref<string | null>(null)
 const firstReadable = ref<string | null>(null) // reading: first heading fully in view below the map
 const tapped = ref<string | null>(null) // a tap wins until reading moves on
 const readingOn = ref(false)
+// When the desk figure travels down the page (components/journey), scrolling picks the route
+// he is on, on every screen: the climber and the highlight are the same route. On phones his
+// plan follows the same reading line as below, so the row under the map is still his route.
+const fromJourney = ref<string | null>(null)
+const journeyOn = ref(false)
 const fromScroll = computed(() => {
+  if (journeyOn.value) return tapped.value ?? fromJourney.value
   if (!readingOn.value) return null
   if (narrow && !pinned.value) return null // before the map pins, the reader is on the intro
   return tapped.value ?? firstReadable.value
@@ -173,19 +181,28 @@ const feet = computed(() =>
   routes.map((r, i) => ({ id: r.id, n: i + 1, ...pct(frame.value.ends[r.id]!.start) })),
 )
 
-// The camera eases toward its aim and stops once it gets there: nothing runs while idle.
+// The camera eases toward its aim and stops once it gets there: nothing runs while idle. The
+// ease is a damped spring with no overshoot (an exponential approach), timed in ms rather than
+// frames, so it settles in --dur-move (95% of the way in 600 ms) on a 60 Hz or a 120 Hz screen,
+// and a new aim mid-way simply bends it toward the new target.
 let raf = 0
 let reduce = false
+let lastT = 0
+const SETTLE = 600 / 3 // ms: the time constant; three of them cover 95%
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k
-function step() {
+function step(t: number) {
   raf = 0
-  const k = 0.085 // about 700 ms to settle at 60 fps
+  const dt = lastT ? Math.min(64, t - lastT) : 16.7
+  lastT = t
+  const k = 1 - Math.exp(-dt / SETTLE)
   for (const key of ['x', 'y', 'zoom', 'sx', 'sy'] as const) cam[key] = lerp(cam[key], aim[key], k)
   frame.value = render(cam)
+  journey.paint() // the figure on the wall moves with it, in this frame
   const far =
     (['x', 'y', 'sx', 'sy'] as const).some((key) => Math.abs(aim[key] - cam[key]) > 0.05) ||
     Math.abs(aim.zoom - cam.zoom) > 1e-4
   if (far) raf = requestAnimationFrame(step)
+  else lastT = 0
 }
 
 // The camera is re-framing (a highlight changed), as opposed to only swaying with the pointer.
@@ -203,6 +220,7 @@ function retarget() {
   if (reduce) {
     Object.assign(cam, aim)
     frame.value = render(cam)
+    journey.paint()
     return
   }
   if (!raf) raf = requestAnimationFrame(step)
@@ -333,6 +351,7 @@ async function layout() {
   narrow = window.matchMedia('(max-width: 52rem)').matches
   // pinned on a phone the plate is cropped to the wall, so the list keeps most of the screen
   box.value = narrow ? { x: 40, y: 60, w: 920, h: 560 } : { x: 0, y: 0, w: SCENE.w, h: SCENE.h }
+  journey.box = box.value
   await nextTick()
   if (map.value) {
     placeTags()
@@ -343,6 +362,7 @@ async function layout() {
   watchReading()
   retarget()
   readScroll()
+  journey.remeasure()
 }
 function onResize() {
   clearTimeout(resizeTimer)
@@ -351,6 +371,12 @@ function onResize() {
 
 onMounted(() => {
   reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  journey.cam = cam
+  journey.setRoute = (id) => {
+    journeyOn.value = true
+    if (id !== fromJourney.value) tapped.value = null
+    fromJourney.value = id
+  }
   fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches
   if (!reduce && map.value)
     drawn.value = map.value.getBoundingClientRect().top < window.innerHeight * 0.85
@@ -365,6 +391,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('resize', onResize)
+  journey.cam = journey.box = null
+  journey.setRoute = null
   reading?.disconnect()
   cancelAnimationFrame(raf)
   cancelAnimationFrame(scrollFrame)
@@ -447,6 +475,13 @@ onBeforeUnmount(() => {
                 </g>
               </g>
             </svg>
+            <!-- the press: the sky behind the wall, redrawn while the pointer presses it -->
+            <PressPlate
+              class="press"
+              :windowed="false"
+              ground="var(--sky-top)"
+              ink="var(--press-on-sky)"
+            />
             <span
               v-for="f in feet"
               :key="'n' + f.id"
@@ -636,6 +671,13 @@ onBeforeUnmount(() => {
 /* the plate: the hero's inks, flat, the low sun from the right */
 .sky {
   fill: var(--sky-top);
+}
+/* pressed, the sky is printed by the canvas under the drawing (PressPlate) */
+.press {
+  z-index: -1;
+}
+.plate:has(> .press.on) .sky {
+  fill: transparent;
 }
 .far-hills {
   fill: var(--hill-far);

@@ -2,8 +2,19 @@
 import { localOffer, localTestimonials } from '@/content'
 import { useContact, useContactPhone } from '@/composables/useContact'
 import OfferVisual from './OfferVisual.vue'
-import PortraitImage from './PortraitImage.vue'
+import PressPlate from './PressPlate.vue'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+// the main page's plate 00, the portrait screened in one ink (scripts/halftone-plate.mjs), here
+// printed in the trial card's ink
+import plateUrl from '@/assets/plates/portrait-halftone.svg?url'
+import plate from '@/assets/plates/portrait-halftone.json'
+
+const no = (i: number) => String(i + 1).padStart(2, '0')
+const plateStyle = {
+  aspectRatio: `${plate.width} / ${plate.height}`,
+  maskImage: `url(${plateUrl})`,
+  WebkitMaskImage: `url(${plateUrl})`,
+}
 
 // The phone bar hides while the hero's own call button is on screen, so there's never two.
 // Without JS it simply stays.
@@ -21,50 +32,74 @@ const { phone, phoneHref } = useContactPhone()
 </script>
 
 <template>
-  <section id="commerces" class="section offer" aria-labelledby="commerces-title">
+  <section id="commerces" class="section offer items-section" aria-labelledby="commerces-title">
     <div class="wrap">
       <h2 id="commerces-title">{{ localOffer.title }}</h2>
+      <!-- the catalogue's running head, as over the main page's project plates -->
+      <p class="runhead" aria-hidden="true">
+        <span>Planches 01–{{ no(localOffer.items.length - 1) }}</span
+        ><span>Avant · Après</span>
+      </p>
 
-      <!-- what I fix, each shown before and after -->
+      <!-- what I fix, each shown before and after on a numbered plate, its title pasted across
+           the plate's foot -->
       <ul class="items">
-        <li v-for="item in localOffer.items" :key="item.title">
-          <OfferVisual :kind="item.visual" :before="item.before" :after="item.after" />
+        <li v-for="(item, i) in localOffer.items" :key="item.title" class="item">
+          <OfferVisual
+            :kind="item.visual"
+            :before="item.before"
+            :after="item.after"
+            :code="item.code"
+            :no="`N° ${no(i)}`"
+          />
           <h3>{{ item.title }}</h3>
           <p>{{ item.text }}</p>
         </li>
       </ul>
+    </div>
+  </section>
 
-      <!-- the three steps, printed like a timetable card in a station or a shop's opening hours -->
-      <div class="sheet timetable">
-        <h2 class="band">
-          <span>{{ localOffer.how }}</span
-          >{{ ' ' }}<span>{{ localOffer.howCount }}</span>
-        </h2>
-        <ol>
-          <li v-for="(step, i) in localOffer.steps" :key="step.title">
-            <span class="n" aria-hidden="true">{{ i + 1 }}</span>
-            <strong>{{ step.title }}</strong>
-            <span class="t">{{ step.text }}</span>
-          </li>
-        </ol>
-      </div>
+  <!-- the three steps: the page's one flood, a line with three stops, like a local railway's
+       poster map -->
+  <section id="etapes" class="section offer flood" aria-labelledby="etapes-title">
+    <!-- the press: a faint screen on the flood, bare at rest -->
+    <PressPlate class="press" ink="var(--flood-press)" />
+    <div class="wrap">
+      <h2 id="etapes-title">{{ localOffer.how }}</h2>
+      <ol class="line">
+        <li v-for="(step, i) in localOffer.steps" :key="step.title" class="stop">
+          <span class="station" aria-hidden="true"></span>
+          <span class="n" aria-hidden="true">{{ i + 1 }}</span>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.text }}</p>
+        </li>
+      </ol>
+    </div>
+  </section>
 
-      <!-- who I am, and the honest offer: a printed card like the summit figure's -->
+  <section class="section offer rest" aria-labelledby="essai-title">
+    <div class="wrap">
+      <!-- who I am, and the honest offer: a printed card, the portrait screened like the main
+           page's plate 00, his head out of its frame -->
       <div class="sheet trial print">
-        <h2 class="band">
+        <PressPlate class="press" ink="var(--trial-press)" avoid=".portrait-plate" />
+        <h2 id="essai-title" class="band">
           <span>{{ localOffer.trial }}</span
           >{{ ' ' }}<span>{{ localOffer.trialFor }}</span>
         </h2>
         <div class="trial-body">
           <div class="me">
-            <span class="frame"
-              ><PortraitImage :size="104" alt="Pierre Bastiani" class="portrait"
-            /></span>
-            <div>
-              <p class="name" translate="no">{{ contact.name }}</p>
-              <p class="line">{{ localOffer.me.line }}</p>
-            </div>
+            <figure class="portrait-plate">
+              <span
+                class="plate-art"
+                role="img"
+                aria-label="Portrait de Pierre Bastiani, tramé en points"
+                :style="plateStyle"
+              />
+            </figure>
+            <p class="name" translate="no">{{ contact.name }}</p>
           </div>
+          <p class="line-me">{{ localOffer.me.line }}</p>
           <p class="offer-text">{{ localOffer.offer }}</p>
         </div>
       </div>
@@ -81,20 +116,16 @@ const { phone, phoneHref } = useContactPhone()
         </li>
       </ul>
 
-      <!-- questions a shop owner asks: a printed notice, one native disclosure per question -->
-      <div class="sheet faq">
-        <h2 class="band">
-          <span>{{ localOffer.faq.title }}</span>
-        </h2>
-        <details v-for="f in localOffer.faq.items" :key="f.q">
-          <summary>{{ f.q }}</summary>
-          <p>{{ f.a }}</p>
-        </details>
-      </div>
-
-      <!-- call: the poster's lettering band. #contact, like the main page's contact section, so
+      <!-- call: the poster's lettering band, straight after the offer (the questions follow it,
+           so the number is one screen nearer than when it closed the page). #contact, like the main page's contact section, so
            the hero's figure at the desk leads here on this page -->
       <div id="contact" class="call print">
+        <!-- the press on the band, as on the footer's -->
+        <PressPlate
+          class="press"
+          :windowed="false"
+          ink="color-mix(in srgb, var(--on-ground) 10%, var(--ground))"
+        />
         <p class="call-band">
           <template v-for="(place, i) in localOffer.call.band.split(' · ')" :key="place"
             >{{ i ? ' · ' : '' }}<span class="nw">{{ place }}</span></template
@@ -107,6 +138,16 @@ const { phone, phoneHref } = useContactPhone()
           <a class="btn btn-primary" :href="phoneHref">{{ localOffer.call.bar }}</a>
           <a class="btn" :href="`mailto:${contact.email}`">{{ localOffer.call.mail }}</a>
         </div>
+      </div>
+      <!-- questions a shop owner asks: a printed notice, one native disclosure per question -->
+      <div class="sheet faq">
+        <h2 class="band">
+          <span>{{ localOffer.faq.title }}</span>
+        </h2>
+        <details v-for="f in localOffer.faq.items" :key="f.q">
+          <summary>{{ f.q }}</summary>
+          <p>{{ f.a }}</p>
+        </details>
       </div>
     </div>
 
@@ -135,31 +176,124 @@ const { phone, phoneHref } = useContactPhone()
 .offer p {
   max-width: 46ch;
 }
+.items-section {
+  padding-bottom: var(--space-section);
+}
 #commerces-title {
-  margin-bottom: var(--space-head);
+  margin-bottom: 1.5rem;
+}
+#etapes-title {
+  margin-bottom: clamp(2rem, 1rem + 2vw, 3rem);
+}
+/* the running head over a catalogue: mono caps between an ink rule and a hairline */
+.runhead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.2rem 1.5rem;
+  margin: 0 0 clamp(2rem, 1rem + 2vw, 3rem);
+  padding: 0.55rem 0 0.5rem;
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  color: var(--muted);
+  font: 500 0.72rem / 1.3 var(--f-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.offer .runhead {
+  max-width: none;
 }
 
-/* offer items */
+/* offer items: numbered plates, each title pasted across its plate's foot */
 .items {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 3.5rem clamp(2rem, 5vw, 4rem);
+  gap: 3.25rem clamp(2rem, 5vw, 4rem);
 }
-.items li {
+.item {
+  /* the title's size, from the plate's width (a token list: cqi resolves where it is used) */
+  --t: min(var(--step-2), 7.6cqi);
+  position: relative;
+  container-type: inline-size;
   display: grid;
-  gap: 0.6rem;
+  gap: 0.85rem;
   align-content: start;
 }
-.items :deep(.ba) {
-  margin-bottom: 0.6rem;
+/* the plate keeps a paper margin under its captions, as deep as the title plate's top half
+   plus a little air, so the title covers margin and frame and never a caption */
+.item :deep(.ba figcaption) {
+  margin-bottom: calc(0.62 * var(--t) - 5.5px + 0.55rem);
 }
-.items h3 {
-  font-size: var(--step-1);
+.item h3 {
+  z-index: 3; /* a grid item: stacks over the plate without being positioned */
+  justify-self: start;
+  margin: calc(-0.62em - 0.85rem) 0 0 0.9rem;
+  padding: 0.12em 0.45em 0 0.3em;
+  background: var(--bg);
+  max-width: calc(100% - 1.8rem);
+  font-size: var(--t);
+  font-weight: 650;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
 }
-.items p {
+.item p {
+  margin-top: 0.2rem;
   color: var(--muted);
+}
+
+/* ---- The flood: the three steps on one porphyry sheet, edge to edge -------------------- */
+/* As on the main page's projects (.section.flood and its tokens in main.css). */
+.flood {
+  /* a sheet of its own: its paper margins a little under the section gap */
+  padding-block: calc(var(--space-section) * 0.75);
+}
+#etapes-title {
+  font-size: var(--step-h2);
+}
+/* the line: a heavy rule through three stops; each stop a square station on the rule, the
+   number large under it, then the step */
+.line {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2rem;
+}
+.stop {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: var(--w-heavy) solid var(--ink);
+}
+/* the station: a square of the flood framed in the line's ink, astride the rule */
+.station {
+  position: absolute;
+  top: calc(var(--w-heavy) / -2);
+  left: 0;
+  width: 1.15rem;
+  height: 1.15rem;
+  translate: 0 -50%;
+  background: var(--flood);
+  border: var(--w-heavy) solid var(--ink);
+}
+.stop .n {
+  grid-row: span 2;
+  font: 800 var(--step-4) / 0.8 var(--f-display);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.stop h3 {
+  font: 650 var(--step-2) / 1.1 var(--f-display);
+  letter-spacing: -0.02em;
+}
+.stop p {
+  margin-top: 0.4rem;
 }
 
 /* ---- Printed objects: sharp corners, an ink rule, the posters' lettering band on top ---- */
@@ -167,9 +301,12 @@ const { phone, phoneHref } = useContactPhone()
 .call {
   margin-top: var(--space-section);
 }
+.rest .wrap > :first-child {
+  margin-top: 0;
+}
+/* the notice is the page's own paper, so the page's press shows through it */
 .sheet {
   border: 1.5px solid var(--ink);
-  background: var(--bg);
 }
 .band {
   display: flex;
@@ -185,41 +322,6 @@ const { phone, phoneHref } = useContactPhone()
   text-transform: uppercase;
 }
 
-/* the timetable: number column, a vertical rule, step title large and plain, the detail under it */
-.timetable ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.timetable li {
-  display: grid;
-  grid-template-columns: 3.5rem minmax(0, 1fr);
-  column-gap: 1.25rem;
-  row-gap: 0.15rem;
-  padding: 1.1rem 1rem 1.1rem 0;
-  border-top: 1px solid var(--line);
-}
-.timetable li:first-child {
-  border-top: 0;
-}
-.n {
-  grid-row: span 2;
-  align-self: stretch;
-  display: grid;
-  place-items: start center;
-  padding-top: 0.1rem;
-  border-right: 1px solid var(--ink);
-  font: 600 var(--step-2) / 1 var(--f-mono);
-  color: var(--ink);
-}
-.timetable strong {
-  font: 600 var(--step-1) / 1.2 var(--f-display);
-  letter-spacing: -0.01em;
-}
-.t {
-  color: var(--muted);
-}
-
 /* the free half-day: the figure card's family, double ink rule and grain */
 .trial {
   background: var(--surface);
@@ -227,9 +329,18 @@ const { phone, phoneHref } = useContactPhone()
     inset 0 0 0 4px var(--surface),
     inset 0 0 0 5px var(--ink);
 }
+.trial {
+  /* the press on the card: the ghost wall's ink, 8% into the card, like the page's own */
+  --trial-press: color-mix(in srgb, var(--ghost-ink) 8%, var(--surface));
+}
 .trial > * {
   position: relative;
   z-index: 2;
+}
+.trial > .press,
+.call > .press {
+  position: absolute;
+  z-index: 0;
 }
 .trial .band {
   margin: 5px 5px 0;
@@ -244,26 +355,51 @@ const { phone, phoneHref } = useContactPhone()
   align-items: center;
   gap: 1.25rem;
 }
-.frame {
+.me {
+  align-items: end;
+}
+/* plate 00's portrait, printed in the card's ink; the head rises out of the frame's top rule.
+   The screen is a positive: at dusk the card is navy and light dots would print a negative,
+   so the plate gets its own sheet of shell paper there, printed in the night ink */
+.portrait-plate {
+  --plate-paper: var(--surface);
+  --plate-ink: var(--ink);
   flex: none;
-  display: block;
-  padding: 3px;
-  border: 1px solid var(--ink);
+  width: clamp(7.5rem, 26vw, 12rem);
+  margin: 0;
+  padding: 0.3rem;
+  background: var(--plate-paper);
 }
-.portrait {
-  width: 5.5rem;
-  height: 5.5rem;
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light']) .trial .portrait-plate) {
+    --plate-paper: var(--ink-shell);
+    --plate-ink: var(--ink-oxblood);
+  }
 }
-.portrait :deep(img) {
+:global(:root[data-theme='dark'] .trial .portrait-plate) {
+  --plate-paper: var(--ink-shell);
+  --plate-ink: var(--ink-oxblood);
+}
+.plate-art {
   display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background: var(--plate-ink);
+  mask-position: center;
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+}
+.me .name {
+  padding-bottom: 0.1rem;
+}
+.trial-body .line-me {
+  margin-top: -0.75rem;
 }
 .name {
   font: 650 var(--step-1) / 1.2 var(--f-display);
 }
-.line {
+.line-me {
   color: var(--muted);
 }
 
@@ -440,20 +576,27 @@ blockquote {
   .items {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .timetable ol {
-    display: grid;
+  /* one line across the sheet, the stops along it */
+  .line {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
   }
-  .timetable li {
-    border-top: 0;
-    border-left: 1px solid var(--line);
+  .stop {
+    grid-template-columns: minmax(0, 1fr);
+    padding-right: clamp(1.5rem, 4vw, 3.5rem);
   }
-  .timetable li:first-child {
-    border-left: 0;
+  .stop .n {
+    grid-row: auto;
+    margin-bottom: 0.9rem;
   }
   .trial-body {
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    align-items: center;
+    column-gap: clamp(1.5rem, 4vw, 3rem);
+  }
+  .trial-body .offer-text {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: end;
   }
 }
 </style>

@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ridgeFacets, ridgeLine, ridgePath, ridgeY, type RidgeOptions } from '@/lib/ridge'
+import {
+  FRONT_RIDGE,
+  ridgeFacets,
+  ridgeLine,
+  ridgePath,
+  ridgeY,
+  type RidgeOptions,
+} from '@/lib/ridge'
 import {
   VAR_PLAIN,
   cityBlocks,
@@ -11,7 +18,10 @@ import {
   village,
   windows,
 } from '@/lib/scene'
+import { ramp } from '@/lib/halftone'
 import { useParallax } from '@/composables/useParallax'
+import type { Built, Frame, Lattice } from '@/composables/usePress'
+import PressPlate from './PressPlate.vue'
 import HeroLayer from './hero/HeroLayer.vue'
 import SummitSetup from './hero/SummitSetup.vue'
 import DeskFigureLink from './hero/DeskFigureLink.vue'
@@ -20,6 +30,27 @@ import DeskFigureLink from './hero/DeskFigureLink.vue'
 // running down to Nice and the airport. Ahead: hills stepping down to the sea at Cagnes.
 // Right is west: Vence, Saint-Paul, La Colle, Antibes and its cap, the Estérel on the horizon.
 // Scene units and the phone-safe zone are described in lib/scene.ts.
+
+// The sky's one screened plate: the sky ink breaks into dots on its way down to the paper band
+// at the horizon, in four steps of one tile. Tiles of 32 scene units, about 17 px on screen (12 px
+// between dots), so the dots read as print at any width and never beat with the pixels.
+const SKY_P = 32
+const skyRamp = ramp(320, SKY_P, 1, [0.13, 0.24, 0.24, 0.13])
+// Under the wordmark the same ramp is printed on its own plate, set from the letters instead of
+// the scene: it starts at the caps' top and runs down to the warm band, so the dots only show
+// between the letters and the open sky over the name stays flat. The column width sets the
+// caps' height and the viewport sets the scene's, so no scene unit fits every screen; the plate
+// counts in px instead, an 18 px tile (32 units on a 574 px phone scene), the same screen at
+// every size, as a printer's would be.
+const PLATE_P = 18
+const PLATE_SOLID = 2 // tiles of flat sky ink at the plate's top, under its first two bands
+// Two screens for the same ramp. At dusk on a phone the light dots sit right between the
+// letters of the first line and the standard screen reads busy there, so it gets a calmer one:
+// smaller dots, the heaviest band lightest (CSS picks the set, see .ramp .calm).
+const plateSets = [
+  { id: 'std', bands: ramp(0, PLATE_P, 1, [0.13, 0.24, 0.24, 0.13]) },
+  { id: 'calm', bands: ramp(0, PLATE_P, 1, [0.08, 0.15, 0.19, 0.11]) },
+]
 
 const clouds = [
   cloud(3, 446, 920, 1180, 10, 22),
@@ -90,21 +121,7 @@ const near: RidgeOptions = {
     { x: 2300, height: 80, width: 250 },
   ],
 }
-// The foreground: a low edge of rock and scrub in the band's colour, so the scene runs into the
-// intro band below instead of stopping on a straight line.
-const front: RidgeOptions = {
-  seed: 37,
-  base: 966, // stays well above any lift the pointer gives the layers behind it
-  amp: 4,
-  scale: 0.008,
-  bumps: [
-    { x: -300, height: 52, width: 260 },
-    { x: 300, height: 40, width: 120 },
-    { x: 640, height: 20, width: 60 },
-    { x: 1190, height: 34, width: 90 },
-    { x: 1720, height: 48, width: 210 },
-  ],
-}
+const front = FRONT_RIDGE
 const hills = {
   far: ridgePath(far),
   mid: ridgePath(mid),
@@ -155,22 +172,266 @@ const dusk = {
   near: [...windows(vence.houses, 2, 44), ...windows(saintJeannet.houses, 2, 45)],
 }
 
-// noTranslate: the title is a name, which browser translation would garble.
-const props = defineProps<{ title: string[]; noTranslate?: boolean }>()
+// The table d'orientation: each name on a leader line over its place. base is the place, a and
+// b the leader's ends above it, t the text's baseline (scene units).
+type Label = { name: string; x: number; base: number; a: number; b: number; t: number }
+const label = (name: string, x: number, base: number, a: number, b: number, t: number): Label => ({
+  name,
+  x,
+  base,
+  a: base - a,
+  b: base - b,
+  t: base - t,
+})
+const labelsIn = {
+  plain: [label('Var', 250, 590, 0, 22, 28)],
+  far: [label('Nice', -160, 549, 0, 43, 49), label('Antibes', 1400, 540, 0, 34, 40)],
+  mid: [label('La Gaude', gx, gy, 12, 40, 46), label('Saint-Paul', px, py, 16, 40, 46)],
+  near: [label('Saint-Jeannet', jx, jy, 16, 40, 46), label('Vence', vx, vy, 20, 46, 52)],
+}
+// Over the wordmark a name would print across a letter. Each hover the names are checked
+// against the caps: one that would cross a letter drops under its place, on its own hill, if
+// that spot is clear and not hidden by a nearer hill; otherwise it stays off.
+const placed = ref<Record<string, 'down' | 'off' | undefined>>({})
+const DROP = { a: -6, b: -26, t: -42 } // the dropped leader and baseline, under the place
+const leader = (l: Label) =>
+  placed.value[l.name] === 'down'
+    ? `M${l.x} ${l.base - DROP.a} V${l.base - DROP.b}`
+    : `M${l.x} ${l.a} V${l.b}`
+const textY = (l: Label) => (placed.value[l.name] === 'down' ? l.base - DROP.t : l.t)
 
 const scene = ref<HTMLElement | null>(null)
+const isShape = (e: Element) => e instanceof SVGGeometryElement || e instanceof SVGTextElement
+function placeLabels() {
+  const el = scene.value
+  const h1 = el?.querySelector('.wordmark h1')
+  if (!el || !h1) return
+  // the caps of each letter: a glyph's box is the font's content area (1.3em, the baseline
+  // 1em down); the caps are the 0.714em over the baseline
+  const caps: number[][] = []
+  const range = document.createRange()
+  const walker = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT)
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const text = n.textContent ?? ''
+    const fs = parseFloat(getComputedStyle(n.parentElement!).fontSize)
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === ' ') continue
+      range.setStart(n, i)
+      range.setEnd(n, i + 1)
+      const r = range.getBoundingClientRect()
+      caps.push([r.left, r.top + 0.286 * fs, r.right, r.top + fs])
+    }
+  }
+  const pad = 4
+  const hits = (r: DOMRect, dy = 0) =>
+    caps.some(
+      ([a, b, c, d]) =>
+        r.right + pad > a! &&
+        r.left - pad < c! &&
+        r.bottom + dy + pad > b! &&
+        r.top + dy - pad < d!,
+    )
+  const next: Record<string, 'down' | 'off' | undefined> = {}
+  const box = el.getBoundingClientRect()
+  for (const g of el.querySelectorAll<SVGGElement>('[data-label]')) {
+    const name = g.dataset.label!
+    const l = Object.values(labelsIn)
+      .flat()
+      .find((x) => x.name === name)!
+    const text = g.querySelector('text')!
+    const k = (g.ownerSVGElement?.getScreenCTM()?.d ?? 1) || 1 // px per scene unit
+    const now = text.getBoundingClientRect()
+    const cur = textY(l)
+    const up = (l.t - cur) * k
+    if (!hits(now, up)) continue
+    const dy = (l.base - DROP.t - cur) * k
+    const cx = (now.left + now.right) / 2
+    const cy = (now.top + now.bottom) / 2 + dy
+    const own = g.ownerSVGElement
+    const clear =
+      !hits(now, dy) &&
+      now.bottom + dy < box.bottom &&
+      [now.left + 2, cx, now.right - 2].every(
+        // the first painted shape there (a layer's own svg box is hit everywhere)
+        (x) => document.elementsFromPoint(x, cy).find(isShape)?.closest('svg') === own,
+      )
+    next[name] = clear ? 'down' : 'off'
+  }
+  placed.value = next
+}
+function onSceneEnter(e: PointerEvent) {
+  if (props.fit && e.pointerType === 'mouse') placeLabels()
+}
+
+// noTranslate: the title is a name, which browser translation would garble.
+// fit: set the title as a wordmark that fills the column, behind the hills (the main page).
+// Its numbers are the title's width in em at 800 with -0.035em tracking, in caps, measured in
+// Chrome: the whole title on one line first, then each line on its own (phones).
+const props = defineProps<{ title: string[]; noTranslate?: boolean; fit?: number[] }>()
+const fitStyle = props.fit
+  ? Object.fromEntries(props.fit.map((w, i) => [i ? `--fit-${i - 1}` : '--fit', w]))
+  : undefined
+
 const cardOpen = ref(false) // the summit figure's card holds the pointer parallax while open
 useParallax(scene, cardOpen)
+
+// The signature: the pointer presses the plate's screen (see usePress). The plate's lattice is
+// read off the SVG as it is now: its box, which screen CSS shows (the calm one on dark phones),
+// and where its tiles fall. Over the plate is open sky: paper dots of no size; under its bands,
+// bare paper.
+const plate = ref<SVGSVGElement | null>(null)
+function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
+  const svg = plate.value
+  if (!svg) return null
+  const cr = cv.getBoundingClientRect()
+  const sr = svg.getBoundingClientRect()
+  const shownSet =
+    plateSets.find((s) => {
+      const g = svg.querySelector(`g.${s.id}`)
+      return g && getComputedStyle(g).display !== 'none'
+    }) ?? plateSets[0]!
+  const p = PLATE_P
+  // the pattern's tiles start at the SVG's own origin, which runs past the canvas's left
+  const ox = (((sr.left - cr.left) % p) + p) % p
+  const oy = sr.top - cr.top
+  const cols = Math.ceil(f.w / p) + 2
+  const j0 = -Math.ceil(oy / p) // rows of open sky over the plate, up to the canvas's top
+  const rows = Math.ceil(f.h / p) + 1
+  const n = cols * rows * 2
+  const L: Lattice = {
+    xs: new Float32Array(n),
+    ys: new Float32Array(n),
+    r0: new Float32Array(n),
+    kind: new Uint8Array(n),
+  }
+  let k = 0
+  for (let j = j0; j < j0 + rows; j++) {
+    const band = shownSet.bands[j]
+    const r = band ? band.dots[0]!.r : 0
+    const paper = j < 0 || band?.paper ? 1 : 0
+    for (let i = -1; i < cols - 1; i++)
+      for (const q of [0.25, 0.75]) {
+        L.xs[k] = ox + (i + q) * p
+        L.ys[k] = oy + (j + q) * p
+        L.r0[k] = r
+        L.kind[k] = paper
+        k++
+      }
+  }
+  // the flat sky ink at the plate's top and over it, on the paper
+  const solid = Math.max(0, oy + PLATE_SOLID * p)
+  return {
+    lattice: L,
+    under: (c, inks) => {
+      c.fillStyle = inks.ink
+      c.fillRect(0, 0, f.w, solid)
+    },
+  }
+}
 </script>
 
 <template>
-  <section id="top" class="hero" aria-labelledby="hero-title">
-    <div ref="scene" class="scene print">
+  <section id="top" class="hero" :class="{ wm: props.fit }" aria-labelledby="hero-title">
+    <div ref="scene" class="scene print" @pointerenter="onSceneEnter">
       <!-- sky and sun: flat bands, a darker band at the top, two thin ones at the horizon -->
       <HeroLayer :y0="-400" :h="940" :depth="0">
+        <defs>
+          <pattern
+            v-for="(b, i) in skyRamp"
+            :id="`ht-sky-${i}`"
+            :key="i"
+            patternUnits="userSpaceOnUse"
+            :width="SKY_P"
+            :height="SKY_P"
+          >
+            <circle
+              v-for="(d, j) in b.dots"
+              :key="j"
+              :cx="d.cx"
+              :cy="d.cy"
+              :r="d.r"
+              :fill="b.paper ? 'var(--sky-screen)' : 'var(--sky-top)'"
+            />
+          </pattern>
+        </defs>
         <rect x="-1300" y="-400" width="4200" height="940" fill="var(--sky-top)" />
-        <rect x="-1300" y="452" width="4200" height="88" fill="var(--sky-mid)" />
+        <template v-if="!props.fit">
+          <rect x="-1300" y="384" width="4200" height="156" fill="var(--sky-screen)" />
+          <rect
+            v-for="(b, i) in skyRamp"
+            :key="'ht' + i"
+            x="-1300"
+            :y="b.y"
+            width="4200"
+            :height="b.h"
+            :fill="`url(#ht-sky-${i})`"
+          />
+        </template>
+        <!-- under the wordmark's plate: the paper it leaves bare when the parallax lifts it -->
+        <rect v-else x="-1300" y="400" width="4200" height="140" fill="var(--sky-screen)" />
         <rect x="-1300" y="494" width="4200" height="46" fill="var(--sky-low)" />
+      </HeroLayer>
+
+      <!-- the wordmark's screened plate: sky ink, the ramp, then paper down to the warm band.
+           It moves with the wordmark, so the caps never slide into the dots -->
+      <div v-if="props.fit" class="skyplate" :style="fitStyle" aria-hidden="true">
+        <div class="bleed">
+          <svg ref="plate" class="ramp" focusable="false">
+            <defs>
+              <template v-for="set in plateSets" :key="set.id">
+                <pattern
+                  v-for="(b, i) in set.bands"
+                  :id="`ht-${set.id}-${i}`"
+                  :key="i"
+                  patternUnits="userSpaceOnUse"
+                  :width="PLATE_P"
+                  :height="PLATE_P"
+                >
+                  <circle
+                    v-for="(d, j) in b.dots"
+                    :key="j"
+                    :cx="d.cx"
+                    :cy="d.cy"
+                    :r="d.r"
+                    :fill="b.paper ? 'var(--sky-screen)' : 'var(--sky-top)'"
+                  />
+                </pattern>
+              </template>
+            </defs>
+            <rect width="100%" :height="PLATE_SOLID * PLATE_P" fill="var(--sky-top)" />
+            <rect :y="PLATE_SOLID * PLATE_P" width="100%" height="100%" fill="var(--sky-screen)" />
+            <g v-for="set in plateSets" :key="set.id" :class="set.id">
+              <rect
+                v-for="(b, i) in set.bands"
+                :key="i"
+                :y="b.y"
+                width="100%"
+                :height="b.h"
+                :fill="`url(#ht-${set.id}-${i})`"
+              />
+            </g>
+          </svg>
+          <!-- the same plate redrawn while the pointer presses it (fine pointers), see
+               usePress; hidden at rest, so the page at rest is the SVG above -->
+          <PressPlate
+            v-if="props.fit"
+            class="press"
+            host=".scene"
+            :tile="PLATE_P"
+            :depth="0.26"
+            :windowed="false"
+            :build="plateLattice"
+            ground="var(--sky-screen)"
+            ink="var(--sky-top)"
+            paper="var(--sky-screen)"
+            ink-press="var(--press-on-paper)"
+            paper-press="var(--press-on-sky)"
+          />
+        </div>
+      </div>
+
+      <!-- the sun, over the plate -->
+      <HeroLayer :y0="400" :h="140" :depth="0">
         <g class="sun">
           <circle cx="1560" cy="472" r="62" fill="var(--sun-halo)" />
           <circle cx="1560" cy="472" r="38" fill="var(--sun-halo-2)" />
@@ -231,10 +492,26 @@ useParallax(scene, cardOpen)
         </g>
       </HeroLayer>
 
+      <!-- the wordmark: in front of the sea and the shore, behind the hills, so the summits
+           of La Gaude and Saint-Paul stand over its feet like a poster's lettering -->
+      <div v-if="props.fit" class="wordmark" :style="fitStyle">
+        <div class="bleed">
+          <h1 id="hero-title" :translate="props.noTranslate ? 'no' : undefined">
+            <template v-for="(line, i) in props.title" :key="line"
+              >{{ i > 0 ? ' ' : '' }}<span :class="`l${i}`">{{ line }}</span></template
+            >
+          </h1>
+        </div>
+      </div>
+
       <!-- the Var valley floor, seen through the notch near the coast -->
       <HeroLayer :y0="545" :h="165" :depth="0.2">
         <path :d="VAR_PLAIN" fill="var(--plain)" />
-        <g class="labels"> <path d="M250 590 V568" /><text x="250" y="562">Var</text> </g>
+        <g class="labels">
+          <g v-for="l in labelsIn.plain" :key="l.name" :class="placed[l.name]" :data-label="l.name">
+            <path :d="leader(l)" /><text :x="l.x" :y="textY(l)">{{ l.name }}</text>
+          </g>
+        </g>
       </HeroLayer>
 
       <!-- far hills: the Nice side on the left, the hills behind Cagnes and Antibes -->
@@ -242,8 +519,9 @@ useParallax(scene, cardOpen)
         <path :d="hills.far" fill="var(--hill-far)" />
         <path :d="shade.far" fill="var(--hill-far-shade)" />
         <g class="labels">
-          <path d="M-160 549 V506" /><text x="-160" y="500">Nice</text>
-          <path d="M1400 540 V506" /><text x="1400" y="500">Antibes</text>
+          <g v-for="l in labelsIn.far" :key="l.name" :class="placed[l.name]" :data-label="l.name">
+            <path :d="leader(l)" /><text :x="l.x" :y="textY(l)">{{ l.name }}</text>
+          </g>
         </g>
       </HeroLayer>
 
@@ -284,8 +562,9 @@ useParallax(scene, cardOpen)
           <circle v-for="(d, i) in dusk.mid" :key="i" :cx="d.x" :cy="d.y" :r="d.r" />
         </g>
         <g class="labels">
-          <path :d="`M${gx} ${gy - 12} V${gy - 40}`" /><text :x="gx" :y="gy - 46">La Gaude</text>
-          <path :d="`M${px} ${py - 16} V${py - 40}`" /><text :x="px" :y="py - 46">Saint-Paul</text>
+          <g v-for="l in labelsIn.mid" :key="l.name" :class="placed[l.name]" :data-label="l.name">
+            <path :d="leader(l)" /><text :x="l.x" :y="textY(l)">{{ l.name }}</text>
+          </g>
         </g>
       </HeroLayer>
 
@@ -312,18 +591,18 @@ useParallax(scene, cardOpen)
           <circle v-for="(d, i) in dusk.near" :key="i" :cx="d.x" :cy="d.y" :r="d.r" />
         </g>
         <g class="labels">
-          <path :d="`M${jx} ${jy - 16} V${jy - 40}`" /><text :x="jx" :y="jy - 46"
-            >Saint-Jeannet</text
-          >
-          <path :d="`M${vx} ${vy - 20} V${vy - 46}`" /><text :x="vx" :y="vy - 52">Vence</text>
+          <g v-for="l in labelsIn.near" :key="l.name" :class="placed[l.name]" :data-label="l.name">
+            <path :d="leader(l)" /><text :x="l.x" :y="textY(l)">{{ l.name }}</text>
+          </g>
         </g>
       </HeroLayer>
 
       <!-- the summit and the desk -->
       <HeroLayer :y0="380" :h="620" :depth="0.85">
         <SummitSetup />
-        <!-- an Aleppo pine on the crest to the west: the poster's frame on wide screens -->
-        <g transform="translate(305 22)">
+        <!-- an Aleppo pine on the crest to the west: the poster's frame on wide screens; the
+             wordmark frames the view instead (the crown would sit on its last letters) -->
+        <g v-if="!props.fit" transform="translate(305 22)">
           <path
             d="M1434 782 C1428 700 1412 600 1396 482 L1408 480 C1424 600 1442 700 1450 782 Z"
             fill="var(--trunk-shade)"
@@ -358,7 +637,7 @@ useParallax(scene, cardOpen)
 
       <DeskFigureLink v-model:open="cardOpen" />
 
-      <div class="title" style="--depth: 0.6">
+      <div v-if="!props.fit" class="title" style="--depth: 0.6">
         <div class="wrap">
           <h1 id="hero-title" :translate="props.noTranslate ? 'no' : undefined">
             <!-- a space between the lines, so the heading's text reads "Pierre Bastiani" -->
@@ -426,6 +705,9 @@ useParallax(scene, cardOpen)
 .labels text {
   stroke: none;
 }
+.labels .off {
+  display: none;
+}
 .scene:hover .labels {
   opacity: 1;
 }
@@ -463,6 +745,159 @@ useParallax(scene, cardOpen)
 }
 .title h1 .indent {
   padding-left: 0.5em;
+}
+/* The wordmark runs off both edges of the screen, like a poster title cropped by its sheet:
+   the caps' ink is a little wider than the screen, so the edges cut into the P's stem and the
+   last I's, never further, and the I less (a thin I would read as a rule). Sizes count from
+   the scene's width (100cqi in .bleed). The fit numbers are advance widths; the caps' ink
+   starts 0.063em in and ends about 0.02em short, and each edge cuts --cut-l / --cut-r more. On very wide screens the caps stop growing at half the scene's
+   height, then stand inside it, centred.
+   Phones: the two lines run off the left edge only (the P's and the B's stems are cut) and
+   both end on the right gutter, so the E and the last I, the letters a cut would turn into
+   something else, stay whole. */
+.wordmark,
+.skyplate {
+  --depth: 0.18;
+  --cut-l: 0.065;
+  --cut-r: 0.03;
+  --cut-phone: 0.07;
+  --fs: min(100cqi / (var(--fit) - 0.083 - var(--cut-l) - var(--cut-r)), 50cqh);
+  --fs-0: calc((100cqi - var(--gutter-r)) / (var(--fit-0) - 0.083 - var(--cut-phone)));
+  --fs-1: calc((100cqi - var(--gutter-r)) / (var(--fit-1) - 0.083 - var(--cut-phone)));
+}
+.wordmark {
+  position: absolute;
+  inset-inline: 0;
+  /* the caps' feet sit on the shore, under the horizon (52%), where the summits of the mid
+     plane rise in front of them */
+  bottom: 41.5%;
+  pointer-events: none;
+  transform: translate3d(
+    calc(var(--px) * var(--depth) * -18px),
+    calc(var(--scroll) * (1 - var(--depth)) * 150px + var(--py) * var(--depth) * -6px),
+    0
+  );
+}
+.bleed {
+  container-type: inline-size;
+}
+/* The plate shares the wordmark's plane and width, so 100cqi is the caps' measure here too. */
+.skyplate {
+  /* from the wordmark's foot to its cap line: the caps are 0.714em tall, and in a 0.8 line box
+     of a font 1.3em deep their top sits 0.764em above the box's foot */
+  --cap: calc(0.764 * var(--fs));
+  --foot: 41.5%;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translate3d(
+    calc(var(--px) * var(--depth) * -18px),
+    calc(var(--scroll) * (1 - var(--depth)) * 150px + var(--py) * var(--depth) * -6px),
+    0
+  );
+}
+.skyplate .bleed {
+  height: 100%;
+}
+.ramp,
+.press {
+  position: absolute;
+  /* a little past both edges, for the pointer parallax; the scene clips it */
+  left: -1.5rem;
+  width: calc(100% + 3rem);
+  /* The foot is the warm band at y 494 and the top is the cap line, so the first dots start
+     under the caps' top edge and the open sky above the name stays flat. Where the caps sit too
+     low for four tiles (a 1280 screen leaves about three), the plate keeps its four and rises
+     past the cap line instead of cutting the ramp. */
+  bottom: 50.6%;
+  height: max(calc(var(--foot) - 50.6% + var(--cap)), 4 * 18px);
+}
+/* the pressed plate also covers the open sky over the name, which the press can reach: from
+   the scene's top down to the plate's foot (a canvas has no bitmap until pressed, so its height
+   is set, never left to its intrinsic size) */
+.press {
+  display: block;
+  top: 0;
+  height: 49.4%;
+  visibility: hidden;
+}
+.press.on {
+  visibility: visible;
+}
+.ramp .calm {
+  display: none;
+}
+.wordmark h1 {
+  /* one line, its ink a hair wider than the screen: the part the edges leave is centred on it
+     (0.0215em moves the ink's centre, not the advance's, onto the screen's) */
+  position: relative;
+  left: 50%;
+  width: max-content;
+  translate: calc(-50% - (0.0215 + (var(--cut-l) - var(--cut-r)) / 2) * 1em) 0;
+  font-family: 'Hanken Grotesk Variable', 'Hanken Grotesk Caps Fallback', var(--f-display);
+  font-size: var(--fs);
+  font-weight: 800;
+  line-height: 0.8;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink);
+  pointer-events: auto;
+}
+/* Wide screens: the wordmark is the sky's subject, so the empty top of the sky goes, the same
+   cut the phones get */
+@media (min-width: 40.0625rem) {
+  .wm .scene {
+    --sky-cut: min(13svh, 6.5rem);
+    margin-top: calc(-1 * var(--sky-cut));
+    clip-path: inset(var(--sky-cut) 0 0 0);
+  }
+}
+/* Phones: two lines, each as wide as the screen from its left edge to the right gutter, like a
+   justified poster block slid off the sheet */
+@media (max-width: 40rem) {
+  /* a little higher: at this width the near hills fill the whole foot of the second line */
+  .wordmark {
+    bottom: 43.5%;
+  }
+  .wordmark h1 {
+    left: 0;
+    width: auto;
+    translate: none;
+    white-space: normal;
+  }
+  .wordmark h1 span {
+    display: block;
+    margin-left: calc(-1em * (0.063 + var(--cut-phone)));
+  }
+  .wordmark .l0 {
+    font-size: var(--fs-0);
+  }
+  .wordmark .l1 {
+    font-size: var(--fs-1);
+  }
+  /* the cap line of the first line: the whole second line box, then the first line's caps */
+  .skyplate {
+    --cap: calc(0.8 * var(--fs-1) + 0.764 * var(--fs-0));
+    --foot: 43.5%;
+  }
+}
+/* Dusk on a phone: the calmer screen (see plateSets) */
+@media (max-width: 40rem) and (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .ramp .std {
+    display: none;
+  }
+  :root:not([data-theme='light']) .ramp .calm {
+    display: inline;
+  }
+}
+@media (max-width: 40rem) {
+  :root[data-theme='dark'] .ramp .std {
+    display: none;
+  }
+  :root[data-theme='dark'] .ramp .calm {
+    display: inline;
+  }
 }
 /* Phones: the top of the sky is cut off, so the line under the name (the role, or the shop's
    offer) comes up onto the first screen. The scene keeps its size, so the drawing and the
@@ -512,7 +947,9 @@ useParallax(scene, cardOpen)
   padding-block: 1.8rem 3.5rem;
 }
 @media (prefers-reduced-motion: reduce) {
-  .title {
+  .title,
+  .wordmark,
+  .skyplate {
     transform: none;
   }
   .labels {

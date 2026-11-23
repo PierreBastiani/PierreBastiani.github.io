@@ -1,0 +1,13 @@
+{
+  "source": "pierre-bastiani-312.jpg",
+  "width": 312,
+  "height": 312,
+  "pitch": 5.2,
+  "frame": {
+    "top": 0.31,
+    "right": 1,
+    "bottom": 1,
+    "left": 0
+  },
+  "dots": 1534
+}

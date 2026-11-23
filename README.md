@@ -17,7 +17,7 @@ npm run build      # type-check, then nuxt generate into .output/public
 npm run preview    # serve the generated site
 ```
 
-All the copy lives in `app/content.ts`; components only lay it out. The contact email, the phone and the business address aren't in the repository: copy `.env.example` to `.env` locally, and the deploy workflow reads them from the `CONTACT_EMAIL`, `CONTACT_PHONE` and `LEGAL_ADDRESS` repository secrets. Generation fails without them. The phone reaches only the shop page and the legal notice, the address only the legal notice.
+All the copy lives in `app/content.ts`; components only lay it out. The legal page's text is in `app/content/legal.json`, generated from a shared template: don't edit it by hand. The contact email, the phone and the business address aren't in the repository: copy `.env.example` to `.env` locally, and the deploy workflow reads them from the `CONTACT_EMAIL`, `CONTACT_PHONE` and `LEGAL_ADDRESS` repository secrets. Generation fails without them. The phone reaches only the shop page and the legal notice, the address only the legal notice.
 
 ## Design notes
 
