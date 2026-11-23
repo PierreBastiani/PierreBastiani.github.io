@@ -5,6 +5,7 @@ import { POSES, SIT, SEAT_LOCAL, type PoseId } from '@/lib/figure'
 import { journey, type Box, type Cam, type Course } from '@/lib/journey'
 import { ROUTE_LINES, SCENE, smooth, type Pt } from '@/lib/crag'
 import { FRONT_RIDGE, ridgeY } from '@/lib/ridge'
+import { floodEdgePath } from '@/lib/edge'
 import { VIEW } from '@/lib/scene'
 
 // The man at the summit desk travels down the page as it scrolls: he drops onto the Malt
@@ -40,6 +41,7 @@ interface State {
   pose: Id
   flip?: boolean
   map?: boolean // on the topo: only inside its plate
+  desk?: boolean // sat at a desk with a keyboard: he types
 }
 type At = (s: number) => State
 interface Seg {
@@ -96,7 +98,7 @@ interface Geo {
   rope: { top: number; left: number; xs: { x: number; y: number }[]; anchors: number[] } | null
   plate: Rect | null
   ledges: { x: number; docY: number; pose: Id }[] // the project cards' top edges, page order
-  flood: Rect | null
+  flood: (Rect & { edge: number }) | null // edge: the ridge's depth on its top, 0 if cut straight
   seat: { x: number; y: number; k: number; desk: Rect | null } | null
   text: { r: Rect; ink: Ink }[] // every block of text in the page, which prints over him
 }
@@ -122,6 +124,18 @@ function along(i: number, d: number): Pt {
   return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]
 }
 const OVERVIEW: Cam = { x: SCENE.w / 2, y: SCENE.h / 2, zoom: 1 }
+
+// how deep the flood's ridge cuts into its top (lib/edge.ts), in px; 0 where the browser keeps
+// the straight cut
+function edgeDepth(el: HTMLElement) {
+  if (!CSS.supports('clip-path', 'shape(from 0 0, line to 1px 1px)')) return 0
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:absolute;visibility:hidden;height:var(--edge-a)'
+  el.appendChild(probe)
+  const a = probe.offsetHeight
+  probe.remove()
+  return a
+}
 
 function measure() {
   const vw = window.innerWidth
@@ -302,7 +316,7 @@ function measure() {
     rope,
     plate: plateArt ? docRect(plateArt) : null,
     ledges,
-    flood: floodEl ? docRect(floodEl) : null,
+    flood: floodEl ? { ...docRect(floodEl), edge: edgeDepth(floodEl) } : null,
     seat,
     text,
   }
@@ -326,6 +340,7 @@ const heroSeat: At = (s) => {
     y: H.t - s + H.h - (1000 - SEAT_LOCAL[1] - 30) * u + ty,
     k: 2.5 * u,
     pose: 'sit',
+    desk: true,
   }
 }
 const onMalt: At = (s) => ({ ...G!.malt, y: G!.malt.docY - s })
@@ -426,7 +441,7 @@ const inPlate: At = (s) => {
 }
 const atSeat: At = (s) => {
   const S = G!.seat!
-  return { x: S.x, y: S.y - s, k: S.k, pose: 'sit' }
+  return { x: S.x, y: S.y - s, k: S.k, pose: 'sit', desk: !!S.desk }
 }
 
 // How much of him is out of sight in a state: under the header, off the screen, or behind a
@@ -646,6 +661,8 @@ let layers: Record<
     el: SVGSVGElement
     mover: SVGGElement
     poses: Record<string, SVGGElement>
+    heads: Record<string, SVGGElement>
+    hands: [SVGGElement, SVGGElement] // near, far
     pat: SVGPatternElement | null
   }
 > | null = null
@@ -670,7 +687,13 @@ function stateAt(s: number): { st: State; route: number | null } {
 }
 
 // the grounds under him, in screen px at this scroll position
-type Ground = { ink: Ink; d: string; box: [number, number, number, number] }
+// inner: the part that is surely this ground (the flood under its ridge), when it differs from box
+type Ground = {
+  ink: Ink
+  d: string
+  box: [number, number, number, number]
+  inner?: [number, number, number, number]
+}
 const rectPath = (l: number, t: number, w: number, h: number) =>
   `M${l.toFixed(1)} ${t.toFixed(1)}H${(l + w).toFixed(1)}V${(t + h).toFixed(1)}H${l.toFixed(1)}Z`
 function grounds(s: number): Ground[] {
@@ -715,8 +738,9 @@ function grounds(s: number): Ground[] {
     const f = g.flood
     out.push({
       ink: 'flood',
-      d: rectPath(-8, f.t - s, vw + 16, f.h),
+      d: f.edge ? floodEdgePath(0, vw, f.t - s, f.h, f.edge) : rectPath(-8, f.t - s, vw + 16, f.h),
       box: [0, f.t - s, vw, f.t + f.h - s],
+      inner: [0, f.t - s + f.edge, vw, f.t + f.h - s],
     })
   }
   if (g.seat?.desk) {
@@ -792,7 +816,11 @@ function paint() {
       L.poses[st.pose]!.style.display = 'inline'
     }
     last.pose = st.pose
+    paintHead()
   }
+  now = st
+  atDesk = !!st.desk
+  if (atDesk) startTyping() // a no-op while a burst runs; it stops itself out of sight or idle
   const tf = `translate(${st.x.toFixed(1)} ${st.y.toFixed(1)}) scale(${((st.flip ? -1 : 1) * st.k).toFixed(4)} ${st.k.toFixed(4)})`
   const regrain = Math.abs(st.k - last.k) > last.k * 0.05
   for (const ink of INKS) {
@@ -844,7 +872,11 @@ function paint() {
     return
   }
   const whole =
-    near.length === 1 && inside(near[0]!.box) ? near[0]!.ink : near.length ? null : 'page'
+    near.length === 1 && inside(near[0]!.inner ?? near[0]!.box)
+      ? near[0]!.ink
+      : near.length
+        ? null
+        : 'page'
   if (whole) {
     const cut = holes.map(hole).join(' ')
     for (const ink of INKS)
@@ -865,6 +897,182 @@ function paint() {
     setClip(ink, mine.length ? `path(evenodd, '${mine.join(' ')} ${cut}')` : 'none')
   }
 }
+
+// ---- Alive: he types at a desk, and looks at what is being read -----------------------------
+// Both answer the visitor and stop on their own (IX3: nothing loops at rest). While the visitor
+// scrolls, points or types, he types if he is at a desk. Once they have been still for IDLE ms
+// he stops and turns his head, in two strip frames, towards what they are most likely reading:
+// the block under a mouse that moved lately, else the block on the reading line. The next input
+// turns him back at once. Head frames only, in every pose: ahead, up, down, turned round.
+const IDLE = 1800
+const TILT = 22 // degrees per frame of looking up or down
+let now: State | null = null // where he is, from the last paint
+let atDesk = false
+let lastInput = 0
+let idleTimer = 0
+let lookTimer = 0
+let typeTimer = 0
+let keysLeft = 0
+const handsUp = [false, false]
+let hand = 0 // the hand that struck last
+let look: { back: boolean; tilt: number } | null = null
+const pointer = { x: 0, y: 0, at: 0 }
+
+// in sight: nobody watches him type or turn when he is off the screen or under the header
+const inSight = (st: State | null) =>
+  !!st &&
+  st.x > 0 &&
+  st.x < window.innerWidth &&
+  st.y > (G?.head ?? 0) &&
+  st.y < window.innerHeight + 40 * st.k
+
+function paintHead() {
+  if (!layers || !now) return
+  const id = now.pose
+  const sit = id === 'sit'
+  const [nx, ny] = sit ? SIT.neck : POSES[id as Exclude<PoseId, 'sit'>].neck
+  let tf = ''
+  if (look) {
+    // in the pose's own frame he faces +x; turned round, the head is mirrored about the neck
+    const a = (look.back ? -1 : 1) * look.tilt * TILT
+    tf = `rotate(${a} ${nx} ${ny})${look.back ? ` translate(${2 * nx} 0) scale(-1 1)` : ''}`
+  }
+  const turned =
+    !!look &&
+    !sit &&
+    POSES[id as Exclude<PoseId, 'sit'>].turn !== POSES[id as Exclude<PoseId, 'sit'>].head
+  for (const ink of INKS) {
+    const h = layers[ink].heads[id]!
+    if (tf) h.setAttribute('transform', tf)
+    else h.removeAttribute('transform')
+    h.classList.toggle('turned', turned)
+  }
+}
+
+function setHand(hand: number, up: boolean) {
+  if (!layers || up === handsUp[hand]) return
+  handsUp[hand] = up
+  const [ex, ey] = hand ? SIT.farElbow : SIT.elbow
+  for (const ink of INKS)
+    if (up) layers[ink].hands[hand].setAttribute('transform', `rotate(-8 ${ex} ${ey})`)
+    else layers[ink].hands[hand].removeAttribute('transform')
+}
+const handsDown = () => {
+  setHand(0, false)
+  setHand(1, false)
+}
+
+// bursts of 3 to 7 keys, the hands in turn (now and then the same one twice), about 4 a
+// second, a pause between words
+function typeStep() {
+  typeTimer = 0
+  if (!atDesk || look || document.hidden || !inSight(now) || performance.now() - lastInput > IDLE) {
+    handsDown()
+    return
+  }
+  const up = handsUp.indexOf(true)
+  if (up >= 0) {
+    // the key is struck: the hand comes back down
+    setHand(up, false)
+    keysLeft--
+    typeTimer = window.setTimeout(
+      typeStep,
+      keysLeft > 0 ? 110 + Math.random() * 120 : 450 + Math.random() * 800,
+    )
+    return
+  }
+  if (keysLeft <= 0) keysLeft = 3 + Math.floor(Math.random() * 5)
+  hand = Math.random() < 0.75 ? 1 - hand : hand
+  setHand(hand, true)
+  typeTimer = window.setTimeout(typeStep, 90)
+}
+function startTyping() {
+  if (!typeTimer && atDesk && !look) typeStep()
+}
+
+// what the visitor is most likely reading, as a point on screen
+function readingPoint(): { x: number; y: number } | null {
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const top = G?.head ?? 64
+  const blocks = [
+    ...document.querySelectorAll<HTMLElement>(
+      'main h1, main h2, main h3, main p, main li, main dd, main blockquote, main figure',
+    ),
+  ]
+    .map((el) => el.getBoundingClientRect())
+    .filter((r) => r.width > 4 && r.height > 4 && r.bottom > top && r.top < vh)
+  if (!blocks.length) return null
+  const dist = (r: DOMRect, x: number, y: number) =>
+    Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom))
+  // a mouse that moved in the last few seconds points at what is read
+  if (performance.now() - pointer.at < 5000) {
+    let best: DOMRect | null = null
+    for (const r of blocks)
+      if (dist(r, pointer.x, pointer.y) < (best ? dist(best, pointer.x, pointer.y) : 160)) best = r
+    if (best)
+      return {
+        x: clamp(pointer.x, best.left, best.right),
+        y: clamp(pointer.y, best.top, best.bottom),
+      }
+  }
+  // else the block on the reading line, a little above the middle of the screen
+  const line = top + (vh - top) * 0.38
+  let best = blocks[0]!
+  const score = (r: DOMRect) =>
+    dist(r, r.left, line) + 0.15 * Math.abs(r.left + r.width / 2 - vw / 2)
+  for (const r of blocks) if (score(r) < score(best)) best = r
+  return { x: best.left + Math.min(best.width, 320) / 2, y: clamp(line, best.top, best.bottom) }
+}
+
+function startLook() {
+  if (!inSight(now) || !layers) return
+  const target = readingPoint()
+  if (!target) return
+  const sgn = now.flip ? -1 : 1
+  const sit = now.pose === 'sit'
+  // the neck on screen: the sit pose is drawn in the hero's scene units (SIT.transform)
+  const [nx, ny] = sit
+    ? [0.4 * (SIT.neck[0] - 828), 0.4 * (SIT.neck[1] - 776)]
+    : POSES[now.pose as Exclude<PoseId, 'sit'>].neck
+  const dx = (target.x - (now.x + sgn * nx * now.k)) * sgn
+  const dy = target.y - (now.y + ny * now.k)
+  const deg = (Math.atan2(dy, Math.abs(dx)) * 180) / Math.PI
+  const tilt = deg < -10 ? -1 : deg > 10 ? 1 : 0
+  const back = dx < 0
+  handsDown()
+  // two frames, like a strip: turn, then raise or lower the eyes
+  look = { back, tilt: 0 }
+  paintHead()
+  if (tilt)
+    lookTimer = window.setTimeout(() => {
+      if (look) {
+        look.tilt = tilt
+        paintHead()
+      }
+    }, 140)
+}
+
+function checkIdle() {
+  idleTimer = 0
+  const quiet = performance.now() - lastInput
+  if (quiet < IDLE) idleTimer = window.setTimeout(checkIdle, IDLE - quiet)
+  else if (!document.hidden) startLook()
+}
+
+function onInput(e: Event) {
+  lastInput = performance.now()
+  if (e instanceof PointerEvent && e.pointerType === 'mouse')
+    Object.assign(pointer, { x: e.clientX, y: e.clientY, at: lastInput })
+  if (look) {
+    look = null
+    clearTimeout(lookTimer)
+    paintHead()
+  }
+  startTyping()
+  if (!idleTimer) idleTimer = window.setTimeout(checkIdle, IDLE)
+}
+const INPUTS = ['scroll', 'pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'] as const
 
 let frame = 0
 const request = () => {
@@ -890,13 +1098,22 @@ onMounted(() => {
     INKS.map((ink) => {
       const el = root.value!.querySelector<SVGSVGElement>(`.layer.${ink}`)!
       const poses: Record<string, SVGGElement> = {}
-      for (const id of IDS) poses[id] = el.querySelector<SVGGElement>(`.p-${id}`)!
+      const heads: Record<string, SVGGElement> = {}
+      for (const id of IDS) {
+        poses[id] = el.querySelector<SVGGElement>(`.p-${id}`)!
+        heads[id] = poses[id].querySelector<SVGGElement>('.hd')!
+      }
       return [
         ink,
         {
           el,
           mover: el.querySelector<SVGGElement>('.mover')!,
           poses,
+          heads,
+          hands: [
+            el.querySelector<SVGGElement>('.p-sit .fa.near')!,
+            el.querySelector<SVGGElement>('.p-sit .fa.far')!,
+          ],
           pat: el.querySelector('pattern'),
         },
       ]
@@ -909,15 +1126,24 @@ onMounted(() => {
   document.documentElement.classList.add('journey')
   root.value.classList.add('on')
   window.addEventListener('scroll', request, { passive: true })
+  for (const ev of INPUTS) window.addEventListener(ev, onInput, { passive: true })
+  document.addEventListener('visibilitychange', onInput)
   window.addEventListener('resize', onResize, { passive: true })
   ro = new ResizeObserver(remeasure)
   const main = document.querySelector('main')
   if (main) ro.observe(main)
   document.fonts?.ready.then(remeasure)
   measure()
+  // he is at work when the page opens, and looks up once the visitor settles
+  onInput(new Event('load'))
 })
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', request)
+  for (const ev of INPUTS) window.removeEventListener(ev, onInput)
+  document.removeEventListener('visibilitychange', onInput)
+  clearTimeout(idleTimer)
+  clearTimeout(lookTimer)
+  clearTimeout(typeTimer)
   window.removeEventListener('resize', onResize)
   ro?.disconnect()
   cancelAnimationFrame(frame)
@@ -946,14 +1172,29 @@ onBeforeUnmount(() => {
       <g class="mover">
         <g class="p p-sit">
           <g :transform="SIT.transform">
+            <g class="fa far">
+              <path :d="SIT.farArm" class="b" />
+            </g>
             <path :d="SIT.body" class="b" />
-            <path :d="SIT.hat" class="h" />
-            <path :d="SIT.band" class="hb" />
-            <path :d="SIT.phones" class="ink-heavy phones" />
-            <path :d="SIT.gear" class="g" />
+            <g class="fa near">
+              <path :d="SIT.forearm" class="b" />
+            </g>
+            <g class="hd">
+              <path :d="SIT.head.body" class="b" />
+              <path :d="SIT.head.hat" class="h" />
+              <path :d="SIT.head.band" class="hb" />
+              <path :d="SIT.phones" class="ink-heavy phones" />
+              <path :d="SIT.head.gear" class="g" />
+              <path
+                v-if="grain"
+                :d="`${SIT.head.body} ${SIT.head.hat}`"
+                class="grain"
+                :fill="`url(#travel-grain-${ink})`"
+              />
+            </g>
             <path
               v-if="grain"
-              :d="`${SIT.body} ${SIT.hat}`"
+              :d="`${SIT.body} ${SIT.forearm}`"
               class="grain"
               :fill="`url(#travel-grain-${ink})`"
             />
@@ -961,15 +1202,26 @@ onBeforeUnmount(() => {
         </g>
         <g v-for="(p, id) in POSES" :key="id" class="p" :class="`p-${id}`">
           <path :d="p.body" class="b" />
-          <path :d="p.hat" class="h" />
-          <path :d="p.band" class="hb" />
           <path v-if="p.gear" :d="p.gear" class="g" />
-          <path
-            v-if="grain"
-            :d="`${p.body} ${p.hat}`"
-            class="grain"
-            :fill="`url(#travel-grain-${ink})`"
-          />
+          <path v-if="grain" :d="p.body" class="grain" :fill="`url(#travel-grain-${ink})`" />
+          <g class="hd">
+            <g
+              v-for="(h, side) in p.turn === p.head ? { d: p.head } : { d: p.head, t: p.turn }"
+              :key="side"
+              :class="side"
+            >
+              <path :d="h.body" class="b" />
+              <path :d="h.hat" class="h" />
+              <path :d="h.band" class="hb" />
+              <path :d="h.gear" class="g" />
+              <path
+                v-if="grain"
+                :d="`${h.body} ${h.hat}`"
+                class="grain"
+                :fill="`url(#travel-grain-${ink})`"
+              />
+            </g>
+          </g>
         </g>
       </g>
     </svg>
@@ -997,6 +1249,14 @@ onBeforeUnmount(() => {
 }
 .p {
   display: none;
+}
+/* the head as drawn, or turned side on while he looks at something (see look) */
+.hd .t,
+.hd.turned .d {
+  display: none;
+}
+.hd.turned .t {
+  display: inline;
 }
 /* the inks of each ground */
 .scene {
@@ -1029,6 +1289,11 @@ onBeforeUnmount(() => {
 }
 .h {
   fill: var(--fh);
+}
+/* the far arm, behind him: a step lighter, as a poster prints the far limb */
+.far .b {
+  fill: color-mix(in srgb, var(--fb) 72%, var(--fg));
+  stroke: none;
 }
 .hb {
   fill: color-mix(in srgb, var(--fb) 25%, var(--fh));

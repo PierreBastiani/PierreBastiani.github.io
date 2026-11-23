@@ -2,6 +2,7 @@
 import { projects, sections } from '@/content'
 import ProjectArt from './ProjectArt.vue'
 import PressPlate from './PressPlate.vue'
+import { floodEdgeShade, floodEdgeShape } from '@/lib/edge'
 // The section's one photographic plate: the portrait screened in one ink by
 // scripts/halftone-plate.mjs, used as a mask so it prints in the section's ink. To swap in an
 // object photo, rerun the script on it and point these two imports at its output.
@@ -18,9 +19,24 @@ const plateStyle = {
 </script>
 
 <template>
-  <section id="projets" class="section flood" aria-labelledby="projects-title">
+  <section
+    id="projets"
+    class="section flood"
+    :style="{ '--edge-shape': floodEdgeShape }"
+    aria-labelledby="projects-title"
+  >
     <!-- the press: a faint screen on the flood, bare at rest, never on plate 00 -->
     <PressPlate class="press" ink="var(--flood-press)" :depth="0.3" avoid=".plate" />
+    <!-- the ridge's shadow sides, under its summits (lib/edge.ts) -->
+    <svg
+      class="edge-shade"
+      :viewBox="floodEdgeShade.viewBox"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path :d="floodEdgeShade.d" />
+    </svg>
     <div class="wrap">
       <div class="masthead">
         <header class="section-head">
@@ -88,6 +104,29 @@ const plateStyle = {
   --vig-spot: var(--ink-sea);
   --vig-beanie: var(--ink-ochre);
   padding-bottom: var(--space-section);
+}
+/* its top is the porphyry ridge against the sky of the section above (lib/edge.ts): the
+   summits touch the box's top, the cols sit --edge-a below it, and the title keeps its gap
+   under the cols. A browser without shape() keeps the straight cut. */
+@supports (clip-path: shape(from 0 0, line to 1px 1px)) {
+  .flood {
+    padding-top: calc(var(--space-section) + var(--edge-a));
+    clip-path: var(--edge-shape);
+  }
+}
+.edge-shade {
+  display: none;
+}
+@supports (clip-path: shape(from 0 0, line to 1px 1px)) {
+  .edge-shade {
+    display: block;
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: -1;
+    width: 100%;
+    height: calc(var(--edge-a) * 3);
+    fill: color-mix(in srgb, var(--flood-plate) 16%, var(--flood));
+  }
 }
 /* at dusk the vignettes' ground is close to their shadow ink, so the cast screen overprints
    toward the sea instead of the paper it falls on */

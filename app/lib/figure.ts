@@ -23,11 +23,21 @@ export type PoseId =
   | 'ropeUp'
   | 'ropeDown'
 
-export interface Pose {
-  body: string // the figure ink
+// The head is drawn apart from the body so it can look somewhere else than where he goes: a
+// few discrete frames (ahead, up, down, turned back), never a tween, like the poses.
+export interface Head {
+  body: string // the face and neck in the figure ink
   hat: string // the beanie
   band: string // the beanie's turn-up, an overprint of hat and body
-  gear?: string // headphone cups and the harness
+  gear: string // the headphone cups
+}
+
+export interface Pose {
+  body: string // the figure ink, without the head
+  gear?: string // the harness
+  head: Head // as drawn in the pose (seen from the back on the routes and in the plate)
+  turn: Head // the same head side on, facing right: what he shows when he looks at something
+  neck: [number, number] // where the head turns, and the x it is mirrored about
 }
 
 // an ellipse as a path, so every part is one `d`
@@ -77,10 +87,11 @@ function pose(
 ): Pose {
   const h = head(cx * k, cy, side ?? true)
   return {
-    body: [...parts.map((d) => widen(d, k)), h.body].join(' '),
-    hat: h.hat,
-    band: h.band,
-    gear: [h.gear, widen(gear, k)].filter(Boolean).join(' '),
+    body: parts.map((d) => widen(d, k)).join(' '),
+    gear: gear ? widen(gear, k) : undefined,
+    head: h,
+    turn: side === false ? head(cx * k, cy, true) : h,
+    neck: [cx * k, cy + 7],
   }
 }
 
@@ -218,19 +229,28 @@ export const POSES: Record<Exclude<PoseId, 'sit'>, Pose> = {
 
 // The desk figure of the hero (hero/SummitSetup.vue), exactly: drawn in scene units there,
 // scaled here (one figure unit is 2.5 scene units) about its seat on the table rock.
+// The head and the forearms are apart: the head looks about like the others, the forearms tap
+// the keyboard in turn (two frames each, the hand on the keys and lifted, turning about the
+// elbow). The far arm is behind the body, so only its hand shows, past the near one.
 export const SIT = {
   transform: 'scale(0.4) translate(-828 -776)',
   body: [
     'M806 768 C806 754 818 752 832 752 L882 756 C892 758 894 768 888 774 L886 818 L904 818 C908 822 906 826 900 826 L872 826 L872 776 L826 776 C812 776 806 774 806 768 Z',
     'M806 770 C800 744 801 714 810 696 C818 682 838 679 850 688 C860 700 861 740 857 770 Z',
-    'M836 694 C848 708 858 726 862 730 L896 712 L901 718 L868 742 C862 746 854 742 851 736 L830 704 Z',
-    'M832 690 L846 690 L848 676 L834 676 Z',
-    'M826 662 a15 17 0 1 0 30 0 a15 17 0 1 0 -30 0 Z',
+    'M836 694 C848 708 858 726 862 730 L868 742 C862 746 854 742 851 736 L830 704 Z', // upper arm
   ].join(' '),
-  hat: 'M824 668 C821 650 828 636 840 633 C847 631 852 633 855 637 C860 645 861 656 858 666 Z',
-  band: 'M823 669 L859 666 L859 659 L823 662 Z',
+  forearm: 'M857 731 L896 712 L901 718 L868 743 C862 745 856 739 857 731 Z',
+  elbow: [863, 737] as [number, number],
+  farArm: 'M851 728 L913 707 L918 713 L861 741 C855 743 849 737 851 728 Z',
+  farElbow: [857, 735] as [number, number],
+  head: {
+    body: 'M832 690 L846 690 L848 676 L834 676 Z M826 662 a15 17 0 1 0 30 0 a15 17 0 1 0 -30 0 Z',
+    hat: 'M824 668 C821 650 828 636 840 633 C847 631 852 633 855 637 C860 645 861 656 858 666 Z',
+    band: 'M823 669 L859 666 L859 659 L823 662 Z',
+    gear: 'M831.5 674 a5.5 7.5 0 1 0 11 0 a5.5 7.5 0 1 0 -11 0 Z',
+  } as Head,
   phones: 'M829 676 C826 654 834 642 845 642 C855 643 859 655 857 670',
-  gear: 'M831.5 674 a5.5 7.5 0 1 0 11 0 a5.5 7.5 0 1 0 -11 0 Z',
+  neck: [841, 682] as [number, number],
 }
 // where the seat is in the scene units of SummitSetup's drawing, and in its own group
 export const SEAT_LOCAL: [number, number] = [828, 776]
