@@ -31,6 +31,56 @@ import { VIEW } from '@/lib/scene'
 
 type Ink = 'scene' | 'page' | 'ground' | 'flood'
 const INKS: Ink[] = ['scene', 'page', 'ground', 'flood']
+// Where his inks can't print (knocked out by a line of text, or under the sticky header) he is
+// printed again as three copies in difference blend, which together turn every colour x under
+// him into paper + ink - x: the paper gives back exactly his ink, a letter in his ink gives back
+// the paper. So he looks the same as anywhere else and only the letters he covers show, inverted,
+// as in an overprint. Per channel, with s = paper + ink: the first copy takes a off (x - a), the
+// second, white, turns it over (255 - x + a), the third takes e off: a = s - 255, e = 0 when s is
+// over 255, a = 0, e = 255 - s otherwise. Every step stays linear in the fills, so where two flats
+// meet an antialiased pixel mixes into the right colour (with one copy per way it went pink), and
+// the white copy has no flats at all. One triple per paper he meets at once. The swap holds for a
+// letter in his body's ink; the beanie and the gear are other inks (ochre over a navy letter would
+// come out mint), so a plain copy of them (`cap`) prints on top, as everywhere else.
+type Over = `o${0 | 1 | 2}${'a' | 'b' | 'c'}`
+const TRIPLES = [0, 1, 2].map((n) => (['a', 'b', 'c'] as const).map((k) => `o${n}${k}` as Over))
+const OVERS: Over[] = TRIPLES.flat()
+type Layer = Ink | Over | 'cap'
+const LAYERS: Layer[] = [...INKS, ...OVERS, 'cap']
+type Rgb = [number, number, number]
+const parseRgb = (c: string): Rgb | null => {
+  const srgb = c.match(/^color\(srgb ([\d.e-]+) ([\d.e-]+) ([\d.e-]+)(?: \/ ([\d.e-]+))?\)/)
+  if (srgb)
+    return srgb[4] && +srgb[4] < 0.5
+      ? null
+      : ([+srgb[1]!, +srgb[2]!, +srgb[3]!].map((v) => v * 255) as Rgb)
+  const rgb = c.match(/^rgba?\(([\d.]+),? ([\d.]+),? ([\d.]+)(?:[,/] ?([\d.]+))?\)/)
+  if (rgb) return rgb[4] && +rgb[4] < 0.5 ? null : [+rgb[1]!, +rgb[2]!, +rgb[3]!]
+  return null
+}
+// the paper an element prints on: the first background behind it that isn't see-through
+const paperOf = (el: Element | null): Rgb => {
+  for (let e = el; e; e = e.parentElement) {
+    const c = parseRgb(getComputedStyle(e).backgroundColor)
+    if (c) return c
+  }
+  return [255, 255, 255]
+}
+// one flat of his, one channel at a time: the fills of the triple's three copies (see Over)
+const swapFills = (p: Rgb, ink: Rgb) => {
+  const a: number[] = []
+  const e: number[] = []
+  p.forEach((pv, i) => {
+    const sum = Math.round(pv + ink[i]!)
+    a.push(Math.max(0, sum - 255))
+    e.push(Math.max(0, 255 - sum))
+  })
+  return [`rgb(${a.join(' ')})`, 'rgb(255 255 255)', `rgb(${e.join(' ')})`] as const
+}
+// colours as the current theme resolves them, read when first needed (cleared on a theme change)
+const papers = new Map<Element, Rgb>()
+const paper = (el: Element) => papers.get(el) ?? papers.set(el, paperOf(el)).get(el)!
+const inkColours = new Map<Ink, { b: Rgb; h: Rgb; g: Rgb; f: Rgb; hb: Rgb }>()
 type Id = PoseId
 const IDS: Id[] = ['sit', ...(Object.keys(POSES) as Exclude<PoseId, 'sit'>[])]
 
@@ -100,7 +150,7 @@ interface Geo {
   ledges: { x: number; docY: number; pose: Id }[] // the project cards' top edges, page order
   flood: (Rect & { edge: number }) | null // edge: the ridge's depth on its top, 0 if cut straight
   seat: { x: number; y: number; k: number; desk: Rect | null } | null
-  text: { r: Rect; ink: Ink }[] // every block of text in the page, which prints over him
+  text: { r: Rect; ink: Ink; el: Element }[] // every block of text in the page, which prints over him
 }
 let G: Geo | null = null
 let segs: Seg[] = []
@@ -138,6 +188,8 @@ function edgeDepth(el: HTMLElement) {
 }
 
 function measure() {
+  papers.clear()
+  headerEl = null
   const vw = window.innerWidth
   const vh = window.innerHeight
   const q = (s: string) => document.querySelector<HTMLElement>(s)
@@ -155,9 +207,10 @@ function measure() {
   const headEl = q('.site-header')
   const head = headEl ? headEl.getBoundingClientRect().height : 64
 
-  // Text prints over him: each line of text knocks the figure out where they meet, so he
-  // passes behind type and never covers a word. The lines of one run of text are joined
-  // across their leading, so he doesn't show through it in stripes.
+  // Text prints with him: each line of text knocks his inks out where they meet and the white
+  // copy (difference blend) prints him there instead, so he stays whole and never hides a
+  // word, the letters under him inverted. The lines of one run of text are joined across their
+  // leading, so the knockout has no stripes.
   const text: Geo['text'] = []
   const main = q('main')
   if (main) {
@@ -186,6 +239,7 @@ function measure() {
             h: bottom - c.top + 1,
           },
           ink,
+          el,
         })
       })
     }
@@ -656,7 +710,7 @@ function plan() {
 
 // ---- Painting ---------------------------------------------------------------------------
 let layers: Record<
-  Ink,
+  Layer,
   {
     el: SVGSVGElement
     mover: SVGGElement
@@ -763,7 +817,67 @@ function grounds(s: number): Ground[] {
   return out
 }
 
-function setClip(ink: Ink, v: string) {
+let headerEl: Element | null = null
+
+// his flat inks in one layer, as the theme resolves them (cached until the theme changes)
+function inkOf(ink: Ink) {
+  const known = inkColours.get(ink)
+  if (known) return known
+  // the layer's flat inks as resolved: a probe in its defs takes each one as its fill
+  const probe = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+  layers![ink].el.querySelector('defs')!.append(probe)
+  const read = (v: string) => {
+    probe.style.fill = `var(${v})`
+    return parseRgb(getComputedStyle(probe).fill)
+  }
+  const b = read('--fb') ?? [0, 0, 0]
+  const h = read('--fh') ?? b
+  const gr = read('--fg') ?? b
+  probe.style.fill = 'color-mix(in srgb, var(--fb) 72%, var(--fg))'
+  const f = parseRgb(getComputedStyle(probe).fill) ?? b
+  probe.style.fill = 'color-mix(in srgb, var(--fb) 25%, var(--fh))'
+  const hb = parseRgb(getComputedStyle(probe).fill) ?? h
+  const c = { b, h, g: gr, f, hb }
+  probe.remove()
+  inkColours.set(ink, c)
+  return c
+}
+
+// his ink plus the paper, per flat (body, beanie, gear): see Over
+function paintOvers(groups: { ink: Ink; paper: Rgb; d: string[] }[]) {
+  const cap = layers!.cap.el
+  const top = groups[0] ? inkOf(groups[0].ink) : null
+  if (top && cap.dataset.fill !== top.h.join()) {
+    cap.dataset.fill = top.h.join()
+    const rgb = (x: Rgb) => `rgb(${x.map(Math.round).join(' ')})`
+    cap.style.setProperty('--fh', rgb(top.h))
+    cap.style.setProperty('--fg', rgb(top.g))
+    cap.style.setProperty('--fhb', rgb(top.hb))
+  }
+  setClip('cap', top ? `path('${groups.flatMap((g) => g.d).join(' ')}')` : 'none')
+  TRIPLES.forEach((triple, i) => {
+    const g = groups[i]
+    if (!g) return triple.forEach((o) => setClip(o, 'none'))
+    const c = inkOf(g.ink)
+    const flats = [c.b, c.h, c.g, c.f, c.hb].map((x) => swapFills(g.paper, x))
+    const clip = `path('${g.d.join(' ')}')`
+    triple.forEach((o, k) => {
+      const el = layers![o].el
+      const fill = flats.map((f) => f[k]!)
+      if (el.dataset.fill !== fill.join()) {
+        el.dataset.fill = fill.join()
+        el.style.setProperty('--fb', fill[0]!)
+        el.style.setProperty('--fh', fill[1]!)
+        el.style.setProperty('--fg', fill[2]!)
+        el.style.setProperty('--ff', fill[3]!)
+        el.style.setProperty('--fhb', fill[4]!)
+      }
+      setClip(o, clip)
+    })
+  })
+}
+
+function setClip(ink: Layer, v: string) {
   if (last.clips[ink] === v) return
   last.clips[ink] = v
   const el = layers![ink].el
@@ -810,7 +924,7 @@ function paint() {
 
   // pose and place, the same in every ink
   if (st.pose !== last.pose) {
-    for (const ink of INKS) {
+    for (const ink of LAYERS) {
       const L = layers[ink]
       if (last.pose) L.poses[last.pose]!.style.display = 'none'
       L.poses[st.pose]!.style.display = 'inline'
@@ -823,7 +937,7 @@ function paint() {
   if (atDesk) startTyping() // a no-op while a burst runs; it stops itself out of sight or idle
   const tf = `translate(${st.x.toFixed(1)} ${st.y.toFixed(1)}) scale(${((st.flip ? -1 : 1) * st.k).toFixed(4)} ${st.k.toFixed(4)})`
   const regrain = Math.abs(st.k - last.k) > last.k * 0.05
-  for (const ink of INKS) {
+  for (const ink of LAYERS) {
     layers[ink].mover.setAttribute('transform', tf)
     if (regrain)
       layers[ink].pat?.setAttribute('patternTransform', `scale(${(1 / st.k).toFixed(3)})`)
@@ -845,7 +959,7 @@ function paint() {
   // the text boxes he meets, merged where they overlap (even-odd would print a double hole)
   const holes = G.text
     .filter(({ r }) => hit([r.l, r.t - s, r.l + r.w, r.t - s + r.h]))
-    .map((h) => ({ ink: h.ink, r: { ...h.r } }))
+    .map((h) => ({ ...h, r: { ...h.r } }))
   for (let i = 0; i < holes.length; i++)
     for (let j = i + 1; j < holes.length; j++) {
       const A = holes[i]!.r
@@ -865,10 +979,32 @@ function paint() {
     }
   const hole = (h: Geo['text'][number]) => rectPath(h.r.l, h.r.t - s, h.r.w, h.r.h)
   const full = `M-10 -10H${G.vw + 10}V${G.vh + 10}H-10Z`
+  // the overprint copies print him where his inks can't: over type, which knocks them out, and
+  // over the sticky header, which covers them (type is cut at its foot: none prints over it)
+  const overprint = (headInk: Ink) => {
+    const groups = new Map<string, { ink: Ink; paper: Rgb; d: string[] }>()
+    const add = (ink: Ink, p: Rgb, d: string) => {
+      const key = `${ink} ${p.join(' ')}`
+      const g = groups.get(key) ?? groups.set(key, { ink, paper: p, d: [] }).get(key)!
+      g.d.push(d)
+    }
+    const head = G!.head
+    headerEl ??= document.querySelector('.site-header')
+    if (fb[1] < head && headerEl)
+      add(headInk, paper(headerEl), rectPath(-10, -10, G!.vw + 20, head + 10))
+    for (const h of holes) {
+      const t = Math.max(h.r.t - s, head)
+      const b = h.r.t - s + h.r.h
+      if (b > t) add(h.ink, paper(h.el), rectPath(h.r.l, t, h.r.w, b - t))
+    }
+    paintOvers([...groups.values()])
+  }
+  const cut = holes.map(hole).join(' ')
   if (st.map) {
     const p = plateAt(s)
     for (const ink of INKS)
       setClip(ink, ink === 'scene' ? `path('${rectPath(p.l, p.t, p.w, p.h)}')` : 'none')
+    paintOvers([])
     return
   }
   const whole =
@@ -878,17 +1014,14 @@ function paint() {
         ? null
         : 'page'
   if (whole) {
-    const cut = holes.map(hole).join(' ')
     for (const ink of INKS)
       setClip(ink, ink !== whole ? 'none' : cut ? `path(evenodd, '${full} ${cut}')` : 'all')
+    overprint(whole)
     return
   }
+  overprint('page')
   const others = near.map((g) => g.d).join(' ')
   for (const ink of INKS) {
-    const cut = holes
-      .filter((h) => h.ink === ink)
-      .map(hole)
-      .join(' ')
     if (ink === 'page') {
       setClip(ink, `path(evenodd, '${full} ${others} ${cut}')`)
       continue
@@ -945,7 +1078,7 @@ function paintHead() {
     !!look &&
     !sit &&
     POSES[id as Exclude<PoseId, 'sit'>].turn !== POSES[id as Exclude<PoseId, 'sit'>].head
-  for (const ink of INKS) {
+  for (const ink of LAYERS) {
     const h = layers[ink].heads[id]!
     if (tf) h.setAttribute('transform', tf)
     else h.removeAttribute('transform')
@@ -957,7 +1090,7 @@ function setHand(hand: number, up: boolean) {
   if (!layers || up === handsUp[hand]) return
   handsUp[hand] = up
   const [ex, ey] = hand ? SIT.farElbow : SIT.elbow
-  for (const ink of INKS) {
+  for (const ink of LAYERS) {
     const g = layers[ink].hands[hand ? 1 : 0]
     if (up) g.setAttribute('transform', `rotate(-8 ${ex} ${ey})`)
     else g.removeAttribute('transform')
@@ -1095,13 +1228,22 @@ const onResize = () => {
   resizeTimer = window.setTimeout(measure, 150)
 }
 let ro: ResizeObserver | null = null
+// a theme change repaints the papers and inks the overprint copies are mixed from
+let themeObs: MutationObserver | null = null
+let scheme: MediaQueryList | null = null
+function recolour() {
+  papers.clear()
+  inkColours.clear()
+  for (const o of [...OVERS, 'cap'] as const) if (layers) delete layers[o].el.dataset.fill
+  request()
+}
 
 onMounted(() => {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !root.value) return
   const g = getComputedStyle(document.documentElement).getPropertyValue('--grain').trim()
   grain.value = g.replace(/^url\(["']?/, '').replace(/["']?\)$/, '')
   layers = Object.fromEntries(
-    INKS.map((ink) => {
+    LAYERS.map((ink) => {
       const el = root.value!.querySelector<SVGSVGElement>(`.layer.${ink}`)!
       const poses: Record<string, SVGGElement> = {}
       const heads: Record<string, SVGGElement> = {}
@@ -1135,6 +1277,10 @@ onMounted(() => {
   for (const ev of INPUTS) window.addEventListener(ev, onInput, { passive: true })
   document.addEventListener('visibilitychange', onInput)
   window.addEventListener('resize', onResize, { passive: true })
+  themeObs = new MutationObserver(recolour)
+  themeObs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+  scheme = window.matchMedia('(prefers-color-scheme: dark)')
+  scheme.addEventListener('change', recolour)
   ro = new ResizeObserver(remeasure)
   const main = document.querySelector('main')
   if (main) ro.observe(main)
@@ -1144,6 +1290,8 @@ onMounted(() => {
   onInput(new Event('load'))
 })
 onBeforeUnmount(() => {
+  themeObs?.disconnect()
+  scheme?.removeEventListener('change', recolour)
   window.removeEventListener('scroll', request)
   for (const ev of INPUTS) window.removeEventListener(ev, onInput)
   document.removeEventListener('visibilitychange', onInput)
@@ -1163,7 +1311,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="root" class="travel" aria-hidden="true">
-    <svg v-for="ink in INKS" :key="ink" class="layer" :class="ink" focusable="false">
+    <svg
+      v-for="ink in LAYERS"
+      :key="ink"
+      class="layer"
+      :class="[ink, { over: ink.startsWith('o') }]"
+      focusable="false"
+    >
       <defs>
         <pattern
           v-if="grain"
@@ -1233,21 +1387,20 @@ onBeforeUnmount(() => {
 <style scoped>
 .travel {
   display: none;
+}
+/* no box of its own: a stacking context here would keep the difference copy from reaching the
+   page, so each layer is fixed by itself */
+.travel.on {
+  display: contents;
+}
+.layer {
   position: fixed;
   inset: 0;
   z-index: 15; /* over the sections, under the sticky header (20) */
-  pointer-events: none;
-  overflow: hidden;
-}
-.travel.on {
-  display: block;
-}
-.layer {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
-  overflow: visible;
+  overflow: hidden;
+  pointer-events: none;
 }
 .p {
   display: none;
@@ -1281,6 +1434,20 @@ onBeforeUnmount(() => {
   --fh: var(--ink-ochre);
   --fg: color-mix(in srgb, var(--flood-plate) 55%, var(--flood));
 }
+.over {
+  z-index: 21; /* over the sticky header too: he never goes behind it */
+  mix-blend-mode: difference;
+}
+.over .grain {
+  display: none;
+}
+.cap {
+  z-index: 22;
+}
+.cap .b,
+.cap .grain {
+  display: none;
+}
 .b {
   fill: var(--fb);
   /* a hairline of the same ink closes the seams where two flats meet */
@@ -1294,11 +1461,11 @@ onBeforeUnmount(() => {
 }
 /* the far arm, behind him: a step lighter, as a poster prints the far limb */
 .far .b {
-  fill: color-mix(in srgb, var(--fb) 72%, var(--fg));
+  fill: var(--ff, color-mix(in srgb, var(--fb) 72%, var(--fg)));
   stroke: none;
 }
 .hb {
-  fill: color-mix(in srgb, var(--fb) 25%, var(--fh));
+  fill: var(--fhb, color-mix(in srgb, var(--fb) 25%, var(--fh)));
 }
 .g {
   fill: var(--fg);
