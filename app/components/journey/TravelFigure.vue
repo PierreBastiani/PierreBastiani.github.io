@@ -31,7 +31,7 @@ import { VIEW } from '@/lib/scene'
 
 type Ink = 'scene' | 'page' | 'ground' | 'flood'
 const INKS: Ink[] = ['scene', 'page', 'ground', 'flood']
-// Where his inks can't print (knocked out by a line of text, or under the sticky header) he is
+// Where his inks can't print (knocked out by a line of text) he is
 // printed again as three copies in difference blend, which together turn every colour x under
 // him into paper + ink - x: the paper gives back exactly his ink, a letter in his ink gives back
 // the paper. So he looks the same as anywhere else and only the letters he covers show, inverted,
@@ -80,6 +80,10 @@ const swapFills = (p: Rgb, ink: Rgb) => {
 // colours as the current theme resolves them, read when first needed (cleared on a theme change)
 const papers = new Map<Element, Rgb>()
 const paper = (el: Element) => papers.get(el) ?? papers.set(el, paperOf(el)).get(el)!
+// the colour of an element's letters (cleared with the papers)
+const letters = new Map<Element, Rgb>()
+const letter = (el: Element) =>
+  letters.get(el) ?? letters.set(el, parseRgb(getComputedStyle(el).color) ?? [0, 0, 0]).get(el)!
 const inkColours = new Map<Ink, { b: Rgb; h: Rgb; g: Rgb; f: Rgb; hb: Rgb }>()
 type Id = PoseId
 const IDS: Id[] = ['sit', ...(Object.keys(POSES) as Exclude<PoseId, 'sit'>[])]
@@ -189,7 +193,7 @@ function edgeDepth(el: HTMLElement) {
 
 function measure() {
   papers.clear()
-  headerEl = null
+  letters.clear()
   const vw = window.innerWidth
   const vh = window.innerHeight
   const q = (s: string) => document.querySelector<HTMLElement>(s)
@@ -758,7 +762,9 @@ function grounds(s: number): Ground[] {
   const H = g.hero
   const u = Math.max(H.w / (VIEW.x1 - VIEW.x0), H.h / 1000)
   const bottom = H.t + H.h - s
-  if (bottom > -40 && H.t - s < g.vh) {
+  const bandBottom = g.band.t + g.band.h - s
+  // the band stays a ground after the scene has scrolled away: he stands on its Malt button
+  if (bandBottom > -40 && H.t - s < g.vh) {
     const pts: string[] = []
     let ridgeTop = Infinity
     for (let x = -8; x <= vw + 8; x += 16) {
@@ -768,12 +774,12 @@ function grounds(s: number): Ground[] {
       pts.push(`${x.toFixed(1)} ${y.toFixed(1)}`)
     }
     const top = H.t - s
-    const bandBottom = g.band.t + g.band.h - s
-    out.push({
-      ink: 'scene',
-      d: `M-8 ${top}L${pts.join('L')}L${vw + 8} ${top}Z`,
-      box: [0, top, vw, bottom],
-    })
+    if (bottom > -40)
+      out.push({
+        ink: 'scene',
+        d: `M-8 ${top}L${pts.join('L')}L${vw + 8} ${top}Z`,
+        box: [0, top, vw, bottom],
+      })
     out.push({
       ink: 'ground',
       d: `M-8 ${bandBottom}L${pts.join('L')}L${vw + 8} ${bandBottom}Z`,
@@ -817,8 +823,6 @@ function grounds(s: number): Ground[] {
   return out
 }
 
-let headerEl: Element | null = null
-
 // his flat inks in one layer, as the theme resolves them (cached until the theme changes)
 function inkOf(ink: Ink) {
   const known = inkColours.get(ink)
@@ -844,7 +848,9 @@ function inkOf(ink: Ink) {
 }
 
 // his ink plus the paper, per flat (body, beanie, gear): see Over
-function paintOvers(groups: { ink: Ink; paper: Rgb; d: string[] }[]) {
+// one overprint: the type of one paper and one letter colour that he covers, and the ink he is in
+type Overprint = { ink: Ink; paper: Rgb; letter: Rgb; d: string[] }
+function paintOvers(groups: Overprint[]) {
   const cap = layers!.cap.el
   const top = groups[0] ? inkOf(groups[0].ink) : null
   if (top && cap.dataset.fill !== top.h.join()) {
@@ -859,7 +865,11 @@ function paintOvers(groups: { ink: Ink; paper: Rgb; d: string[] }[]) {
     const g = groups[i]
     if (!g) return triple.forEach((o) => setClip(o, 'none'))
     const c = inkOf(g.ink)
-    const flats = [c.b, c.h, c.g, c.f, c.hb].map((x) => swapFills(g.paper, x))
+    // the swap gives the paper back only for letters in his body's ink: over letters in another
+    // ink (navy on the copper Malt button, under him in the band's cream) he prints in theirs
+    const mine = c.b.every((v, j) => Math.abs(v - g.letter[j]!) < 24)
+    const body = mine ? [c.b, c.f] : [g.letter, g.letter]
+    const flats = [body[0]!, c.h, c.g, body[1]!, c.hb].map((x) => swapFills(g.paper, x))
     const clip = `path('${g.d.join(' ')}')`
     triple.forEach((o, k) => {
       const el = layers![o].el
@@ -977,25 +987,25 @@ function paint() {
         j = i
       }
     }
-  const hole = (h: Geo['text'][number]) => rectPath(h.r.l, h.r.t - s, h.r.w, h.r.h)
+  // on whole pixels: his inks and the overprint meet on this edge, and two antialiased edges on
+  // one fractional line leave a seam of neither colour
+  const hole = (h: Geo['text'][number]) => {
+    const l = Math.round(h.r.l)
+    const t = Math.round(h.r.t - s)
+    return rectPath(l, t, Math.round(h.r.l + h.r.w) - l, Math.round(h.r.t - s + h.r.h) - t)
+  }
   const full = `M-10 -10H${G.vw + 10}V${G.vh + 10}H-10Z`
-  // the overprint copies print him where his inks can't: over type, which knocks them out, and
-  // over the sticky header, which covers them (type is cut at its foot: none prints over it)
-  const overprint = (headInk: Ink) => {
-    const groups = new Map<string, { ink: Ink; paper: Rgb; d: string[] }>()
-    const add = (ink: Ink, p: Rgb, d: string) => {
-      const key = `${ink} ${p.join(' ')}`
-      const g = groups.get(key) ?? groups.set(key, { ink, paper: p, d: [] }).get(key)!
-      g.d.push(d)
-    }
-    const head = G!.head
-    headerEl ??= document.querySelector('.site-header')
-    if (fb[1] < head && headerEl)
-      add(headInk, paper(headerEl), rectPath(-10, -10, G!.vw + 20, head + 10))
+  // the overprint copies print him where his inks can't: over type, which knocks them out. Like
+  // his inks they sit under the sticky header, so he goes behind it
+  const overprint = () => {
+    const groups = new Map<string, Overprint>()
     for (const h of holes) {
-      const t = Math.max(h.r.t - s, head)
-      const b = h.r.t - s + h.r.h
-      if (b > t) add(h.ink, paper(h.el), rectPath(h.r.l, t, h.r.w, b - t))
+      const p = paper(h.el)
+      const l = letter(h.el)
+      const key = `${h.ink} ${p.join(' ')} ${l.join(' ')}`
+      const g =
+        groups.get(key) ?? groups.set(key, { ink: h.ink, paper: p, letter: l, d: [] }).get(key)!
+      g.d.push(hole(h))
     }
     paintOvers([...groups.values()])
   }
@@ -1016,10 +1026,10 @@ function paint() {
   if (whole) {
     for (const ink of INKS)
       setClip(ink, ink !== whole ? 'none' : cut ? `path(evenodd, '${full} ${cut}')` : 'all')
-    overprint(whole)
+    overprint()
     return
   }
-  overprint('page')
+  overprint()
   const others = near.map((g) => g.d).join(' ')
   for (const ink of INKS) {
     if (ink === 'page') {
@@ -1233,6 +1243,7 @@ let themeObs: MutationObserver | null = null
 let scheme: MediaQueryList | null = null
 function recolour() {
   papers.clear()
+  letters.clear()
   inkColours.clear()
   for (const o of [...OVERS, 'cap'] as const) if (layers) delete layers[o].el.dataset.fill
   request()
@@ -1435,14 +1446,14 @@ onBeforeUnmount(() => {
   --fg: color-mix(in srgb, var(--flood-plate) 55%, var(--flood));
 }
 .over {
-  z-index: 21; /* over the sticky header too: he never goes behind it */
+  z-index: 16; /* over his inks, under the sticky header (20), which he goes behind */
   mix-blend-mode: difference;
 }
 .over .grain {
   display: none;
 }
 .cap {
-  z-index: 22;
+  z-index: 17;
 }
 .cap .b,
 .cap .grain {
