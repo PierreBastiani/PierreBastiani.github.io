@@ -425,4 +425,18 @@ const laptop = box(96, 88, 50, 6, 6, -4, 14)
   border-color: var(--on-ground);
   color: var(--on-ground);
 }
+/* large text on a phone: a long word ("téléphone") is wider than half the plate, so the two
+   captions stack, each under its stamp; the plates are in one column here, no line to keep */
+@media (max-width: 20rem) {
+  .band {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cap {
+    min-height: 0;
+  }
+  .cap + .cap {
+    border-left: 0;
+    border-top: 1px solid var(--on-ground-line);
+  }
+}
 </style>

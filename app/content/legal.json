@@ -95,8 +95,7 @@
           "title": "Sur le site",
           "text": [
             "Le site ne pose aucun cookie, ne mesure pas l’audience et ne charge rien depuis un autre site.",
-            "Pendant la visite, le navigateur garde deux informations techniques dans l’onglet ouvert. La première est la position de défilement des pages déjà vues, pour vous ramener au même endroit quand vous revenez en arrière. La seconde ne sert que si une page doit être rechargée, par exemple après une mise à jour du site : elle évite de la recharger en boucle et note où en était la page (ce qui y était ouvert ou déjà choisi), jamais ce que vous y avez tapé. Les deux s’effacent à la fermeture de l’onglet et ne sont envoyées ni à moi ni à l’hébergeur.",
-            "Si vous choisissez le thème clair ou sombre avec le bouton en haut de page, le navigateur garde aussi ce choix dans son stockage local (clé « theme »). Il ne quitte pas votre appareil, et revenir au thème automatique l’efface.",
+            "Le navigateur garde sur votre appareil des informations techniques propres à ce site. Il peut s’agir de l’endroit où vous en étiez dans une page déjà vue, de quoi recharger correctement une page après une mise à jour du site, d’un choix d’affichage comme le thème clair ou sombre, ou d’une aide à l’écran déjà vue, pour ne pas l’afficher à nouveau. Elles servent uniquement à faire fonctionner les pages que vous consultez, ne contiennent rien de ce que vous saisissez et ne sont envoyées ni à moi ni à l’hébergeur. Vous pouvez les effacer dans les réglages de votre navigateur.",
             "Les boutons « Signer le carnet de sommet » et « Écrire un mail » ouvrent votre messagerie : le message part de votre boîte, pas de ce site.",
             "Les liens vers GitHub, LinkedIn et Malt ouvrent d’autres sites, qui ont leurs propres règles."
           ]
@@ -165,5 +164,5 @@
       ]
     }
   ],
-  "updated": "Mise à jour le 21 novembre 2026"
+  "updated": "Mise à jour le 23 novembre 2026"
 }

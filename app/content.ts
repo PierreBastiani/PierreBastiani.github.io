@@ -102,7 +102,7 @@ export interface Project {
   text: string
   tags: string[]
   /** which small illustration ProjectArt.vue draws for it */
-  art: 'homelab' | 'smarket' | 'gree' | 'site' | 'talk'
+  art: 'homelab' | 'smarket' | 'gree' | 'site' | 'talk' | 'paste'
   /** four-letter catalogue code printed on the card's band */
   code: string
   /** extra links under the text, when the repo isn't the only thing to open */
@@ -110,6 +110,14 @@ export interface Project {
 }
 
 export const projects: Project[] = [
+  {
+    name: 'slack-paste',
+    href: 'https://github.com/PierreBastiani/slack-paste',
+    text: 'Un skill d’agent (Claude Code, Codex, Cursor) qui copie un message markdown pour que Slack le mette en forme au collage, tableaux compris. Avec la rétro-ingénierie du moteur de collage de Slack\u00a0: quel format gagne, quand le markdown est reconnu, ce que deviennent titres et tableaux, mesurés dans un labo Playwright.',
+    tags: ['Agent Skills', 'Playwright', 'Slack'],
+    art: 'paste',
+    code: 'PSTE',
+  },
   {
     name: 'from-chat-to-agent',
     href: 'https://pierre.kensae.com/from-chat-to-agent/deck/',

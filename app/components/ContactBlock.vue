@@ -277,7 +277,27 @@ dd {
 }
 @media (max-width: 52rem) {
   .grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Large text (a phone at 150 % or 200 %, as in SiteHeader): the name goes under the portrait
+   and the register's column and band words may narrow, so both stay inside the screen */
+@media (max-width: 20rem) {
+  .id {
+    flex-wrap: wrap;
+  }
+  .logbook {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .band {
+    overflow-wrap: anywhere;
+  }
+  /* the dated line: "Vous" goes under the date, on the same ruled line, which grows for it */
+  .ruled p {
+    flex-wrap: wrap;
+    row-gap: 0;
+    height: auto;
+    min-height: 2.4rem;
   }
 }
 @media (max-width: 30rem) {

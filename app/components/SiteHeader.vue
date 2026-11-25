@@ -194,4 +194,20 @@ nav a:focus-visible {
     display: inline;
   }
 }
+/* Large text (a phone at 150 % or 200 %, where a rem is 24 or 32 px; at normal size only a
+   screen under 320 px): mark, switch and key no longer fit one row, so the key stays by the
+   mark and the switch takes a second row under them, rather than pushing the page sideways */
+@media (max-width: 20rem) {
+  .bar {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+    padding-block: 0.5rem;
+  }
+  .switch {
+    order: 1;
+    flex-basis: 100%;
+    padding-bottom: 0.25rem;
+    white-space: normal;
+  }
+}
 </style>

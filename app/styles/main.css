@@ -193,6 +193,11 @@
   --on-flood: var(--on-accent);
   --flood-plate: var(--on-accent);
   --flood-press: color-mix(in srgb, var(--ground) 18%, var(--flood));
+  /* how the flood's grain lays on it: soft-light by day, where its light specks only part the
+     dark words further from their ground. At dusk the words are the light ones, so the grain
+     only darkens (multiply): no speck under a word can be lighter than the flood itself, and the
+     words keep the token pair's 5.03:1 (soft-light took them to 3.9:1, F1810) */
+  --flood-grain-blend: soft-light;
 
   /* Inks: the print palette every drawing is made of (2026-11-03 illustration pass, after
      Roger Broders' PLM posters and Swiss maps). A drawing picks from these eight, as flats;
@@ -304,6 +309,7 @@
     --flood: color-mix(in srgb, var(--ink-porphyry) 64%, var(--ink-sea));
     --on-flood: var(--ink);
     --flood-plate: var(--ink-oxblood);
+    --flood-grain-blend: multiply;
     --ink-oxblood: #0e1524;
     --ghost-ink: var(--ink-ochre); /* lit by the last light */
     --grain-opacity: 0.32;
@@ -369,6 +375,7 @@
   --flood: color-mix(in srgb, var(--ink-porphyry) 64%, var(--ink-sea));
   --on-flood: var(--ink);
   --flood-plate: var(--ink-oxblood);
+  --flood-grain-blend: multiply;
   --ink-oxblood: #0e1524;
   --ghost-ink: var(--ink-ochre); /* lit by the last light */
   --grain-opacity: 0.32;
@@ -625,6 +632,16 @@ a:hover {
 .btn:hover::after {
   opacity: 1;
 }
+/* Pressed: the key sinks a pixel and the inner rule prints at once, heavier than the hover's,
+   so a tap shows before the page goes (a touch screen has no hover to show first) */
+.btn:active {
+  translate: 0 1px;
+}
+.btn:active::after {
+  opacity: 1;
+  border-width: 2px;
+  transition: none;
+}
 .btn-primary,
 .btn-primary:hover {
   background: var(--accent);
@@ -659,7 +676,7 @@ a:hover {
   inset: 0;
   z-index: 4;
   background: var(--grain);
-  mix-blend-mode: soft-light;
+  mix-blend-mode: var(--flood-grain-blend);
   opacity: var(--grain-opacity);
   pointer-events: none;
 }

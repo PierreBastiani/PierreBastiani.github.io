@@ -174,6 +174,13 @@ const call = props.variant === 'geek' ? useContactPhone() : null
   letter-spacing: -0.015em;
   max-width: 26ch;
 }
+/* Desktop: the lead takes its seven columns in four lines rather than five, so the hero's band
+   leaves the scene its height on a 900 px window (HeroStrata fits the hero to the window) */
+@media (min-width: 52.0625rem) {
+  .main .lead {
+    max-width: 32ch;
+  }
+}
 .main .aside {
   grid-column: 9 / -1;
   width: 100%;
@@ -240,10 +247,10 @@ const call = props.variant === 'geek' ? useContactPhone() : null
 @media (max-width: 52rem) {
   .intro-grid,
   .intro-grid.main {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .meta {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 1rem 1.25rem;
   }
   .meta > div:nth-child(n) {
@@ -258,6 +265,20 @@ const call = props.variant === 'geek' ? useContactPhone() : null
   }
   .aside {
     width: 100%;
+  }
+}
+
+/* Large text (a phone at 150 % or 200 %, as in SiteHeader): the index row takes one column and
+   the place names may break at their hyphens, so no word pushes the band past the screen */
+@media (max-width: 20rem) {
+  .meta {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .meta > div:nth-child(3) {
+    grid-column: auto;
+  }
+  .nw {
+    white-space: normal;
   }
 }
 

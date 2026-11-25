@@ -358,6 +358,21 @@ const { phone, phoneHref } = useContactPhone()
 .me {
   align-items: end;
 }
+/* Large text (a phone at 150 % or 200 %, as in SiteHeader): the name goes under the plate, and
+   in the call band the number and the place names may wrap, in a column no wider than the band */
+@media (max-width: 20rem) {
+  .me {
+    flex-wrap: wrap;
+  }
+  .call {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* .call outranks the nowrap rules further down */
+  .call .phone,
+  .call .nw {
+    white-space: normal;
+  }
+}
 /* plate 00's portrait, printed in the card's ink; the head rises out of the frame's top rule.
    The screen is a positive: at dusk the card is navy and light dots would print a negative,
    so the plate gets its own sheet of shell paper there, printed in the night ink */

@@ -5,7 +5,7 @@ import { screenOpen } from '@/lib/halftone'
 import { ridgeFacets, ridgeLine, type RidgeOptions } from '@/lib/ridge'
 // Small illustrations for the project cards, drawn in three layers like the hero.
 // On hover or keyboard focus of the card, the layers lift apart a little (see ProjectGrid).
-export type ArtKind = 'homelab' | 'smarket' | 'gree' | 'site' | 'talk'
+export type ArtKind = 'homelab' | 'smarket' | 'gree' | 'site' | 'talk' | 'paste'
 defineProps<{ kind: ArtKind; label: string; sub?: string }>()
 
 // The vignettes' one screened plate is the cast shadow of the three object cards: lilac dots
@@ -41,6 +41,11 @@ const pulses =
 // as the deck prints it in orange), the chat bubble in front, the agent's terminal beside it
 const screen = box(118, 34, 180, 104, 10, -7)
 const term = box(296, 178, 74, 40, 10, -7, 30)
+
+// slack-paste: the clipboard standing on the ground (its clip the porphyry spot, the sheet with
+// a # heading line and two bullets, the plugin's icon), and in front the chat bubble it pastes
+// into, holding the table that survives
+const board = box(92, 44, 118, 164, 10, -7, 44)
 
 // the site itself: the hero as a small PLM poster
 const card = (
@@ -203,6 +208,31 @@ const site = {
             <path d="M144 120 H232 M132 130 H160" class="ink-hair" />
             <path :d="screen.outline" class="ink-line" />
           </template>
+          <template v-else-if="kind === 'paste'">
+            <!-- the clipboard: its shadow, the board, the sheet, the clip and its ring -->
+            <path :d="board.cast" class="cast" />
+            <path :d="board.front" class="face" />
+            <path :d="board.top" class="lit" />
+            <path :d="board.side" class="shade" />
+            <path d="M104 62 H198 V198 H104 Z" class="lit" />
+            <path d="M104 62 H198 V198 H104 Z" class="ink-hair" />
+            <path :d="board.outline" class="ink-line" />
+            <path d="M132 34 H170 V58 H132 Z" class="spot" />
+            <path d="M170 34 L176 30 V54 L170 58 Z" class="spot-shade" />
+            <circle cx="151" cy="34" r="12" class="spot" />
+            <circle cx="151" cy="34" r="4.5" class="lit" />
+            <path d="M132 34 H139 A12 12 0 0 1 163 34 H170 V58 H132 Z" class="ink-line" />
+            <!-- the sheet: # and its heading line, then two bullets -->
+            <path
+              d="M121 84 L116 112 M133 84 L128 112 M113 93 H138 M111 103 H136"
+              class="ink-heavy"
+            />
+            <path d="M146 98 H186" class="ink-heavy" />
+            <circle cx="120" cy="136" r="4" class="dark" />
+            <path d="M132 136 H184" class="ink-heavy" />
+            <circle cx="120" cy="160" r="4" class="dark" />
+            <path d="M132 160 H168" class="ink-heavy" />
+          </template>
           <template v-else>
             <path :d="site.far" class="far" />
             <path :d="site.farShade" class="far-shade" />
@@ -284,6 +314,20 @@ const site = {
             <path :d="term.side" class="shade" />
             <path d="M306 188 L314 193 L306 198 Z M320 196 h12 v3 h-12 Z" class="lit" />
             <path :d="term.outline" class="ink-line" />
+          </template>
+          <template v-else-if="kind === 'paste'">
+            <!-- the chat bubble, tail down to the left, and the table that arrives in it -->
+            <path d="M236 116 H376 V196 H276 L258 214 V196 H236 Z" class="lit" />
+            <path d="M252 130 H360 V146 H252 Z" class="face" />
+            <path
+              d="M252 130 H360 V182 H252 Z M288 130 V182 M324 130 V182 M252 146 H360 M252 164 H360"
+              class="ink-hair"
+            />
+            <path
+              d="M262 156 H278 M298 156 H314 M334 156 H352 M262 174 H280 M298 174 H310 M334 174 H346"
+              class="ink-hair"
+            />
+            <path d="M236 116 H376 V196 H276 L258 214 V196 H236 Z" class="ink-line" />
           </template>
           <template v-else>
             <path :d="site.near" class="near" />

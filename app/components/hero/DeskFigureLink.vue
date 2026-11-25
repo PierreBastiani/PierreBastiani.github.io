@@ -72,20 +72,22 @@ onBeforeUnmount(() => clearTimeout(timer))
       @keydown="onKey"
     >
       <a ref="figure" class="figure" href="#contact" aria-label="Pierre Bastiani, me contacter"></a>
-      <div class="bridge">
-        <a class="card print" href="#contact" :tabindex="open ? 0 : -1" @click="open = false">
-          <!-- a printed route card: lettering band, the portrait in a frame, a perforation -->
-          <span class="band" aria-hidden="true"
-            ><span>Relais du sommet</span><span>802 m</span></span
-          >
-          <span class="frame"><PortraitImage :size="48" alt="" /></span>
-          <span class="who">
-            <span class="name">{{ contact.name }}</span>
-            <span class="role">{{ profile.role }}</span>
-          </span>
-          <span class="avail">{{ profile.availability }}</span>
-          <span class="cta">Me contacter →</span>
-        </a>
+      <div class="lane">
+        <div class="bridge">
+          <a class="card print" href="#contact" :tabindex="open ? 0 : -1" @click="open = false">
+            <!-- a printed route card: lettering band, the portrait in a frame, a perforation -->
+            <span class="band" aria-hidden="true"
+              ><span>Relais du sommet</span><span>802 m</span></span
+            >
+            <span class="frame"><PortraitImage :size="48" alt="" /></span>
+            <span class="who">
+              <span class="name">{{ contact.name }}</span>
+              <span class="role">{{ profile.role }}</span>
+            </span>
+            <span class="avail">{{ profile.availability }}</span>
+            <span class="cta">Me contacter →</span>
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -116,12 +118,31 @@ onBeforeUnmount(() => clearTimeout(timer))
   inset: 0;
   pointer-events: auto;
 }
+/* The lane is the strip left of the figure where the card may stand: from the top of the
+   scene's visible sky (under the cut, plus half a rem) to half a rem over the scene's foot,
+   which clips. The card opens with its top half a rem over the figure's head, so the spacer
+   above it is that far down the lane; when the scene is too short for the card there (a
+   1280×900 or 1024×768 window: the scene takes only what the band leaves), the spacer gives
+   way and the card rises until its foot is on the lane's, never cut. The lane takes no
+   pointer: only the bridge does, while the card is open. */
+.lane {
+  position: absolute;
+  right: 100%;
+  /* from the zone's top (65.2cqh) and its foot (86cqh) */
+  top: calc(var(--sky-cut) + 0.5rem - 65.2cqh);
+  bottom: calc(0.5rem - 14cqh);
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+.lane::before {
+  content: '';
+  flex: 0 1 max(0px, 65.2cqh - 1rem - var(--sky-cut));
+}
 /* The bridge holds the card and reaches back to the figure, so the pointer never crosses a
    gap. It only takes the pointer while the card is open. */
 .bridge {
-  position: absolute;
-  right: 100%;
-  top: -0.5rem;
+  flex: none;
   padding-right: 0.6rem;
   pointer-events: none;
 }
@@ -222,18 +243,23 @@ onBeforeUnmount(() => clearTimeout(timer))
 }
 /* narrow screens with a keyboard: the card sits above the figure, the bridge reaches down */
 @media (max-width: 40rem) {
-  .bridge {
+  .lane {
     right: auto;
     left: 50%;
     top: auto;
     bottom: 100%;
-    padding: 0 0 0.6rem;
     transform: translateX(-50%);
+  }
+  .lane::before {
+    display: none;
+  }
+  .bridge {
+    padding: 0 0 0.6rem;
   }
 }
 /* touch: a tap on the figure goes straight to the contact section, no card */
 @media (hover: none) {
-  .bridge {
+  .lane {
     display: none;
   }
 }

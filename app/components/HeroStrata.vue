@@ -32,14 +32,11 @@ import DeskFigureLink from './hero/DeskFigureLink.vue'
 // Scene units and the phone-safe zone are described in lib/scene.ts.
 
 // The sky's one screened plate: the sky ink breaks into dots on its way down to the paper band
-// at the horizon, in four steps of one tile. Tiles of 32 scene units, about 17 px on screen (12 px
-// between dots), so the dots read as print at any width and never beat with the pixels.
-const SKY_P = 32
-const skyRamp = ramp(320, SKY_P, 1, [0.13, 0.24, 0.24, 0.13])
-// Under the wordmark the same ramp is printed on its own plate, set from the letters instead of
-// the scene: it starts at the caps' top and runs down to the warm band, so the dots only show
-// between the letters and the open sky over the name stays flat. The column width sets the
-// caps' height and the viewport sets the scene's, so no scene unit fits every screen; the plate
+// at the horizon, in four steps of one tile. It is printed on its own plate under the wordmark,
+// set from the letters instead of the scene: it starts at the caps' top and runs down to the
+// warm band, so the dots only show between the letters and the open sky over the name stays
+// flat. The column width sets the caps' height and the viewport sets the scene's, so no scene
+// unit fits every screen; the plate
 // counts in px instead, an 18 px tile (32 units on a 574 px phone scene), the same screen at
 // every size, as a printer's would be.
 const PLATE_P = 18
@@ -260,17 +257,16 @@ function placeLabels() {
   placed.value = next
 }
 function onSceneEnter(e: PointerEvent) {
-  if (props.fit && e.pointerType === 'mouse') placeLabels()
+  if (e.pointerType === 'mouse') placeLabels()
 }
 
 // noTranslate: the title is a name, which browser translation would garble.
-// fit: set the title as a wordmark that fills the column, behind the hills (the main page).
-// Its numbers are the title's width in em at 800 with -0.035em tracking, in caps, measured in
-// Chrome: the whole title on one line first, then each line on its own (phones).
-const props = defineProps<{ title: string[]; noTranslate?: boolean; fit?: number[] }>()
-const fitStyle = props.fit
-  ? Object.fromEntries(props.fit.map((w, i) => [i ? `--fit-${i - 1}` : '--fit', w]))
-  : undefined
+// fit: set the title as a wordmark that fills the column, behind the hills. Every page passes
+// it: the hero's only h1 is the wordmark. Its numbers are the title's advance width in em, in
+// Kensae Sans caps with ss01, measured in Chrome: the whole title on one line first, then each
+// line on its own (phones).
+const props = defineProps<{ title: string[]; noTranslate?: boolean; fit: number[] }>()
+const fitStyle = Object.fromEntries(props.fit.map((w, i) => [i ? `--fit-${i - 1}` : '--fit', w]))
 
 const cardOpen = ref(false) // the summit figure's card holds the pointer parallax while open
 useParallax(scene, cardOpen)
@@ -331,50 +327,19 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
 </script>
 
 <template>
-  <section id="top" class="hero" :class="{ wm: props.fit }" aria-labelledby="hero-title">
+  <section id="top" class="hero wm" aria-labelledby="hero-title">
     <div ref="scene" class="scene print" @pointerenter="onSceneEnter">
-      <!-- sky and sun: flat bands, a darker band at the top, two thin ones at the horizon -->
+      <!-- sky: a flat band of sky ink, paper at the horizon, a darker thin band under it -->
       <HeroLayer :y0="-400" :h="940" :depth="0">
-        <defs>
-          <pattern
-            v-for="(b, i) in skyRamp"
-            :id="`ht-sky-${i}`"
-            :key="i"
-            patternUnits="userSpaceOnUse"
-            :width="SKY_P"
-            :height="SKY_P"
-          >
-            <circle
-              v-for="(d, j) in b.dots"
-              :key="j"
-              :cx="d.cx"
-              :cy="d.cy"
-              :r="d.r"
-              :fill="b.paper ? 'var(--sky-screen)' : 'var(--sky-top)'"
-            />
-          </pattern>
-        </defs>
         <rect x="-1300" y="-400" width="4200" height="940" fill="var(--sky-top)" />
-        <template v-if="!props.fit">
-          <rect x="-1300" y="384" width="4200" height="156" fill="var(--sky-screen)" />
-          <rect
-            v-for="(b, i) in skyRamp"
-            :key="'ht' + i"
-            x="-1300"
-            :y="b.y"
-            width="4200"
-            :height="b.h"
-            :fill="`url(#ht-sky-${i})`"
-          />
-        </template>
         <!-- under the wordmark's plate: the paper it leaves bare when the parallax lifts it -->
-        <rect v-else x="-1300" y="400" width="4200" height="140" fill="var(--sky-screen)" />
+        <rect x="-1300" y="400" width="4200" height="140" fill="var(--sky-screen)" />
         <rect x="-1300" y="494" width="4200" height="46" fill="var(--sky-low)" />
       </HeroLayer>
 
       <!-- the wordmark's screened plate: sky ink, the ramp, then paper down to the warm band.
            It moves with the wordmark, so the caps never slide into the dots -->
-      <div v-if="props.fit" class="skyplate" :style="fitStyle" aria-hidden="true">
+      <div class="skyplate" :style="fitStyle" aria-hidden="true">
         <div class="bleed">
           <svg ref="plate" class="ramp" focusable="false">
             <defs>
@@ -414,7 +379,6 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
           <!-- the same plate redrawn while the pointer presses it (fine pointers), see
                usePress; hidden at rest, so the page at rest is the SVG above -->
           <PressPlate
-            v-if="props.fit"
             class="press"
             host=".scene"
             :tile="PLATE_P"
@@ -494,7 +458,7 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
 
       <!-- the wordmark: in front of the sea and the shore, behind the hills, so the summits
            of La Gaude and Saint-Paul stand over its feet like a poster's lettering -->
-      <div v-if="props.fit" class="wordmark" :style="fitStyle">
+      <div class="wordmark" :style="fitStyle">
         <div class="bleed">
           <h1 id="hero-title" :translate="props.noTranslate ? 'no' : undefined">
             <template v-for="(line, i) in props.title" :key="line"
@@ -600,34 +564,8 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
       <!-- the summit and the desk -->
       <HeroLayer :y0="380" :h="620" :depth="0.85">
         <SummitSetup />
-        <!-- an Aleppo pine on the crest to the west: the poster's frame on wide screens; the
-             wordmark frames the view instead (the crown would sit on its last letters) -->
-        <g v-if="!props.fit" transform="translate(305 22)">
-          <path
-            d="M1434 782 C1428 700 1412 600 1396 482 L1408 480 C1424 600 1442 700 1450 782 Z"
-            fill="var(--trunk-shade)"
-          />
-          <path
-            d="M1442 782 C1436 700 1419 600 1402 481 L1408 480 C1424 600 1442 700 1450 782 Z"
-            fill="var(--trunk)"
-          />
-          <path
-            d="M1399 530 C1380 505 1360 488 1334 474 L1338 468 C1364 482 1386 498 1404 520 Z"
-            fill="var(--trunk-shade)"
-          />
-          <path
-            d="M1402 505 C1424 488 1446 474 1474 462 L1477 468 C1450 480 1428 494 1406 512 Z"
-            fill="var(--trunk)"
-          />
-          <path
-            d="M1290 470 C1296 452 1320 444 1344 446 C1356 432 1384 428 1404 436 C1420 424 1452 424 1470 436 C1494 432 1522 440 1532 456 C1540 466 1528 474 1510 472 C1490 480 1462 476 1446 470 C1424 480 1392 478 1376 472 C1356 482 1322 482 1306 476 C1296 476 1288 474 1290 470 Z"
-            fill="var(--pine)"
-          />
-          <path
-            d="M1350 446 C1366 436 1388 433 1404 438 C1422 428 1450 428 1468 438 C1490 436 1512 444 1524 456 C1500 450 1478 446 1460 448 C1440 442 1418 444 1404 448 C1388 444 1366 446 1350 446 Z"
-            fill="var(--pine-lit)"
-          />
-        </g>
+        <!-- no pine on the crest to the west: the wordmark frames the view (its crown would sit
+             on the last letters) -->
       </HeroLayer>
 
       <!-- foreground: the edge of the band below -->
@@ -636,17 +574,6 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
       </HeroLayer>
 
       <DeskFigureLink v-model:open="cardOpen" />
-
-      <div v-if="!props.fit" class="title" style="--depth: 0.6">
-        <div class="wrap">
-          <h1 id="hero-title" :translate="props.noTranslate ? 'no' : undefined">
-            <!-- a space between the lines, so the heading's text reads "Pierre Bastiani" -->
-            <template v-for="(line, i) in props.title" :key="line"
-              >{{ i > 0 ? ' ' : '' }}<span :class="{ indent: i > 0 }">{{ line }}</span></template
-            >
-          </h1>
-        </div>
-      </div>
     </div>
 
     <div class="intro on-ground">
@@ -716,41 +643,12 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
     display: none;
   }
 }
-.title {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  /* capped by the scene height so the name always sits on the sky, above the horizon at 52% */
-  padding-top: calc(clamp(2.5rem, 9svh, 6rem) + var(--sky-cut));
-  pointer-events: none;
-  transform: translate3d(
-    calc(var(--px) * var(--depth) * -18px),
-    calc(var(--scroll) * (1 - var(--depth)) * 150px + var(--py) * var(--depth) * -6px),
-    0
-  );
-}
-/* same column as the content below: .wrap gives the max-width and the gutters */
-.title h1 {
-  font-size: min(var(--step-4), 12svh);
-  font-weight: 800;
-  line-height: 0.86;
-  letter-spacing: -0.035em;
-  color: var(--ink);
-  pointer-events: auto;
-}
-.title h1 span {
-  display: block;
-}
-.title h1 .indent {
-  padding-left: 0.5em;
-}
 /* The wordmark runs off both edges of the screen, like a poster title cropped by its sheet:
    the caps' ink is a little wider than the screen, so the edges cut into the P's stem and the
    last I's, never further, and the I less (a thin I would read as a rule). Sizes count from
    the scene's width (100cqi in .bleed). The fit numbers are advance widths; the caps' ink
-   starts 0.063em in and ends about 0.02em short, and each edge cuts --cut-l / --cut-r more. On very wide screens the caps stop growing at half the scene's
+   starts 0.045em in and ends 0.045em short (the 0.09 below), and each edge cuts --cut-l /
+   --cut-r more. On very wide screens the caps stop growing at half the scene's
    height, then stand inside it, centred.
    Phones: the two lines run off the left edge only (the P's and the B's stems are cut) and
    both end on the right gutter, so the E and the last I, the letters a cut would turn into
@@ -841,7 +739,7 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
 }
 .wordmark h1 {
   /* one line, its ink a hair wider than the screen: the part the edges leave is centred on it
-     (0.0215em moves the ink's centre, not the advance's, onto the screen's) */
+     (the left edge cuts more than the right, so the line moves half the difference left) */
   position: relative;
   left: 50%;
   width: max-content;
@@ -862,12 +760,28 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
   pointer-events: auto;
 }
 /* Wide screens: the wordmark is the sky's subject, so the empty top of the sky goes, the same
-   cut the phones get */
+   cut the phones get. The hero fills the window under the header, band included: the scene
+   takes what the band leaves (at least 24rem, the cut included), so the band's buttons end
+   on the first screen and its foot on the window's. Past 60rem of scene the band's ground
+   runs on under it; past an 84rem window the hero stops growing. */
 @media (min-width: 40.0625rem) {
+  .wm {
+    display: flex;
+    flex-direction: column;
+    min-height: min(100svh - var(--header-h), 80rem);
+    background: var(--ground);
+  }
   .wm .scene {
     --sky-cut: min(13svh, 6.5rem);
+    flex: 1 0 24rem;
+    height: auto;
+    max-height: 60rem;
     margin-top: calc(-1 * var(--sky-cut));
     clip-path: inset(var(--sky-cut) 0 0 0);
+  }
+  /* the band's foot is the window's, so it needs less paper under the buttons */
+  .wm .inner {
+    padding-bottom: 2.25rem;
   }
 }
 /* Phones: two lines, each as wide as the screen from its left edge to the right gutter, like a
@@ -926,10 +840,6 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
     margin-top: calc(-1 * var(--sky-cut));
     clip-path: inset(var(--sky-cut) 0 0 0);
   }
-  /* the name moves up with it, so the sky under it stays as tall as the sky above */
-  .title {
-    padding-top: calc(2.5rem + var(--sky-cut));
-  }
 }
 .intro {
   position: relative;
@@ -964,7 +874,6 @@ function plateLattice(f: Frame, cv: HTMLCanvasElement): Built | null {
   padding-block: 1.8rem 3.5rem;
 }
 @media (prefers-reduced-motion: reduce) {
-  .title,
   .wordmark,
   .skyplate {
     transform: none;

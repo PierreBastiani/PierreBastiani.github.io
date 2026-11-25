@@ -39,6 +39,7 @@ type Layout = {
   m: number // where the content column starts
   spine: number
   marks: Mark[]
+  floods: [number, number][] // the flood sections' tops and feet, where numbers take its ink
 }
 
 const root = ref<HTMLElement | null>(null)
@@ -87,7 +88,11 @@ function measure() {
       reach: Math.round(r.bottom - origin),
     })
   }
-  lay.value = { H: el.clientHeight, top, sea: seaY, m, spine: spineFor(m) + 0.5, marks }
+  const floods = [...document.querySelectorAll('main .section.flood')].map((s) => {
+    const r = s.getBoundingClientRect()
+    return [Math.round(r.top - origin), Math.round(r.bottom - origin)] as [number, number]
+  })
+  lay.value = { H: el.clientHeight, top, sea: seaY, m, spine: spineFor(m) + 0.5, marks, floods }
   readScroll()
 }
 
@@ -101,13 +106,15 @@ const geo = computed(() => {
   const yOf = (alt: number) => L.top + (1 - alt / SUMMIT) * span
   const hair: string[] = []
   const line: string[] = []
-  const nums: { y: number; n: number; end?: 'top' | 'foot' }[] = []
+  const nums: { y: number; n: number; end?: 'top' | 'foot'; flood?: boolean }[] = []
+  // a number over a flood prints in the flood's ink (the rail's grey doesn't read on porphyry)
+  const onFlood = (y: number) => L.floods.some(([t, b]) => y > t && y < b)
   for (let a = 800; a > 0; a -= 10) {
     const ty = Math.round(yOf(a)) + 0.5
     const len = a % 100 === 0 ? T100 : a % 50 === 0 ? T50 : T10
     ;(a % 50 === 0 ? line : hair).push(`M${f(x)} ${f(ty)}H${f(x - len)}`)
     // 800 sits a few px under the 802 cap: the cap carries the number
-    if (a % 100 === 0 && ty - L.top > 24) nums.push({ y: ty, n: a })
+    if (a % 100 === 0 && ty - L.top > 24) nums.push({ y: ty, n: a, flood: onFlood(ty) })
   }
   // the two ends: the summit and the sea, capped across the spine
   line.push(`M${f(x - T100)} ${f(L.top + 0.5)}H${f(x + 4)}`)
@@ -263,7 +270,7 @@ onBeforeUnmount(() => {
         v-for="n in geo.nums"
         :key="n.n"
         class="num"
-        :class="n.end"
+        :class="[n.end, { flood: n.flood }]"
         :style="{ top: `${n.y}px`, left: `${lay.spine - T100 - 6}px` }"
         >{{ n.n }}</span
       >
@@ -355,11 +362,17 @@ onBeforeUnmount(() => {
 .num.deep {
   color: var(--on-ground-muted);
 }
+/* over the projects' flood the numbers print in its ink, as its own words do */
+.num.flood {
+  color: var(--on-flood);
+}
 .num.top {
   translate: -100% 30%;
 }
+/* the sea's 0 stands on the sand bank, where the rail's grey reads too faint at dusk */
 .num.foot {
   translate: -100% -130%;
+  color: var(--ink);
 }
 /* section names run down the margin under their leader, read as the page scrolls */
 .mark {

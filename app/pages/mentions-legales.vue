@@ -168,8 +168,6 @@ h1 {
 }
 h2 {
   font-size: var(--step-2);
-  font-weight: 650;
-  letter-spacing: -0.02em;
 }
 h3 {
   margin-bottom: 0.4rem;

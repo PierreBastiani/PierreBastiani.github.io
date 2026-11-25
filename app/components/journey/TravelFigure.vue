@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { routes } from '@/content'
-import { POSES, SIT, SEAT_LOCAL, type PoseId } from '@/lib/figure'
+import { POSES, SIT, SEAT_LOCAL, type Head, type Pose, type PoseId } from '@/lib/figure'
 import { journey, type Box, type Cam, type Course } from '@/lib/journey'
 import { ROUTE_LINES, SCENE, smooth, type Pt } from '@/lib/crag'
 import { FRONT_RIDGE, ridgeY } from '@/lib/ridge'
@@ -919,12 +919,16 @@ let look: { back: boolean; tilt: number } | null = null
 const pointer = { x: 0, y: 0, at: 0 }
 
 // in sight: nobody watches him type or turn when he is off the screen or under the header
-const inSight = (st: State | null) =>
+const inSight = (st: State | null): st is State =>
   !!st &&
   st.x > 0 &&
   st.x < window.innerWidth &&
   st.y > (G?.head ?? 0) &&
   st.y < window.innerHeight + 40 * st.k
+
+// the head frames a pose draws: from the back (d), and side on (t) when that is another drawing
+const headSides = (p: Pose): Record<string, Head> =>
+  p.turn === p.head ? { d: p.head } : { d: p.head, t: p.turn }
 
 function paintHead() {
   if (!layers || !now) return
@@ -953,9 +957,11 @@ function setHand(hand: number, up: boolean) {
   if (!layers || up === handsUp[hand]) return
   handsUp[hand] = up
   const [ex, ey] = hand ? SIT.farElbow : SIT.elbow
-  for (const ink of INKS)
-    if (up) layers[ink].hands[hand].setAttribute('transform', `rotate(-8 ${ex} ${ey})`)
-    else layers[ink].hands[hand].removeAttribute('transform')
+  for (const ink of INKS) {
+    const g = layers[ink].hands[hand ? 1 : 0]
+    if (up) g.setAttribute('transform', `rotate(-8 ${ex} ${ey})`)
+    else g.removeAttribute('transform')
+  }
 }
 const handsDown = () => {
   setHand(0, false)
@@ -1205,11 +1211,7 @@ onBeforeUnmount(() => {
           <path v-if="p.gear" :d="p.gear" class="g" />
           <path v-if="grain" :d="p.body" class="grain" :fill="`url(#travel-grain-${ink})`" />
           <g class="hd">
-            <g
-              v-for="(h, side) in p.turn === p.head ? { d: p.head } : { d: p.head, t: p.turn }"
-              :key="side"
-              :class="side"
-            >
+            <g v-for="(h, side) in headSides(p)" :key="side" :class="side">
               <path :d="h.body" class="b" />
               <path :d="h.hat" class="h" />
               <path :d="h.band" class="hb" />

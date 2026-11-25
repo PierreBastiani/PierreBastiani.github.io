@@ -929,9 +929,32 @@ onBeforeUnmount(() => {
   line-height: 1.45;
   font-weight: 500;
 }
+/* large text on a phone: the number and grade columns, sized in rem, leave the name too little
+   room ("exploitation" ran over the grade), so a row puts its number and grade on one line and
+   the route under them, the sheet's full width */
+@media (max-width: 20rem) {
+  .cols {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .list li {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: 'n g' 'what what';
+    row-gap: 0.6rem;
+  }
+  .list .n {
+    grid-area: n;
+  }
+  .what {
+    grid-area: what;
+  }
+  .g {
+    grid-area: g;
+  }
+}
 @media (max-width: 52rem) {
   .grid {
-    grid-template-columns: 1fr;
+    /* minmax(0, …): at large text the band's words never widen the column past the screen */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas: 'head' 'map' 'list';
     /* the head already carries --space-head below it; the map sits closer to its list */
     gap: 0;

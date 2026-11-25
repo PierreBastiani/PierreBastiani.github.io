@@ -248,6 +248,8 @@ const plateStyle = {
   font: 500 0.72rem / 1.3 var(--f-mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  /* the address is one word: at large text it breaks rather than push the page sideways */
+  overflow-wrap: anywhere;
 }
 .grid {
   list-style: none;
@@ -278,6 +280,10 @@ h3 {
   padding: 0.12em 0.45em 0 0.3em;
   background: var(--bg);
   max-width: calc(100% - 1.8rem);
+  /* a name and its arrow wider than the plate (pierre.kensae.com on a phone, any long name at
+     large text): the arrow, held to the name by a no-break space, goes to the next line
+     instead of past the plate onto the frame's rule */
+  overflow-wrap: anywhere;
   font-size: min(var(--step-3), 10.5cqi);
   font-weight: 650;
   line-height: 1;
